@@ -4,14 +4,19 @@
 .
 ├─ .claude/
 │   ├─ agents/               subagent chuyên môn (code-reviewer, db-architect)
-│   ├─ commands/             slash commands (/feature, /migration)
+│   ├─ commands/             slash commands (/spec, /feature, /migration)
 │   ├─ hooks/                PreToolUse / PostToolUse automation
 │   └─ settings.json         tool permissions + hooks config
 │
 ├─ docs/                     ★ Source of truth — KHÔNG phải lịch sử chat
 │   ├─ specs/                1 folder/feature, mỗi folder có 4 file chuẩn
 │   │   ├─ 00-product-vision.md
-│   │   └─ <NN>-<feature>/
+│   │   ├─ 01-auth/          ✅ Auth end-to-end — hoàn thành (dùng làm ví dụ)
+│   │   │   ├─ requirements.md
+│   │   │   ├─ design.md
+│   │   │   ├─ tasks.md
+│   │   │   └─ checklist.md
+│   │   └─ <NN>-<feature>/   ← tạo bằng /spec <name>
 │   │       ├─ requirements.md   ai dùng, làm gì, ràng buộc nghiệp vụ
 │   │       ├─ design.md         endpoint, schema DB, flow kỹ thuật
 │   │       ├─ tasks.md          task ≤ 30 phút, 1 task = 1 commit
