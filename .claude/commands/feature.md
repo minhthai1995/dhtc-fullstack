@@ -6,20 +6,58 @@ allowed-tools: Read, Write, Bash, Glob
 
 Feature name: $ARGUMENTS
 
+## Step 0 — Check for existing spec (REQUIRED before scaffolding)
+
+Run this command and capture output:
+!`ls docs/specs/ 2>/dev/null | grep -i "$ARGUMENTS" | head -5`
+
+Also check tasks:
+!`find docs/specs/ -name "tasks.md" 2>/dev/null | xargs grep -l "$ARGUMENTS" 2>/dev/null | head -3`
+
+**Decision logic:**
+
+- **If a spec folder exists** (e.g. `docs/specs/02-$ARGUMENTS/`):
+  - Read `docs/specs/<NN>-$ARGUMENTS/tasks.md`
+  - Show the full task list with tick status
+  - Tell the user: "Tìm thấy spec cho '$ARGUMENTS'. Tôi sẽ scaffold theo design.md và tasks.md, không phải template chung."
+  - Read `docs/specs/<NN>-$ARGUMENTS/design.md` to understand API endpoints, schema, and structure
+  - Scaffold ONLY what the spec says — use spec's endpoint paths, field names, schema structure
+  - After scaffolding, show which task this corresponds to and remind to tick it
+
+- **If NO spec exists:**
+  - STOP and print this warning:
+  ```
+  ⚠️  Không tìm thấy spec cho '$ARGUMENTS'.
+
+  Spec-first workflow yêu cầu có spec trước khi code.
+  Chạy: /spec $ARGUMENTS
+
+  Điền requirements.md → design.md → tasks.md → duyệt → rồi mới /feature.
+
+  Muốn scaffold template chung (không theo spec)? Gõ lại:
+  /feature $ARGUMENTS --no-spec
+  ```
+  - Do NOT proceed with scaffolding
+
+- **If user passed `--no-spec` flag:**
+  - Proceed with generic scaffold below (use for prototyping only)
+
+---
+
+## Generic scaffold (only when --no-spec or spec confirmed)
+
 Existing backend routes:
 !`ls backend/app/api/v1/*.py 2>/dev/null | xargs -I{} basename {}`
 
 Existing frontend features:
 !`ls frontend/src/features/ 2>/dev/null`
 
----
-
 Scaffold the feature "$ARGUMENTS" across both backend and frontend. Follow these steps exactly:
 
 ## 1. Backend — create 5 files
 
 ### `backend/app/models/<name>.py`
-SQLAlchemy model (adjust fields as needed):
+SQLAlchemy model (use spec's schema if available, otherwise adjust fields):
 ```python
 from sqlalchemy.orm import Mapped, mapped_column
 from app.models.base import Base, TimestampMixin
@@ -167,4 +205,5 @@ Next steps:
 3. Review generated migration file before applying
 4. Add page: frontend/src/pages/<PascalName>Page.tsx
 5. Wire route in frontend/src/App.tsx
+6. Tick task trong docs/specs/<NN>-<name>/tasks.md
 ```
