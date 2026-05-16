@@ -9,11 +9,11 @@
 - **Đây là:** Template SDD fullstack — không phải project business logic
 - **Đã có:** Auth end-to-end ✅ (register → login → JWT → sessionStorage → protected routes)
 - **Spec hiện tại:** `docs/specs/01-auth/` — tất cả tasks ✅ đã hoàn thành
-- **Branch:** `main` — latest commit `762b26b`
-- **Đang làm:** _(điền vào khi bắt đầu feature mới)_
-- **Blocked:** _(điền nếu có)_
-- **Files đang sửa:** _(điền nếu có file dở dang)_
-- **Next session:** Điền `docs/specs/00-product-vision.md` → viết spec feature đầu tiên → `/spec <name>`
+- **Branch:** `main` — latest commit `432fbba`
+- **Đang làm:** _(không — template hoàn chỉnh, sẵn sàng dùng cho project thật)_
+- **Blocked:** _(không)_
+- **Files đang sửa:** _(không)_
+- **Next session:** Bắt đầu project thật → `/spec <feature-name>` để tạo spec đầu tiên
 
 ---
 
@@ -27,6 +27,20 @@
 ---
 
 ## Session log
+
+<details>
+<summary>2026-05-16 · Hoàn thiện SDD infrastructure — /spec command, session ritual, bài giảng</summary>
+
+**Làm gì:**
+- Tạo `.claude/commands/spec.md` — `/spec <name>` scaffold 4-file spec với template đầy đủ
+- CLAUDE.md: thêm session ritual (ĐẦU/TRONG/CUỐI phiên), Verification Gate, "Luôn lưu plan"
+- `docs/structure.md`: cập nhật — thêm `01-auth/`, `/spec` command
+- `handoff.md`: refactor sang TL;DR + `<details>` collapsed pattern (≤200 dòng)
+- `course_content.html`: CLAUDE.md v0 template thêm session ritual + Verification Gate; React 18→19; tasks.md example hiển thị ticked ✅ pattern
+
+**Commit:** `432fbba` — feat: add SDD infrastructure — /spec command, auth spec, session ritual in CLAUDE.md
+
+</details>
 
 <details>
 <summary>2026-05-16 · Hoàn thiện auth flow + SDD infrastructure (15 files thay đổi)</summary>
