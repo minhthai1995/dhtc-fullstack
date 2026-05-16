@@ -24,6 +24,8 @@
 │   ├─ adr/                  Architecture Decision Records
 │   │   └─ 0001-tech-stack.md
 │   └─ runbooks/             Hướng dẫn vận hành, deploy, rollback
+│       ├─ local-dev.md      dev setup (Docker + local)
+│       └─ deploy.md         deploy lên VPS (nginx + Docker + certbot)
 │
 ├─ frontend/                 React 19 + Vite 6 + TypeScript + Tailwind v4
 │   ├─ src/
@@ -53,6 +55,8 @@
 ├─ CLAUDE.md                 ★ Hiến pháp dự án (50-100 dòng, @imports)
 ├─ AGENTS.md                 Universal brief (Codex/Cursor/Copilot compatible)
 ├─ handoff.md                Session-to-session state handoff
-├─ docker-compose.yml
-└─ .github/workflows/ci.yml
+├─ Makefile                  Shortcuts: make dev|test|lint|build|deploy-check
+├─ docker-compose.yml        Dev stack (postgres + api + frontend)
+├─ docker-compose.prod.yml   Production overrides (no debug, no bind mounts)
+└─ .github/workflows/ci.yml  CI: parallel BE + FE (ruff + mypy + pytest + tsc + build)
 ```

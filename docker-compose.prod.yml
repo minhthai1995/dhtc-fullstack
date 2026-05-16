@@ -1,0 +1,34 @@
+# Production overrides — use with:
+# docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Requires these env vars on the host (or in .env):
+#   DATABASE_URL, JWT_SECRET, CORS_ORIGINS
+
+services:
+  postgres:
+    restart: always
+    # Remove port binding in production — only accessible within Docker network
+    ports: []
+
+  api:
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["https://yourdomain.com"]}
+      DEBUG: "false"
+      ENVIRONMENT: production
+    # No bind mounts in production — use built image
+    volumes: []
+    command:
+      - gunicorn
+      - app.main:app
+      - --workers
+      - "4"
+      - --worker-class
+      - uvicorn.workers.UvicornWorker
+      - --bind
+      - 0.0.0.0:8000
+
+  frontend:
+    restart: always
