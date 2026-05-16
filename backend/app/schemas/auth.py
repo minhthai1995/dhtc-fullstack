@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, EmailStr
 
 
 class TokenResponse(BaseModel):
@@ -6,9 +6,6 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
-class UserRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    email: str
-    is_active: bool
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    password: str

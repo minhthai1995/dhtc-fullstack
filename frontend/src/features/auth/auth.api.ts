@@ -1,9 +1,19 @@
 import { api } from '@/lib/axios'
-import type { TokenResponse } from '@/types/api'
+import type { TokenResponse, UserRead } from '@/types/api'
 
 export interface LoginPayload {
   username: string
   password: string
+}
+
+export interface RegisterPayload {
+  email: string
+  password: string
+}
+
+export async function register(payload: RegisterPayload): Promise<UserRead> {
+  const { data } = await api.post<UserRead>('/auth/register', payload)
+  return data
 }
 
 export async function login(payload: LoginPayload): Promise<TokenResponse> {
@@ -18,5 +28,10 @@ export async function login(payload: LoginPayload): Promise<TokenResponse> {
 }
 
 export async function logout(): Promise<void> {
-  await api.post('/auth/logout')
+  sessionStorage.removeItem('access_token')
+}
+
+export async function getMe(): Promise<UserRead> {
+  const { data } = await api.get<UserRead>('/users/me')
+  return data
 }

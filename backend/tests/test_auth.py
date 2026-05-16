@@ -6,6 +6,29 @@ from app.crud import user as user_crud
 
 
 @pytest.mark.asyncio
+async def test_register_creates_user(client: AsyncClient) -> None:
+    response = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "new@example.com", "password": "secret123"},
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["email"] == "new@example.com"
+    assert body["is_active"] is True
+    assert "hashed_password" not in body
+
+
+@pytest.mark.asyncio
+async def test_register_duplicate_email(client: AsyncClient, db_session: AsyncSession) -> None:
+    await user_crud.create_user(db_session, "dup@example.com", "secret123")
+    response = await client.post(
+        "/api/v1/auth/register",
+        json={"email": "dup@example.com", "password": "another"},
+    )
+    assert response.status_code == 409
+
+
+@pytest.mark.asyncio
 async def test_login_returns_token(client: AsyncClient, db_session: AsyncSession) -> None:
     await user_crud.create_user(db_session, "test@example.com", "secret123")
     response = await client.post(

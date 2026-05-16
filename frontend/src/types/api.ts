@@ -14,3 +14,9 @@ export interface TokenResponse {
   access_token: string
   token_type: 'bearer'
 }
+
+export interface UserRead {
+  id: number
+  email: string
+  is_active: boolean
+}
