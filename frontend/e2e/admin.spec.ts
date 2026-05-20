@@ -209,12 +209,33 @@ test.describe('Admin Portal', () => {
     await expectNoError(page)
     await ss(page, '29-admin-crm-conversations')
 
-    // Switch to "Hành vi" — placeholder tab; must show P2 banner
+    // Switch to "Hành vi" — real behavior overview must render
     await page.locator('button:has-text("Hành vi")').click()
-    await page.waitForTimeout(600)
+    await page.waitForTimeout(800)
     await expectNoError(page)
-    await expect(page.locator('text=/page tracking|pixel|P2/i').first()).toBeVisible()
+    await expect(page.locator('text=Phiên hôm nay').first()).toBeVisible()
+    await expect(page.locator('text=Phễu hành vi').first()).toBeVisible()
+    await expect(page.locator('text=Phiên theo giờ').first()).toBeVisible()
     await ss(page, '30-admin-crm-behavior')
+  })
+
+  test('crm - behavior tab loads counts from API', async ({ page }) => {
+    // Fire a customer pageview first so the day has at least 1 session
+    await page.goto('/shop')
+    await page.waitForLoadState('networkidle')
+    await page.waitForTimeout(800)
+
+    // Visit admin CRM and switch to Hành vi
+    await page.goto('/admin/crm')
+    await page.waitForLoadState('networkidle')
+    await page.locator('button:has-text("Hành vi")').click()
+    await page.waitForTimeout(1200)
+    await expectNoError(page)
+
+    // KPI value for "Phiên hôm nay" should be numeric (not "—")
+    const kpiBlock = page.locator('text=Phiên hôm nay').first().locator('..')
+    const kpiText = await kpiBlock.innerText()
+    expect(kpiText).toMatch(/\d+/)
   })
 
   test('crm - no AI-mockup residue in DOM', async ({ page }) => {
