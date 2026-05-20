@@ -46,7 +46,7 @@
 ## Frontend — ImageUploader component
 
 - [x] **T19** ✅ — `ImageUploader.tsx` skeleton + dropzone + click-to-pick (native HTML5)
-- [ ] **T20** — Preview grid + URL.createObjectURL + remove button
+- [x] **T20** ✅ — Preview grid + URL.createObjectURL + remove button
 - [ ] **T21** — Multi-upload với progress (axios onUploadProgress) + parallel mutations
 - [ ] **T22** — Client compression (browser-image-compression) cho file > 1.5MB
 - [ ] **T23** — Reorder qua native HTML5 drag-drop (draggable + onDragOver + onDrop)
