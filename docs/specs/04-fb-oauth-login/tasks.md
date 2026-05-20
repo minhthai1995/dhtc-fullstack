@@ -1,7 +1,7 @@
 # Tasks — Feature: Facebook OAuth Login (P5A)
 
 **Tổng thời gian ước tính:** ~7 giờ (1 ngày)
-**Status:** 📝 Drafting
+**Status:** ✅ DONE (2026-05-20) — code + tests merged; manual e2e chờ user tạo FB Test User
 
 > **Cách dùng file này:**
 > - Tick task khi xong: `- [x] T1 ✅`
@@ -59,24 +59,25 @@
 
 ## Integration & handoff
 
-- [ ] **T27** — Manual e2e smoke checklist trong `docs/specs/04-fb-oauth-login/handoff.md`: tạo FB test user → login flow đầy đủ → DB verify (steps 1-6 từ plan Phase 3)
-  - Commit: `docs(P5A): handoff manual e2e smoke checklist`
-- [ ] **T28** — Update top-level `handoff.md` TL;DR: P5A done, known limitation token-in-URL → P6, `fb_profiles.messenger_psid` ready cho P5C
-  - Commit: `docs: update handoff TL;DR after P5A done`
-- [ ] **T29** — Run `uv run ruff check .` + `uv run mypy app` + `npm run typecheck && npm run build` → all clean
-  - Commit: nếu cần fix lint/type — `chore: fix lint+type after P5A`
-- [ ] **T30** — Tick `tasks.md` 100% + update checklist.md nếu có
-  - Commit: `docs(P5A): tick tasks.md 100%`
+- [x] **T27** ✅ — Manual e2e smoke checklist trong `docs/specs/04-fb-oauth-login/handoff.md`: TL;DR + user-action items (FB App + Test User + .env) + 6 manual flows (pre-flight/happy/re-login/email merge/cancel/tamper/server-side grep) + Findings placeholder + Files-touched table — `a398682`
+- [x] **T28** ✅ — Top-level `handoff.md` updated: TL;DR ticks P5A ✅, new session log entry với 30-task commit list, carry-over tech debt, known limitation token-in-URL → P6, reserved messenger_psid cho P5C — `4eb1678`
+- [x] **T29** ✅ — `uv run ruff check app/` clean; `uv run mypy app` clean cho P5A files (3 nits fixed: dict[str, Any] annotations + rename `user` → `existing_user`); `npm run typecheck` clean (1 unused `vi` import removed); `npm run build` ✅ pass — `7139168`
+- [x] **T30** ✅ — `tasks.md` 100% ticked; status = ✅ DONE — pending this commit
 
 ---
 
-## Tổng kết (sẽ điền sau khi xong)
+## Tổng kết
 
 | | Dự kiến | Thực tế |
 |--|---------|---------|
-| Tasks | 30 | _TBD_ |
-| Tests | 8 BE + 3 FE = 11 | _TBD_ |
-| Files mới (BE) | 6 (config edit + model + schema + CRUD + service + router + test) | _TBD_ |
-| Files mới (FE) | 3 (button + return page + test) | _TBD_ |
-| Files edit | ~5 (config.py, .env.example, models/__init__.py, main.py, LoginPage, RegisterPage, App.tsx) | _TBD_ |
-| Thời gian | ~7h | _TBD_ |
+| Tasks | 30 | **30 ✅** (T1–T30) |
+| Tests | 8 BE + 3 FE = 11 | **9 BE + 7 FE = 16** (BE: 2 /start + 5 /callback paths + 2 error variants; FE: 3 button + 1 token-happy + 3 error paths) |
+| Files mới (BE) | 6 | **7** (config edit + model + schema + CRUD + service + router + tests/conftest fixture + tests file) |
+| Files mới (FE) | 3 | **3** (FacebookLoginButton + FacebookReturnPage + test file) |
+| Files edit | ~5 | **6** (`config.py`, `.env.example`, `models/__init__.py`, `api/v1/__init__.py`, `Login.tsx`, `Register.tsx`, `App.tsx`) |
+| Suite status | — | BE **74/75** (1 pre-existing fail unrelated — `test_cancel_order_restores_stock` SQLite `now()`); FE **70/70**; ruff clean; mypy clean cho P5A files; typecheck clean; build pass |
+| Thời gian | ~7h | _xấp xỉ_ — chia làm 2 phiên (compaction giữa T13 và T14) |
+
+**Known limitation (defer P6):** Token qua URL query `?token=<jwt>` ở redirect cuối — FE replace-navigate clear history, nhưng vẫn có risk leak qua Referer. P6 thay bằng HttpOnly cookie + `/auth/me` bootstrap hoặc one-shot code exchange.
+
+**Reserved cho P5C:** `fb_profiles.messenger_psid` UNIQUE nullable — webhook P5C sẽ ánh xạ Messenger sender_id → user sau khi user FB-login web.
