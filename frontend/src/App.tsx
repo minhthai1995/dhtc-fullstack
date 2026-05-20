@@ -8,6 +8,7 @@ import { CustomerLayout } from '@/components/layout/CustomerLayout'
 // Public pages
 import { Login } from '@/pages/Login'
 import { Register } from '@/pages/Register'
+import { FacebookReturnPage } from '@/pages/auth/FacebookReturnPage'
 import { NotFound } from '@/pages/NotFound'
 
 // Admin pages
@@ -55,6 +56,7 @@ export function App() {
         {/* Public routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/auth/fb-return" element={<FacebookReturnPage />} />
 
         {/* Root redirect — authenticated users go to their role home */}
         <Route path="/" element={<RoleRedirect />} />
