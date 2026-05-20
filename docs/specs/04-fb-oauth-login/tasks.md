@@ -40,8 +40,7 @@
 - [x] **T16** ✅ — `test_facebook_callback_new_user_happy` + `test_facebook_callback_duplicate_fb_app_user_id` (idempotent: same FB id → no duplicate user/profile, fields refreshed) — pending commit. Bonus `8e03b7b` fix SimpleNamespace scoping in fixture.
 - [x] **T17** ✅ — `test_facebook_callback_email_merge` — existing email/password user, FB login same email → link, no 2nd user, password hash untouched — pending commit
 - [x] **T18** ✅ — `test_facebook_callback_no_email_granted` — FB không trả email → user.email = `fb_<id>@dhtc.local`, FBProfile.fb_email vẫn NULL (honest) — pending commit
-- [ ] **T19** — `tests/test_auth_facebook.py`: `test_facebook_callback_invalid_state` + `test_facebook_callback_fb_api_error` (error path → 302 với `?error=...`)
-  - Commit: `test(backend): /auth/facebook/callback error paths (invalid state, fb api error)`
+- [x] **T19** ✅ — error paths: `invalid_state` (state tampering), `fb_unavailable` (Graph 500), `user_cancelled` (bonus, FB redirect with `error_reason=user_denied`) — pending commit. **Full suite: 74 pass / 1 pre-existing fail unrelated to P5A (`test_cancel_order_restores_stock` — SQLite `now()` server_default issue, P4 tech debt).**
 
 ## Frontend — Button + return route
 

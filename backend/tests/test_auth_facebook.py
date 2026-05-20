@@ -220,3 +220,76 @@ async def test_facebook_callback_no_email_granted(
 
     profile = (await db_session.execute(select(FBProfile))).scalar_one()
     assert profile.fb_email is None  # never invented in FBProfile
+
+
+# ---------- /auth/facebook/callback — error paths ----------
+
+
+async def test_facebook_callback_invalid_state(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    fb_oauth_mocks,
+) -> None:
+    """Tampered state query does not match cookie → 302 ?error=invalid_state.
+    No user/profile created; mocks never reached."""
+    await _start_and_get_state(client)  # set cookie
+    resp = await client.get(
+        "/api/v1/auth/facebook/callback?state=evil_state&code=anycode",
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+    parsed = urlparse(resp.headers["location"])
+    qs = parse_qs(parsed.query)
+    assert qs["error"] == ["invalid_state"]
+    assert "token" not in qs
+
+    # No DB rows, no service calls
+    user_count = (await db_session.execute(select(func.count(User.id)))).scalar_one()
+    fb_count = (await db_session.execute(select(func.count(FBProfile.id)))).scalar_one()
+    assert user_count == 0
+    assert fb_count == 0
+    assert fb_oauth_mocks.calls["exchange"] == []
+    assert fb_oauth_mocks.calls["fetch"] == []
+
+
+async def test_facebook_callback_fb_api_error(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    fb_oauth_mocks,
+) -> None:
+    """FB Graph returns an error during code exchange → 302 ?error=fb_unavailable.
+    No partial user created."""
+    fb_oauth_mocks.set_token_error("fb_unavailable", "graph returned 500")
+
+    state = await _start_and_get_state(client)
+    resp = await client.get(
+        f"/api/v1/auth/facebook/callback?state={state}&code=anycode",
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+    parsed = urlparse(resp.headers["location"])
+    qs = parse_qs(parsed.query)
+    assert qs["error"] == ["fb_unavailable"]
+    assert "token" not in qs
+
+    user_count = (await db_session.execute(select(func.count(User.id)))).scalar_one()
+    assert user_count == 0
+
+
+async def test_facebook_callback_user_cancelled(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    fb_oauth_mocks,
+) -> None:
+    """FB redirects back with error_reason=user_denied → ?error=user_cancelled."""
+    await _start_and_get_state(client)
+    resp = await client.get(
+        "/api/v1/auth/facebook/callback?error_reason=user_denied",
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+    qs = parse_qs(urlparse(resp.headers["location"]).query)
+    assert qs["error"] == ["user_cancelled"]
+    assert "token" not in qs
+    user_count = (await db_session.execute(select(func.count(User.id)))).scalar_one()
+    assert user_count == 0
