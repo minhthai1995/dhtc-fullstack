@@ -26,7 +26,7 @@
 
 ## Backend — Endpoints
 
-- [ ] **T9** — Auth dep `require_seller_or_admin` trong `api/deps.py`
+- [x] **T9** ✅ — Auth dep `require_seller_or_admin` trong `app/deps.py`
 - [ ] **T10** — `POST /api/v1/products/images` endpoint trong `api/v1/products.py`
 - [ ] **T11** — `DELETE /api/v1/products/images/{image_id}` endpoint
 - [ ] **T12** — Mount StaticFiles `/uploads` trong `main.py`

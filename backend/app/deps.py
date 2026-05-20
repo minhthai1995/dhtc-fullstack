@@ -73,3 +73,12 @@ async def require_customer(user: User = Depends(current_user)) -> User:
             detail="Customer access required",
         )
     return user
+
+
+async def require_seller_or_admin(user: User = Depends(current_user)) -> User:
+    if user.role not in (UserRole.seller, UserRole.admin):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seller or admin access required",
+        )
+    return user
