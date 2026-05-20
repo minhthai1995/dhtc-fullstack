@@ -81,4 +81,36 @@ test.describe('Seller Portal', () => {
     await expectNoError(page)
     await ss(page, '37-seller-analytics')
   })
+
+  test('products - uploads a fixture image through ImageUploader', async ({ page }) => {
+    await page.goto('/seller/products/new')
+    await page.waitForLoadState('networkidle')
+    await expectNoError(page)
+
+    // 1×1 red JPEG — minimum valid bytes that Pillow accepts, keeps the
+    // fixture inline so we don't commit a binary.
+    const jpegBytes = Buffer.from(
+      '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEB' +
+        'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAf/AABEIAAEAAQMBIgACEQEDEQH/' +
+        'xAAVAAEBAAAAAAAAAAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/xAAUAQEA' +
+        'AAAAAAAAAAAAAAAAAAAA/8QAFBEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8A' +
+        'fwD/2Q==',
+      'base64',
+    )
+
+    const fileInput = page.locator('input[type="file"]')
+    await fileInput.setInputFiles({
+      name: 'fixture.jpg',
+      mimeType: 'image/jpeg',
+      buffer: jpegBytes,
+    })
+
+    // A preview tile means the upload resolved and onChange fired.
+    // Backend may be slow on cold caches — give it real time.
+    const preview = page.locator('img[src*="/uploads/products/"]').first()
+    await expect(preview).toBeVisible({ timeout: 15000 })
+    await expect(page.locator('text=Ảnh chính')).toBeVisible()
+
+    await ss(page, '38-seller-product-image-upload')
+  })
 })

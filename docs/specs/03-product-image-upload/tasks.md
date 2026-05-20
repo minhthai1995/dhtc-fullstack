@@ -65,7 +65,7 @@
 
 ## E2E & DevOps
 
-- [ ] **T30** — Playwright e2e `seller.spec.ts`: upload fixture image flow
+- [x] **T30** ✅ — Playwright e2e `seller.spec.ts`: upload fixture image flow
 - [ ] **T31** — Update `handoff.md` TL;DR + session log entry
 - [ ] **T32** — Tick toàn bộ tasks.md với commit SHA
 
