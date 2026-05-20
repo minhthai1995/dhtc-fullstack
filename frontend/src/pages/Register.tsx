@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useRegister } from '@/features/auth/useAuth'
+import { FacebookLoginButton } from '@/features/auth/FacebookLoginButton'
 import { Spinner } from '@/components/ui/Spinner'
 import { cn } from '@/lib/cn'
 import { ShieldCheck, ShoppingBag } from 'lucide-react'
@@ -204,6 +205,14 @@ export function Register() {
               )}
             </button>
           </form>
+
+          <div className="my-5 flex items-center gap-3 text-[11px] uppercase tracking-widest text-ink-mute">
+            <div className="flex-1 border-t border-border" />
+            <span>hoặc</span>
+            <div className="flex-1 border-t border-border" />
+          </div>
+
+          <FacebookLoginButton label="Đăng ký bằng Facebook" />
 
           <div className="mt-6 text-center text-sm text-ink-mute">
             Đã có tài khoản?{' '}
