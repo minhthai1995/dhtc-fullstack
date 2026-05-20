@@ -187,3 +187,36 @@ async def test_facebook_callback_email_merge(
     profile = (await db_session.execute(select(FBProfile))).scalar_one()
     assert profile.user_id == existing_id
     assert profile.fb_app_user_id == "200000002"
+
+
+async def test_facebook_callback_no_email_granted(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    fb_oauth_mocks,
+) -> None:
+    """User denied the email scope on FB dialog → /me returns no email.
+    Service must synthesize fb_<id>@dhtc.local so users.email NOT NULL holds,
+    and FBProfile.fb_email stays NULL (honest record of denial)."""
+    fb_oauth_mocks.set_profile({
+        "id": "300000003",
+        "email": None,
+        "first_name": "NoEmail",
+        "last_name": "User",
+        "fb_profile_pic_url": None,
+        "locale": None,
+        "raw": {"id": "300000003"},
+    })
+
+    state = await _start_and_get_state(client)
+    resp = await client.get(
+        f"/api/v1/auth/facebook/callback?state={state}&code=noemail",
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+    assert "token=" in resp.headers["location"]
+
+    user = (await db_session.execute(select(User))).scalar_one()
+    assert user.email == "fb_300000003@dhtc.local"
+
+    profile = (await db_session.execute(select(FBProfile))).scalar_one()
+    assert profile.fb_email is None  # never invented in FBProfile
