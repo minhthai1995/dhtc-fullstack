@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type DragEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import { ImagePlus, X } from 'lucide-react'
+import { uploadProductImage } from './productImages.api'
 import type { ProductImage } from './types'
 
 export const MAX_IMAGES = 9
@@ -10,7 +11,6 @@ export interface ImageUploaderProps {
 }
 
 interface PendingItem {
-  /** Stable local id used as React key + revoke target */
   localId: string
   file: File
   previewUrl: string
@@ -18,12 +18,14 @@ interface PendingItem {
   error?: string
 }
 
+let pendingCounter = 0
+const nextLocalId = () => `pending-${++pendingCounter}`
+
 export function ImageUploader({ value, onChange }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
   const [pending, setPending] = useState<PendingItem[]>([])
 
-  // Revoke object URLs on unmount so we don't leak memory
   useEffect(() => {
     return () => {
       pending.forEach((p) => URL.revokeObjectURL(p.previewUrl))
@@ -33,10 +35,53 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
   const handlePick = () => inputRef.current?.click()
   const remaining = MAX_IMAGES - value.length - pending.length
 
+  const startUpload = (files: File[]) => {
+    if (files.length === 0) return
+    const slots = Math.max(0, MAX_IMAGES - value.length - pending.length)
+    const accepted = files.slice(0, slots)
+    const items: PendingItem[] = accepted.map((file) => ({
+      localId: nextLocalId(),
+      file,
+      previewUrl: URL.createObjectURL(file),
+      progress: 0,
+    }))
+    setPending((prev) => [...prev, ...items])
+
+    items.forEach((item) => {
+      uploadProductImage(item.file, (percent) => {
+        setPending((prev) =>
+          prev.map((p) => (p.localId === item.localId ? { ...p, progress: percent } : p)),
+        )
+      })
+        .then((uploaded) => {
+          onChange([...value, uploaded])
+          setPending((prev) => {
+            const target = prev.find((p) => p.localId === item.localId)
+            if (target) URL.revokeObjectURL(target.previewUrl)
+            return prev.filter((p) => p.localId !== item.localId)
+          })
+        })
+        .catch(() => {
+          setPending((prev) =>
+            prev.map((p) =>
+              p.localId === item.localId ? { ...p, error: 'Tải lên thất bại' } : p,
+            ),
+          )
+        })
+    })
+  }
+
+  const handleFileInput = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    e.target.value = '' // allow same file twice
+    startUpload(files)
+  }
+
   const handleDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     setDragOver(false)
-    // Upload wired in T21
+    const files = Array.from(e.dataTransfer.files ?? [])
+    startUpload(files)
   }
 
   const removeUploaded = (id: string) => {
@@ -62,7 +107,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
         accept="image/jpeg,image/png,image/webp,image/heic"
         multiple
         className="hidden"
-        onChange={() => { /* wired in T21 */ }}
+        onChange={handleFileInput}
       />
 
       {showGrid && (
@@ -89,6 +134,22 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
               className="relative aspect-square rounded-xl overflow-hidden border border-border bg-white"
             >
               <img src={p.previewUrl} alt="" className="w-full h-full object-cover opacity-70" />
+              {!p.error && (
+                <div className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1">
+                  <div className="h-1 bg-white/30 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-green transition-all"
+                      style={{ width: `${p.progress}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-white font-mono mt-0.5">{p.progress}%</p>
+                </div>
+              )}
+              {p.error && (
+                <div className="absolute inset-x-0 bottom-0 bg-danger/90 px-2 py-1">
+                  <p className="text-[10px] text-white font-semibold">{p.error}</p>
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => removePending(p.localId)}

@@ -47,7 +47,7 @@
 
 - [x] **T19** ✅ — `ImageUploader.tsx` skeleton + dropzone + click-to-pick (native HTML5)
 - [x] **T20** ✅ — Preview grid + URL.createObjectURL + remove button
-- [ ] **T21** — Multi-upload với progress (axios onUploadProgress) + parallel mutations
+- [x] **T21** ✅ — Multi-upload với progress (axios onUploadProgress) + parallel mutations
 - [ ] **T22** — Client compression (browser-image-compression) cho file > 1.5MB
 - [ ] **T23** — Reorder qua native HTML5 drag-drop (draggable + onDragOver + onDrop)
 - [ ] **T24** — Toast errors tiếng Việt + validation client-side (MIME + size)
