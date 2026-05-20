@@ -6,11 +6,16 @@ Standard OAuth 2.0 redirect flow with `email + public_profile` scope.
 """
 from __future__ import annotations
 
+import secrets
 from urllib.parse import urlencode
 
 import httpx
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.crud import fb_profile as fb_profile_crud
+from app.crud import user as user_crud
+from app.models.user import User, UserRole
 
 FB_GRAPH_VERSION = "v19.0"
 FB_DIALOG_URL = f"https://www.facebook.com/{FB_GRAPH_VERSION}/dialog/oauth"
@@ -114,3 +119,81 @@ async def fetch_user_profile(access_token: str) -> dict:
         "locale": payload.get("locale"),
         "raw": payload,
     }
+
+
+def _synthetic_email(fb_app_user_id: str) -> str:
+    """Used when FB user denied the email scope — keeps users.email NOT NULL invariant."""
+    return f"fb_{fb_app_user_id}@dhtc.local"
+
+
+def _unusable_password_hash() -> str:
+    """Random unusable bcrypt hash so email+password login can never reach FB-only users."""
+    from app.core.security import hash_password
+
+    return hash_password(secrets.token_urlsafe(48))
+
+
+async def upsert_user_and_profile(db: AsyncSession, profile: dict) -> User:
+    """Idempotent upsert keyed on fb_app_user_id, with email-merge fallback.
+
+    Resolution order:
+      1. Existing FBProfile by fb_app_user_id → refresh OAuth fields, return its user
+      2. Existing User by email → link new FBProfile to that user (merge)
+      3. New User (random unusable password) + new FBProfile
+
+    `profile` must come from `fetch_user_profile`.
+    """
+    fb_id = profile["id"]
+    fb_email: str | None = profile.get("email")
+    first_name: str | None = profile.get("first_name")
+    last_name: str | None = profile.get("last_name")
+    pic_url: str | None = profile.get("fb_profile_pic_url")
+    locale: str | None = profile.get("locale")
+    raw = profile.get("raw")
+
+    existing_profile = await fb_profile_crud.get_by_fb_app_user_id(db, fb_id)
+    if existing_profile is not None:
+        await fb_profile_crud.update_oauth_payload(
+            db,
+            existing_profile,
+            fb_email=fb_email,
+            fb_first_name=first_name,
+            fb_last_name=last_name,
+            fb_profile_pic_url=pic_url,
+            fb_locale=locale,
+            raw_oauth_payload=raw,
+        )
+        user = await user_crud.get_by_id(db, existing_profile.user_id)
+        assert user is not None  # FK guarantees this
+        return user
+
+    user: User | None = None
+    if fb_email:
+        user = await user_crud.get_by_email(db, fb_email)
+
+    if user is None:
+        email_to_use = fb_email or _synthetic_email(fb_id)
+        full_name = " ".join(p for p in (first_name, last_name) if p) or None
+        user = User(
+            email=email_to_use,
+            hashed_password=_unusable_password_hash(),
+            full_name=full_name,
+            role=UserRole.customer,
+            is_active=True,
+        )
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
+
+    await fb_profile_crud.create(
+        db,
+        user_id=user.id,
+        fb_app_user_id=fb_id,
+        fb_email=fb_email,
+        fb_first_name=first_name,
+        fb_last_name=last_name,
+        fb_profile_pic_url=pic_url,
+        fb_locale=locale,
+        raw_oauth_payload=raw,
+    )
+    return user
