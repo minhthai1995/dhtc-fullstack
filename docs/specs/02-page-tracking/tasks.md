@@ -12,35 +12,16 @@
 
 ## Backend — Models & Migration
 
-- [ ] **T1** (15') — Tạo `PageView` SQLAlchemy model (kế thừa `TimestampMixin`, imported vào `models/__init__.py`)
-  File: `backend/app/models/page_view.py`
-  Commit: `feat(tracking): add PageView model`
-
-- [ ] **T2** (15') — Alembic autogenerate migration cho `page_views` table + review SQL output
-  File: `backend/alembic/versions/2026_05_20_XXXX_add_page_views.py`
-  Commit: `feat(tracking): alembic migration for page_views`
+- [x] **T1** ✅ — PageView SQLAlchemy model (commit `cd22647`)
+- [x] **T2** ✅ — Alembic migration `page_views` (commit `9480096`)
 
 ## Backend — Tracking endpoint
 
-- [ ] **T3** (15') — Pydantic schema `PageViewIn`
-  File: `backend/app/schemas/tracking.py`
-  Commit: `feat(tracking): add PageViewIn schema`
-
-- [ ] **T4** (20') — CRUD layer: `create_page_view`, `get_for_date`, `count_distinct_sessions`
-  File: `backend/app/crud/page_view.py`
-  Commit: `feat(tracking): add page_view CRUD`
-
-- [ ] **T5** (20') — Service helpers: `derive_device`, `derive_source`, optional country parse từ header
-  File: `backend/app/services/tracking.py`
-  Commit: `feat(tracking): add device/source derivation helpers`
-
-- [ ] **T6** (20') — Rate limit decorator (in-memory dict, max 60/min/visitor_id) — đủ MVP, KHÔNG cần Redis
-  File: `backend/app/core/rate_limit.py` (NEW) hoặc inline trong tracking.py
-  Commit: `feat(tracking): add in-memory rate limit`
-
-- [ ] **T7** (25') — Route `POST /api/v1/tracking/page-view` (optional Bearer, parse UA, rate-limit, insert)
-  File: `backend/app/api/v1/tracking.py` + wire vào `api/v1/__init__.py`
-  Commit: `feat(tracking): add POST /tracking/page-view endpoint`
+- [x] **T3** ✅ — PageViewIn Pydantic schema (commit `a747650`)
+- [x] **T4** ✅ — page_view CRUD (commit `c8cd994`)
+- [x] **T5** ✅ — device/source/country derive helpers (commit `22c6418`)
+- [x] **T6** ✅ — in-memory sliding-window rate limiter (commit `37fd193`)
+- [x] **T7** ✅ — POST /tracking/page-view endpoint (commit `d7d9b8f`)
 
 ## Backend — Admin behavior aggregation
 
@@ -62,9 +43,7 @@
 
 ## Backend — Tests
 
-- [ ] **T12** (30') — pytest: happy + 429 rate-limit + optional Bearer cho POST tracking endpoint
-  File: `backend/tests/test_tracking.py` (NEW)
-  Commit: `test(tracking): add page-view endpoint tests`
+- [x] **T12** ✅ — pytest tracking: happy + bearer-link + 60-then-429 + 422 (commit `be10ce8`)
 
 - [ ] **T13** (30') — pytest: happy + 401 unauth cho 2 admin behavior endpoints (seed page_views + cart + orders)
   File: `backend/tests/test_admin_behavior.py` (NEW)
