@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as adminApi from './admin.api'
-import type { RevenueReport, WithdrawalItem, OriginRevenue, CRMStats, FunnelStage, SegmentCount, CustomerRow, CustomerDetail, CRMCustomersParams, Demographics, ConversationOverview, ConversationProfile, ConversationSummary, ChatMessageOut } from './admin.api'
+import type { RevenueReport, WithdrawalItem, OriginRevenue, CRMStats, FunnelStage, SegmentCount, CustomerRow, CustomerDetail, CRMCustomersParams, Demographics, ConversationOverview, ConversationProfile, ConversationSummary, ChatMessageOut, BehaviorOverview, SessionSummary } from './admin.api'
 import type { AdminDashboard, AdminMerchantDetail, ProductRead } from '@/types/api'
 import { useToast } from '@/components/ui/Toast'
 
@@ -256,5 +256,19 @@ export function useCRMConversationProfile(sessionId: string | null) {
     queryKey: ['admin', 'crm', 'conversations', sessionId, 'profile'],
     queryFn: () => adminApi.getCRMConversationProfile(sessionId!),
     enabled: !!sessionId,
+  })
+}
+
+export function useBehaviorOverview(date?: string) {
+  return useQuery<BehaviorOverview>({
+    queryKey: ['admin', 'behavior', 'overview', date ?? 'today'],
+    queryFn: () => adminApi.getBehaviorOverview(date),
+  })
+}
+
+export function useBehaviorSessions(params: { date?: string; limit?: number; offset?: number } = {}) {
+  return useQuery<SessionSummary[]>({
+    queryKey: ['admin', 'behavior', 'sessions', params],
+    queryFn: () => adminApi.getBehaviorSessions(params),
   })
 }
