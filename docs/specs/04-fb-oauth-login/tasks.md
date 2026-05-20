@@ -44,8 +44,7 @@
 
 ## Frontend — Button + return route
 
-- [ ] **T20** — Component `frontend/src/features/auth/FacebookLoginButton.tsx` (style green, FB SVG icon inline, full-width mobile, `onClick → window.location.href = '/api/v1/auth/facebook/start'`)
-  - Commit: `feat(frontend): FacebookLoginButton component`
+- [x] **T20** ✅ — `FacebookLoginButton.tsx` — FB-blue pill button, inline SVG "f" icon, click → `window.location.href = '/api/v1/auth/facebook/start'`. Note: chọn FB brand blue `#1877F2` thay vì green để user recognize Facebook flow ngay. — pending commit
 - [ ] **T21** — Add `<FacebookLoginButton />` vào `LoginPage.tsx` + `RegisterPage.tsx` (dưới form, divider "hoặc")
   - Commit: `feat(frontend): wire FB login button into Login + Register pages`
 - [ ] **T22** — Page `frontend/src/pages/auth/FacebookReturnPage.tsx`: `useSearchParams` đọc `token` | `error`, success path `setAuthToken` + navigate `/`, error path toast VI + nút quay lại login
