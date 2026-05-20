@@ -28,7 +28,6 @@ export function useLogin() {
     onSuccess: (data) => {
       sessionStorage.setItem('access_token', data.access_token)
       queryClient.invalidateQueries({ queryKey: authKeys.me })
-      window.location.href = '/'
     },
   })
 }

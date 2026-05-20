@@ -1,4 +1,4 @@
-.PHONY: help dev build test lint typecheck migrate deploy-check
+.PHONY: help dev build test lint typecheck migrate deploy-check hooks-test
 
 # Default target
 help:
@@ -47,6 +47,9 @@ migrate:
 
 migrate-local:
 	cd backend && uv run alembic upgrade head
+
+hooks-test:  ## Test git hooks manually (runs pre-commit against all staged files)
+	@bash .git/hooks/pre-commit
 
 deploy-check:
 	@echo "=== Pre-deploy checklist ==="

@@ -6,27 +6,43 @@
 
 ## TL;DR (đọc đầu phiên mới — ≤ 30 dòng)
 
-- **Đây là:** Template SDD fullstack — không phải project business logic
-- **Đã có:** Auth end-to-end ✅ (register → login → JWT → sessionStorage → protected routes)
-- **Spec hiện tại:** `docs/specs/01-auth/` — tất cả tasks ✅ đã hoàn thành
-- **Branch:** `main` — latest commit `432fbba`
-- **Đang làm:** _(không — template hoàn chỉnh, sẵn sàng dùng cho project thật)_
+- **Đây là:** DHTC marketplace fullstack (Đà Nẵng truyền thống) — đã rời template, đang build feature thật
+- **Đã có:** Auth ✅ · Admin/Seller/Customer portals ✅ · Chatbot Messenger ✅ · CRM admin 4-tab match mockup ✅
+- **Vừa xong (2026-05-20):** Restructure `/admin/crm` → 4 tab khớp mockup (`Tổng quan / Khách hàng / Hội thoại / Hành vi`), gỡ AI-feel
+  - BE: 3 endpoints mới (`/admin/crm/demographics`, `/conversation-overview`, `/conversations/{sid}/profile`) + helper `_classify_intent`
+  - FE: xoá Intent Clusters fake demo, thêm Demographics row + ConversationsTab + BehaviorTab (P2 placeholder honest)
+  - Tests: 6 pytest (3 happy + 3 401) pass · 2 Playwright e2e (4-tab navigate + no-AI-residue) pass
+- **Branch:** `main` — chuẩn bị commit lớn (toàn bộ DHTC app chưa từng vào git)
 - **Blocked:** _(không)_
-- **Files đang sửa:** _(không)_
-- **Next session:** Bắt đầu project thật → `/spec <feature-name>` để tạo spec đầu tiên
+- **Files đang sửa:** _(không — work đã xong, chờ commit)_
+- **Next session:** P2 page tracking (pixel JS + `page_views` table) cho tab Hành vi; response time/conversion compute
 
 ---
 
 ## Active context
 
-→ Template đã có đủ infrastructure. Khi bắt đầu project thật:
-1. Chạy `/spec <feature-name>` để tạo spec 4 file
-2. Điền requirements → design → tasks → code → checklist
-3. Xem `docs/adr/0001-tech-stack.md` nếu cần đổi stack
+→ Sau commit lớn này, dirty tree sẽ về clean. Lần sau nhớ commit theo task để tránh dồn.
+→ Pre-existing test failure trong `test_orders.py::test_cancel_order_restores_stock` (OrderEvent.created_at `'now()'` isoformat) — không phải do CRM work, để xử lý riêng.
+→ Backend ruff có 66 lỗi pre-existing (F401/F811/E501/F841) — không gate CI hiện tại, cleanup sau.
 
 ---
 
 ## Session log
+
+<details>
+<summary>2026-05-20 · CRM admin restructure 4 tab khớp mockup + gỡ AI-feel</summary>
+
+**Làm gì:**
+- BE `admin.py`: thêm `GET /admin/crm/demographics` (by_source/by_country/by_device), `GET /admin/crm/conversation-overview` (stats/intent_breakdown/trend_7d/funnel), `GET /admin/crm/conversations/{session_id}/profile` (linked_user qua phone/email regex, intent_history)
+- BE helper `_classify_intent`: 5 cluster keyword match (product_search/price_inquiry/order_lookup/shipping_inquiry/complaint)
+- FE `AdminCRM.tsx`: xoá Intent Clusters fake demo + nhãn "Demo — AI phân loại tự động"; restructure 3→4 tabs khớp mockup `/DHTC/admin/crm/*.html`
+- FE thêm ConversationsTab (KPI strip · intent bars · 7-day mini chart · funnel · conversation table click → drawer) và BehaviorTab (banner P2 · 4 KPI "—" · 3 empty state · funnel skeleton · 24h chart)
+- FE thêm `SourceBadge`, `CountryFlag`, `MiniBarChart`, `HourlyBarChart`, `EmptyState`, `ConversationDetailDrawer` 3-pane
+- Tests: `tests/test_admin_crm.py` (6 pytest, happy + 401 cho mỗi endpoint) + 2 Playwright e2e (4-tab navigate, no-AI-residue) — tất cả pass
+
+**Commit:** sẽ điền sau khi commit
+
+</details>
 
 <details>
 <summary>2026-05-16 · Hoàn thiện SDD infrastructure — /spec command, session ritual, bài giảng</summary>

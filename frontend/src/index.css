@@ -1,14 +1,38 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ── Design tokens — thay đổi theo brand của dự án ───────── */
 @theme {
-  --color-brand:       #1d4ed8;
-  --color-brand-dark:  #1e40af;
-  --color-brand-light: #dbeafe;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --color-green: #2d6a4f;
+  --color-green-soft: #40916c;
+  --color-green-deep: #1b3b2f;
+  --color-green-pale: #d8f3dc;
+  --color-cream: #faf7f2;
+  --color-cream-dark: #f0ece4;
+  --color-ink: #1a1a1a;
+  --color-ink-soft: #4a4a4a;
+  --color-ink-mute: #8a8a8a;
+  --color-border: #e0dbd0;
+  --color-gold: #c9a961;
+  --color-gold-deep: #9a7c3f;
+  --color-vermillion: #8b2635;
+  --color-warning: #e67e22;
+  --color-danger: #e74c3c;
+  --color-success: #27ae60;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }
-  body { @apply bg-gray-50 text-gray-900 antialiased; }
+  body {
+    font-family: var(--font-body);
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  html { overflow-x: hidden; }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-body);
+  }
 }

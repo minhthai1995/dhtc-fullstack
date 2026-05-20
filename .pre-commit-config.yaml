@@ -1,0 +1,21 @@
+# This file documents the git hook setup for this project.
+# Hooks are implemented as native git hooks in .git/hooks/
+# To view: ls -la .git/hooks/
+#
+# pre-commit  : ruff lint (backend, if backend/ files staged)
+#               tsc typecheck (frontend, if frontend/src/ files staged)
+#
+# pre-push    : pytest (backend tests)
+#               vitest (frontend unit tests)
+#               vite build (frontend build verification)
+#
+# commit-msg  : conventional commits format enforcement
+#               Format: <type>(<scope>): <description>
+#               Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert
+#               Example: feat(auth): add password change endpoint
+#
+# To skip all hooks temporarily: git commit --no-verify
+# To skip push hooks only:       git push --no-verify
+# To test hooks manually:        make hooks-test
+
+repos: []  # Using native git hooks instead of pre-commit framework

@@ -1,17 +1,17 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: fst_postgres
+    container_name: dhtc_postgres
     environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
-      POSTGRES_DB: app
+      POSTGRES_USER: dhtc
+      POSTGRES_PASSWORD: dhtc
+      POSTGRES_DB: dhtc
     ports:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      test: ["CMD-SHELL", "pg_isready -U dhtc -d dhtc"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -20,9 +20,9 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: fst_api
+    container_name: dhtc_api
     environment:
-      DATABASE_URL: postgresql+asyncpg://app:app@postgres:5432/app
+      DATABASE_URL: postgresql+asyncpg://dhtc:dhtc@postgres:5432/dhtc
       JWT_SECRET: dev_secret_change_in_prod
       DEBUG: "true"
       ENVIRONMENT: development
@@ -40,7 +40,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: fst_frontend
+    container_name: dhtc_frontend
     ports:
       - "3000:80"
     depends_on:

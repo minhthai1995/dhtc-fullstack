@@ -1,0 +1,389 @@
+import { useState, useEffect } from 'react'
+import { useParams, Link } from 'react-router-dom'
+import { useProduct, useReviews, useRelatedProducts } from '@/features/products/useProducts'
+import { useAddToCart } from '@/features/cart/useCart'
+import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/features/customer/useWishlist'
+import { Spinner } from '@/components/ui/Spinner'
+import { Heart, Truck, CreditCard, RotateCcw, Minus, Plus, ShoppingCart, ChevronRight } from 'lucide-react'
+import { addToRecentlyViewed } from '@/pages/customer/Shop'
+
+export function ProductDetail() {
+  const { id } = useParams<{ id: string }>()
+  const productId = parseInt(id ?? '0')
+  const { data: product, isLoading } = useProduct(productId)
+  const [reviewSort, setReviewSort] = useState<'newest' | 'rating_desc' | 'rating_asc'>('newest')
+  const { data: reviews = [] } = useReviews(productId, reviewSort)
+  const { data: relatedProducts } = useRelatedProducts(productId)
+  const addToCart = useAddToCart()
+  const { data: wishlist = [] } = useWishlist()
+  const addToWishlist = useAddToWishlist()
+  const removeFromWishlist = useRemoveFromWishlist()
+  const isWishlisted = wishlist.some(w => w.product_id === productId)
+  const [qty, setQty] = useState(1)
+  const [activeImage, setActiveImage] = useState(0)
+
+  useEffect(() => {
+    if (product) addToRecentlyViewed(product)
+  }, [product?.id])
+
+  if (isLoading) {
+    return <div className="flex justify-center py-16"><Spinner /></div>
+  }
+
+  if (!product) {
+    return (
+      <div className="flex flex-col items-center py-20 text-center">
+        <div className="text-ink-mute text-sm">Không tìm thấy sản phẩm</div>
+        <Link to="/shop" className="mt-4 text-sm text-green font-semibold hover:underline">
+          ← Quay lại cửa hàng
+        </Link>
+      </div>
+    )
+  }
+
+  const hasOcop = product.certifications?.some((c) => c.includes('OCOP'))
+  const hasOrganic = product.certifications?.some((c) => c.toLowerCase().includes('organic'))
+
+  return (
+    <div>
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wide text-ink-mute mb-5">
+        <Link to="/shop" className="hover:text-green transition-colors">Mua sắm</Link>
+        <ChevronRight size={10} />
+        <span className="text-ink">{product.name_vi}</span>
+      </div>
+
+      {/* Main product section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-9 mb-12">
+        {/* Images */}
+        <div>
+          <div className="bg-white border border-border rounded-2xl overflow-hidden aspect-square flex items-center justify-center p-8 mb-3">
+            {product.images?.[activeImage]?.url ? (
+              <img
+                src={product.images[activeImage].url}
+                alt={product.name_vi}
+                className="max-w-full max-h-full object-contain"
+              />
+            ) : (
+              <div className="text-6xl">🌿</div>
+            )}
+          </div>
+          {product.images && product.images.length > 1 && (
+            <div className="grid grid-cols-4 gap-2.5">
+              {product.images.map((img, i) => (
+                <button
+                  key={img.id}
+                  onClick={() => setActiveImage(i)}
+                  className={`h-20 rounded-xl border-2 overflow-hidden bg-cream transition-all ${
+                    i === activeImage ? 'border-green' : 'border-border hover:border-green/50'
+                  }`}
+                >
+                  <img src={img.url} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Product info */}
+        <div>
+          {/* Cert badges */}
+          <div className="flex gap-2 mb-3">
+            {hasOcop && (
+              <span className="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-vermillion text-white">
+                ★ OCOP 4★
+              </span>
+            )}
+            {hasOrganic && (
+              <span className="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide bg-green" style={{ color: 'var(--color-gold)' }}>
+                USDA ORGANIC
+              </span>
+            )}
+          </div>
+
+          <h1
+            className="text-4xl font-medium leading-tight tracking-tight text-ink mb-3"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            {product.name_vi}
+          </h1>
+
+          {/* Merchant link */}
+          <Link
+            to={`/shop/merchants/${product.merchant_id}`}
+            className="flex items-center gap-3 p-3 bg-cream rounded-xl mb-4 no-underline hover:bg-cream-dark transition-colors"
+          >
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-base flex-shrink-0"
+              style={{ background: 'var(--color-green)', color: 'var(--color-gold)', fontFamily: 'var(--font-display)' }}
+            >
+              M
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-ink">Xem gian hàng</div>
+              <div className="text-xs text-ink-mute">{product.rating ? `${product.rating.toFixed(1)}★` : ''} · {product.origin}</div>
+            </div>
+            <span className="text-xs font-semibold text-green">Xem gian hàng →</span>
+          </Link>
+
+          {/* Rating */}
+          <div className="flex items-center gap-3.5 mb-5">
+            <div className="text-lg font-semibold" style={{ color: 'var(--color-gold-deep)' }}>★★★★★</div>
+            <div className="text-sm font-semibold text-ink">{product.rating?.toFixed(1)}</div>
+            <a href="#reviews" className="text-xs text-ink-mute underline">{product.sold_count?.toLocaleString()} đánh giá</a>
+            <span className="text-border">·</span>
+            <span className="text-xs text-ink-mute">{product.sold_count?.toLocaleString()} đã bán</span>
+          </div>
+
+          {/* Price */}
+          <div className="flex items-baseline gap-4 py-5 border-y border-border mb-5">
+            <div
+              className="text-4xl font-semibold text-green tracking-tight"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              {product.price.toLocaleString('vi-VN')}₫
+            </div>
+            <div className="text-sm text-ink-mute font-mono">
+              ≈ ${(product.price / 25000).toFixed(2)} USD
+            </div>
+          </div>
+
+          {/* Description */}
+          <p className="text-sm leading-relaxed text-ink-soft mb-5">
+            {product.description_vi}
+          </p>
+
+          {/* Attributes */}
+          <div className="flex flex-wrap gap-2 mb-5">
+            {product.origin && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 bg-cream rounded-lg text-xs font-medium">
+                📍 {product.origin}
+              </span>
+            )}
+            {product.certifications?.map((cert) => (
+              <span key={cert} className="flex items-center gap-1.5 px-3 py-1.5 bg-cream rounded-lg text-xs font-medium">
+                {cert}
+              </span>
+            ))}
+          </div>
+
+          {/* QTY + add to cart */}
+          <div className="flex gap-3 mb-2">
+            <div className="flex items-center border border-border rounded-xl bg-white">
+              <button
+                onClick={() => setQty((q) => Math.max(1, q - 1))}
+                className="w-10 h-11 flex items-center justify-center text-green font-bold hover:bg-cream transition-colors rounded-l-xl"
+              >
+                <Minus size={15} />
+              </button>
+              <span className="px-4 text-base font-semibold">{qty}</span>
+              <button
+                onClick={() => setQty((q) => Math.min(product.stock, q + 1))}
+                disabled={product.stock === 0 || qty >= product.stock}
+                className="w-10 h-11 flex items-center justify-center text-green font-bold hover:bg-cream transition-colors rounded-r-xl disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Plus size={15} />
+              </button>
+            </div>
+            {product.stock === 0 ? (
+              <button
+                disabled
+                className="flex-1 py-3 bg-border text-ink-mute rounded-xl font-semibold text-sm cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                Hết hàng
+              </button>
+            ) : (
+              <button
+                onClick={() => addToCart.mutate({ productId: product.id, quantity: qty })}
+                disabled={addToCart.isPending}
+                className="flex-1 py-3 bg-green text-white rounded-xl font-semibold text-sm hover:bg-green-soft disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
+              >
+                <ShoppingCart size={15} />
+                {addToCart.isPending ? 'Đang thêm...' : 'Thêm vào giỏ'}
+              </button>
+            )}
+            <button
+              onClick={() => isWishlisted ? removeFromWishlist.mutate(productId) : addToWishlist.mutate(productId)}
+              disabled={addToWishlist.isPending || removeFromWishlist.isPending}
+              className={`p-3 border rounded-xl transition-colors ${
+                isWishlisted
+                  ? 'border-vermillion bg-vermillion/10 text-vermillion hover:bg-vermillion/20'
+                  : 'border-border text-ink-mute hover:border-vermillion hover:text-vermillion'
+              }`}
+              title={isWishlisted ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}
+            >
+              <Heart size={18} fill={isWishlisted ? 'currentColor' : 'none'} />
+            </button>
+            <Link
+              to="/shop/checkout"
+              className="flex-1 py-3 border-2 border-green text-green rounded-xl font-semibold text-sm hover:bg-green/5 transition-colors flex items-center justify-center no-underline"
+            >
+              Mua ngay
+            </Link>
+          </div>
+
+          {/* Stock indicator */}
+          <div className="mb-4 text-xs text-ink-mute">
+            {product.stock === 0 ? (
+              <span className="font-semibold text-danger">Đã hết hàng</span>
+            ) : (
+              <span>Còn lại: <span className="font-semibold text-ink">{product.stock} sản phẩm</span></span>
+            )}
+          </div>
+
+          {/* Shipping info */}
+          <div className="p-4 border border-border rounded-xl bg-white space-y-2.5">
+            <div className="flex items-center gap-3 text-[12.5px]">
+              <Truck size={16} className="text-green flex-shrink-0" />
+              <span><strong>Ship DHL Express → mọi quốc gia</strong> · 4-7 ngày</span>
+            </div>
+            <div className="flex items-center gap-3 text-[12.5px]">
+              <CreditCard size={16} className="text-green flex-shrink-0" />
+              <span><strong>VietQR · </strong>Cross-border, thẻ Visa/Master</span>
+            </div>
+            <div className="flex items-center gap-3 text-[12.5px]">
+              <RotateCcw size={16} className="text-green flex-shrink-0" />
+              <span><strong>Đổi trả 14 ngày</strong> · Không lý do</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Description + Reviews */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          {/* Description */}
+          {product.description_vi && (
+            <div className="bg-white border border-border rounded-2xl p-6">
+              <h2 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)', fontSize: '18px' }}>
+                Mô tả sản phẩm
+              </h2>
+              <div className="text-sm leading-relaxed text-ink-soft">
+                <p>{product.description_vi}</p>
+                {product.description_en && (
+                  <p className="mt-3 text-ink-mute italic">{product.description_en}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Reviews */}
+          <div id="reviews" className="bg-white border border-border rounded-2xl p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)', fontSize: '18px' }}>
+                Đánh giá ({reviews.length})
+              </h2>
+              <div className="flex items-center gap-2">
+                <div className="text-3xl font-medium" style={{ fontFamily: 'var(--font-display)' }}>{product.rating?.toFixed(1)}</div>
+                <div>
+                  <div className="text-yellow-500 text-sm">★★★★★</div>
+                  <div className="text-xs text-ink-mute">{product.sold_count} đánh giá</div>
+                </div>
+              </div>
+            </div>
+            {/* Sort tabs */}
+            <div className="flex gap-2 mb-4">
+              {(['newest', 'rating_desc', 'rating_asc'] as const).map((v) => {
+                const label = v === 'newest' ? 'Mới nhất' : v === 'rating_desc' ? 'Điểm cao nhất' : 'Điểm thấp nhất'
+                return (
+                  <button
+                    key={v}
+                    onClick={() => setReviewSort(v)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                      reviewSort === v
+                        ? 'bg-green text-white'
+                        : 'bg-white border border-border text-ink-soft hover:border-green hover:text-green'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {reviews.length === 0 ? (
+              <div className="text-center text-ink-mute text-sm py-6">Chưa có đánh giá nào</div>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <div key={review.id} className="p-4 bg-cream rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-semibold text-sm text-ink">Khách #{review.customer_id}</span>
+                      <div className="text-yellow-500 text-xs ml-auto">{'★'.repeat(review.rating)}</div>
+                      <span className="text-xs text-ink-mute">{new Date(review.created_at).toLocaleDateString('vi-VN')}</span>
+                    </div>
+                    {review.comment && (
+                      <p className="text-sm text-ink-soft leading-relaxed">{review.comment}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Related products */}
+          {relatedProducts && relatedProducts.length > 0 && (
+            <div className="bg-white border border-border rounded-2xl p-6">
+              <h2 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)', fontSize: '18px' }}>
+                Sản phẩm liên quan
+              </h2>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {relatedProducts.map((p) => {
+                  const img = p.images?.[0]?.url
+                  return (
+                    <Link
+                      key={p.id}
+                      to={`/shop/product/${p.id}`}
+                      className="group flex flex-col rounded-xl border border-border overflow-hidden hover:border-green hover:shadow-md transition-all no-underline"
+                    >
+                      <div className="h-28 bg-cream flex items-center justify-center overflow-hidden">
+                        {img ? (
+                          <img src={img} alt={p.name_vi} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                        ) : (
+                          <div className="text-2xl">🌿</div>
+                        )}
+                      </div>
+                      <div className="p-2.5">
+                        <div className="text-xs font-medium text-ink line-clamp-2 mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+                          {p.name_vi}
+                        </div>
+                        <div className="text-xs font-semibold text-green">{p.price.toLocaleString('vi-VN')}₫</div>
+                        {p.rating && (
+                          <div className="text-[10px] text-yellow-500 mt-0.5">{'★'.repeat(Math.round(p.rating))}</div>
+                        )}
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar: certifications + related products */}
+        {product.certifications && product.certifications.length > 0 && (
+          <div>
+            <div className="bg-white border border-border rounded-2xl p-5">
+              <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+                Chứng nhận
+              </h3>
+              <div className="space-y-2.5">
+                {product.certifications.map((cert) => (
+                  <div key={cert} className="flex items-center justify-between p-3 bg-cream rounded-xl">
+                    <div>
+                      <div className="font-semibold text-sm text-ink">{cert}</div>
+                      <div className="text-xs text-ink-mute">Đang hiệu lực</div>
+                    </div>
+                    <span className="text-[10px] font-bold text-green bg-green/10 px-2 py-0.5 rounded-full">
+                      ✓ ACTIVE
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

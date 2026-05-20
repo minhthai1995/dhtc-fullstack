@@ -14,8 +14,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(
-    title=settings.APP_NAME,
-    version="0.1.0",
+    title="DHTC Platform API",
+    description="B2B2C Vietnamese specialty food marketplace",
+    version="1.0.0",
     debug=settings.DEBUG,
     lifespan=lifespan,
     openapi_url="/api/openapi.json",
@@ -25,7 +26,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        *settings.CORS_ORIGINS,
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,4 +41,4 @@ app.include_router(api_router, prefix="/api")
 
 @app.get("/", include_in_schema=False)
 async def root() -> dict[str, str]:
-    return {"app": settings.APP_NAME, "docs": "/api/docs"}
+    return {"app": "DHTC Platform API", "docs": "/api/docs"}

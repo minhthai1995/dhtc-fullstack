@@ -1,7 +1,7 @@
 [project]
-name = "fullstack-template-backend"
+name = "dhtc-backend"
 version = "0.1.0"
-description = "FastAPI + SQLAlchemy + Alembic backend: auth, users, health — production-ready skeleton"
+description = "DHTC Platform API — B2B2C Vietnamese specialty food marketplace (FastAPI + SQLAlchemy + Alembic)"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115.0",
@@ -15,6 +15,12 @@ dependencies = [
     "python-jose[cryptography]>=3.3.0",
     "bcrypt>=4.2.0",
     "python-multipart>=0.0.9",
+    "agno>=2.6.7",
+    "anthropic>=0.102.0",
+    "httpx>=0.28.1",
+    "aiosmtplib>=5.1.0",
+    "openai>=2.37.0",
+    "psycopg2-binary>=2.9.12",
 ]
 
 [dependency-groups]

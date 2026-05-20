@@ -9,6 +9,7 @@ export interface LoginPayload {
 export interface RegisterPayload {
   email: string
   password: string
+  role: 'admin' | 'seller' | 'customer'
 }
 
 export async function register(payload: RegisterPayload): Promise<UserRead> {

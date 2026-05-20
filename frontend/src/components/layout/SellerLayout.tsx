@@ -1,0 +1,199 @@
+import { useState } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { cn } from '@/lib/cn'
+import { useCurrentUser, useLogout } from '@/features/auth/useAuth'
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Tag,
+  Truck,
+  Wallet,
+  User,
+  Menu,
+  X,
+  LogOut,
+  Star,
+  RotateCcw,
+} from 'lucide-react'
+import { NotificationBell } from '@/components/ui/NotificationBell'
+import { useNotificationSocket } from '@/lib/useNotificationSocket'
+
+const navGroups = [
+  {
+    label: 'Bán hàng',
+    items: [
+      { label: 'Bảng điều khiển', href: '/seller/dashboard', icon: <LayoutDashboard size={18} /> },
+      { label: 'Sản phẩm của tôi', href: '/seller/products', icon: <Package size={18} />, badge: '8' },
+      { label: 'Đơn hàng', href: '/seller/orders', icon: <ShoppingCart size={18} />, badge: '14' },
+      { label: 'Đổi trả', href: '/seller/returns', icon: <RotateCcw size={18} /> },
+      { label: 'Khuyến mãi', href: '/seller/promotions', icon: <Tag size={18} /> },
+    ],
+  },
+  {
+    label: 'Tài chính',
+    items: [
+      { label: 'Ví & rút tiền', href: '/seller/wallet', icon: <Wallet size={18} /> },
+    ],
+  },
+  {
+    label: 'Vận chuyển',
+    items: [
+      { label: 'DHL Waybill', href: '/seller/shipping', icon: <Truck size={18} /> },
+    ],
+  },
+  {
+    label: 'Cài đặt',
+    items: [
+      { label: 'Hồ sơ gian hàng', href: '/seller/profile', icon: <User size={18} /> },
+    ],
+  },
+]
+
+export function SellerLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { data: user } = useCurrentUser()
+  const logout = useLogout()
+  const navigate = useNavigate()
+  useNotificationSocket()
+
+  const handleLogout = () => {
+    logout.mutate(undefined, {
+      onSuccess: () => navigate('/login'),
+    })
+  }
+
+  const Sidebar = () => (
+    <aside
+      className={cn(
+        'fixed top-0 left-0 h-full w-[248px] flex flex-col z-40 transition-transform duration-300',
+        'bg-white border-r border-border',
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      )}
+    >
+      {/* Brand */}
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
+        <img
+          src="https://dhtcdanang.com/wp-content/uploads/2023/07/cropped-Logo_Food-01-e1693969421521.png"
+          alt="DHTC"
+          className="w-9 h-9 rounded-lg object-contain border border-border p-1"
+        />
+        <div>
+          <div className="font-bold text-green text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
+            DHTC
+          </div>
+          <div className="text-ink-mute text-[10px] uppercase tracking-widest">Seller Studio</div>
+        </div>
+        <button
+          className="ml-auto lg:hidden text-ink-mute hover:text-ink"
+          onClick={() => setSidebarOpen(false)}
+        >
+          <X size={18} />
+        </button>
+      </div>
+
+      {/* Store card */}
+      <div className="mx-3 my-3 p-3 bg-cream rounded-xl border border-border">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <Star size={11} className="text-gold fill-gold" />
+          <span className="text-[10px] font-bold text-gold-deep uppercase tracking-wider">Gold Tier</span>
+        </div>
+        <div className="text-xs font-semibold text-ink leading-tight mb-1">
+          {user?.email ?? 'Seller Store'}
+        </div>
+        <div className="text-[11px] text-ink-mute">Đã xác minh</div>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-2 px-3">
+        {navGroups.map((group) => (
+          <div key={group.label} className="mb-1">
+            <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-ink-mute">
+              {group.label}
+            </div>
+            {group.items.map((item) => (
+              <NavLink
+                key={item.href}
+                to={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className={({ isActive }) =>
+                  cn(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all mb-0.5',
+                    isActive
+                      ? 'bg-green/10 text-green'
+                      : 'text-ink-soft hover:bg-cream-dark hover:text-ink'
+                  )
+                }
+              >
+                <span className="flex-shrink-0">{item.icon}</span>
+                <span className="flex-1">{item.label}</span>
+                {item.badge && (
+                  <span className="text-[10px] bg-green/10 text-green px-1.5 py-0.5 rounded-full font-mono font-bold">
+                    {item.badge}
+                  </span>
+                )}
+              </NavLink>
+            ))}
+          </div>
+        ))}
+      </nav>
+
+      {/* User card */}
+      <div className="border-t border-border p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-green/15 flex items-center justify-center text-green text-sm font-bold flex-shrink-0">
+            {user?.email?.[0]?.toUpperCase() ?? 'S'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-ink text-xs font-semibold truncate">{user?.email ?? 'Seller'}</div>
+            <div className="text-ink-mute text-[10px]">Tiểu thương</div>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="text-ink-mute hover:text-danger transition-colors"
+            title="Đăng xuất"
+          >
+            <LogOut size={15} />
+          </button>
+        </div>
+      </div>
+    </aside>
+  )
+
+  return (
+    <div className="flex min-h-screen bg-cream">
+      <Sidebar />
+
+      {/* Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main content */}
+      <div className="flex-1 lg:ml-[248px] flex flex-col min-h-screen">
+        {/* Mobile topbar */}
+        <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-border">
+          <button onClick={() => setSidebarOpen(true)} className="text-ink-soft">
+            <Menu size={22} />
+          </button>
+          <span
+            className="text-green font-semibold text-sm"
+            style={{ fontFamily: 'var(--font-display)' }}
+          >
+            DHTC Seller
+          </span>
+          <div className="ml-auto">
+            <NotificationBell />
+          </div>
+        </div>
+
+        <main className="flex-1 p-5 lg:p-7">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  )
+}

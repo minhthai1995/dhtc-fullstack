@@ -1,0 +1,24 @@
+import { defineConfig, devices } from '@playwright/test'
+
+export default defineConfig({
+  testDir: './e2e',
+  fullyParallel: false,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  workers: 1,
+  reporter: [['html', { outputFolder: 'playwright-report' }], ['list']],
+  use: {
+    baseURL: 'http://localhost:5173',
+    screenshot: 'on',
+    video: 'retain-on-failure',
+    trace: 'retain-on-failure',
+    actionTimeout: 10000,
+    navigationTimeout: 15000,
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+})
