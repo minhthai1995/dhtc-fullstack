@@ -6,9 +6,11 @@ import {
   useCRMStats, useCRMFunnel, useCRMSegments, useCRMCustomers, useCRMCustomer,
   useCRMDemographics, useCRMConversationOverview, useCRMConversations,
   useCRMConversationMessages, useCRMConversationProfile,
+  useBehaviorOverview, useBehaviorSessions,
 } from "@/features/admin/useAdmin"
 import type {
   CustomerRow, DemographicBucket, IntentBucket, TrendPoint, ConversationSummary,
+  BehaviorBucket, TopPage, BehaviorFunnelStage, SessionSummary,
 } from "@/features/admin/admin.api"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -850,42 +852,119 @@ function ConversationDetailDrawer({ sessionId, conversations, onSelect, onClose 
 }
 
 // ── Tab: Hành vi ──────────────────────────────────────────────────────────────
+const DEVICE_LABELS: Record<string, string> = {
+  mobile: "Mobile", desktop: "Desktop", tablet: "Tablet", unknown: "Khác",
+}
+const SOURCE_LABELS: Record<string, string> = {
+  direct: "Direct", google: "Google", facebook: "Facebook", other: "Khác",
+}
+const FUNNEL_LABELS: Record<BehaviorFunnelStage["key"], string> = {
+  view_product: "Xem sản phẩm",
+  add_to_cart:  "Vào giỏ hàng",
+  checkout:     "Tới checkout",
+  complete:     "Hoàn tất đặt",
+}
+
+function bucketTotal(buckets: BehaviorBucket[]): number {
+  return buckets.reduce((sum, b) => sum + b.count, 0)
+}
+
 function BehaviorTab() {
-  const hourlyPlaceholder = useMemo(() => Array.from({ length: 24 }, () => 0), [])
-  const behaviorFunnel = [
-    { stage: "Xem sản phẩm",  key: "view",     count: 0 },
-    { stage: "Vào giỏ hàng",  key: "cart",     count: 0 },
-    { stage: "Tới checkout",  key: "checkout", count: 0 },
-    { stage: "Hoàn tất đặt",  key: "complete", count: 0 },
-  ]
+  const { data: overview, isLoading, isError } = useBehaviorOverview()
+  const { data: sessions = [] } = useBehaviorSessions({ limit: 20 })
+  const hourlyData = useMemo(
+    () => overview?.hourly_24h.map((b) => b.count) ?? Array.from({ length: 24 }, () => 0),
+    [overview],
+  )
+
+  if (isLoading) {
+    return (
+      <div className="space-y-5">
+        <EmptyState label="Đang tải dữ liệu hành vi..." />
+      </div>
+    )
+  }
+  if (isError || !overview) {
+    return (
+      <div className="space-y-5">
+        <EmptyState label="Không tải được dữ liệu hành vi" hint="Thử lại sau hoặc kiểm tra backend" />
+      </div>
+    )
+  }
+
+  const { stats, by_device, by_source, top_pages, funnel } = overview
+  const totalPageviews = bucketTotal(by_device)
+  const deviceTotal = totalPageviews || 1
+  const sourceTotal = bucketTotal(by_source) || 1
+  const topPageMax = Math.max(...top_pages.map((p) => p.count), 1)
+  const funnelMax = Math.max(...funnel.map((s) => s.count), 1)
+
+  const bounceLabel = stats.bounce_rate == null ? "—" : `${Math.round(stats.bounce_rate * 100)}%`
+  const pagesPerSession = stats.pages_per_session == null
+    ? "—" : stats.pages_per_session.toFixed(1)
+  const avgDuration = stats.avg_duration_sec == null
+    ? "—" : `${Math.round(stats.avg_duration_sec)}s`
 
   return (
     <div className="space-y-5">
-      <div className="bg-cream-dark/40 border border-border rounded-xl px-4 py-3">
-        <p className="text-[12px] text-ink-soft italic">
-          Tính năng phân tích hành vi sẽ available sau khi tích hợp pixel tracking (lộ trình P2).
-        </p>
-      </div>
-
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label="Phiên trong 24h" value="—" delta="Chưa có data tracking" deltaType="up" />
-        <KpiCard label="Pageviews"        value="—" delta="Chưa có data tracking" deltaType="up" />
-        <KpiCard label="Bounce rate"      value="—" delta="Chưa có data tracking" deltaType="up" />
-        <KpiCard label="Avg session"      value="—" delta="Chưa có data tracking" deltaType="up" />
+        <KpiCard label="Phiên hôm nay"  value={String(stats.total_sessions)} delta="Hôm nay"   deltaType="up" />
+        <KpiCard label="Pageviews"      value={String(totalPageviews)}       delta="Hôm nay"   deltaType="up" />
+        <KpiCard label="Bounce rate"    value={bounceLabel}                  delta={`${pagesPerSession} pages/session`} deltaType="up" />
+        <KpiCard label="Avg session"    value={avgDuration}                  delta="Trung bình hôm nay" deltaType="up" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="bg-white border border-border rounded-2xl p-5">
           <SectionLabel>Thiết bị</SectionLabel>
-          <EmptyState label="Cần page tracking" hint="Lộ trình P2" />
+          {by_device.length === 0 ? (
+            <EmptyState label="Chưa có pageview hôm nay" />
+          ) : (
+            <div className="space-y-2.5">
+              {by_device.map((b) => (
+                <ThinBar
+                  key={b.key}
+                  label={DEVICE_LABELS[b.key] ?? b.key}
+                  pct={(b.count / deviceTotal) * 100}
+                  value={String(b.count)}
+                />
+              ))}
+            </div>
+          )}
         </div>
         <div className="bg-white border border-border rounded-2xl p-5">
           <SectionLabel>Nguồn truy cập</SectionLabel>
-          <EmptyState label="Cần page tracking" hint="Lộ trình P2" />
+          {by_source.length === 0 ? (
+            <EmptyState label="Chưa có pageview hôm nay" />
+          ) : (
+            <div className="space-y-2.5">
+              {by_source.map((b) => (
+                <ThinBar
+                  key={b.key}
+                  label={SOURCE_LABELS[b.key] ?? b.key}
+                  pct={(b.count / sourceTotal) * 100}
+                  value={String(b.count)}
+                />
+              ))}
+            </div>
+          )}
         </div>
         <div className="bg-white border border-border rounded-2xl p-5">
           <SectionLabel>Top pages</SectionLabel>
-          <EmptyState label="Cần page tracking" hint="Lộ trình P2" />
+          {top_pages.length === 0 ? (
+            <EmptyState label="Chưa có pageview hôm nay" />
+          ) : (
+            <div className="space-y-2.5">
+              {top_pages.slice(0, 8).map((p: TopPage) => (
+                <ThinBar
+                  key={p.path}
+                  label={p.path}
+                  pct={(p.count / topPageMax) * 100}
+                  value={String(p.count)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -893,31 +972,61 @@ function BehaviorTab() {
         <div className="bg-white border border-border rounded-2xl p-5">
           <SectionLabel>Phễu hành vi</SectionLabel>
           <div className="space-y-2.5">
-            {behaviorFunnel.map((stage) => (
-              <div key={stage.key} className="space-y-1">
-                <div className="flex items-center justify-between text-[12px]">
-                  <span className="font-medium text-ink">{stage.stage}</span>
-                  <span className="font-semibold text-ink-mute" style={display}>{stage.count}</span>
+            {funnel.map((stage) => {
+              const pct = (stage.count / funnelMax) * 100
+              return (
+                <div key={stage.key} className="space-y-1">
+                  <div className="flex items-center justify-between text-[12px]">
+                    <span className="font-medium text-ink">{FUNNEL_LABELS[stage.key]}</span>
+                    <span className="font-semibold text-ink" style={display}>{stage.count}</span>
+                  </div>
+                  <div className="h-1.5 bg-cream-dark rounded-full overflow-hidden">
+                    <div className="h-full bg-green rounded-full" style={{ width: `${Math.max(pct, 2)}%` }} />
+                  </div>
                 </div>
-                <div className="h-1.5 bg-cream-dark rounded-full overflow-hidden">
-                  <div className="h-full bg-cream-dark rounded-full" style={{ width: "2%" }} />
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
-          <p className="text-[10.5px] text-ink-mute italic mt-3">Cần page tracking để đo từng bước (P2)</p>
         </div>
 
         <div className="bg-white border border-border rounded-2xl p-5">
           <SectionLabel>Phiên theo giờ (24h)</SectionLabel>
-          <HourlyBarChart data={hourlyPlaceholder} />
-          <p className="text-[10.5px] text-ink-mute italic mt-3">Skeleton — cần pixel tracking</p>
+          <HourlyBarChart data={hourlyData} />
         </div>
       </div>
 
       <div className="bg-white border border-border rounded-2xl p-5">
         <SectionLabel>Phiên gần đây</SectionLabel>
-        <EmptyState label="Chưa có session nào" hint="Cần tích hợp tracking script" />
+        {sessions.length === 0 ? (
+          <EmptyState label="Chưa có session nào hôm nay" />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-[12.5px]">
+              <thead>
+                <tr className="text-left text-[10px] uppercase tracking-[.06em] text-ink-mute border-b border-border">
+                  <th className="py-2.5 pr-3">Session</th>
+                  <th className="py-2.5 pr-3">Visitor</th>
+                  <th className="py-2.5 pr-3">User</th>
+                  <th className="py-2.5 pr-3 text-right">Pages</th>
+                  <th className="py-2.5 pr-3 text-right">Duration</th>
+                  <th className="py-2.5 text-right">Last seen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sessions.map((s: SessionSummary) => (
+                  <tr key={s.session_id} className="border-b border-border last:border-0">
+                    <td className="py-2 pr-3 truncate max-w-[140px]" style={mono}>{s.session_id.slice(0, 8)}</td>
+                    <td className="py-2 pr-3 truncate max-w-[140px]" style={mono}>{s.visitor_id.slice(0, 8)}</td>
+                    <td className="py-2 pr-3 text-ink-soft">{s.user_id ?? "—"}</td>
+                    <td className="py-2 pr-3 text-right" style={mono}>{s.page_count}</td>
+                    <td className="py-2 pr-3 text-right" style={mono}>{s.duration_sec}s</td>
+                    <td className="py-2 text-right text-ink-soft">{fmtRelative(s.last_seen)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )
