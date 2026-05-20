@@ -21,6 +21,8 @@ dependencies = [
     "aiosmtplib>=5.1.0",
     "openai>=2.37.0",
     "psycopg2-binary>=2.9.12",
+    "pillow>=10.1.0",
+    "pillow-heif>=0.13.0",
 ]
 
 [dependency-groups]
