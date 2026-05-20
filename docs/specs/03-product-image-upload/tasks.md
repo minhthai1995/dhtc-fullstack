@@ -21,7 +21,7 @@
 - [x] **T4** ✅ — `schemas/product_image.py` (ProductImageUrls + ProductImageOut + ProductImageIn)
 - [x] **T5** ✅ — `services/image_service.py` skeleton (SIZES + ALLOWED_MIME + ImageValidationError + MAX_IMAGE_PIXELS)
 - [x] **T6** ✅ — `services/image_service.py::process_upload()` (validate + EXIF + 4 WebP sizes)
-- [ ] **T7** — `services/image_service.py::delete_image()` (xóa folder + files)
+- [x] **T7** ✅ — `services/image_service.py::delete_image()` (idempotent + path traversal block)
 - [ ] **T8** — `register_heif_opener()` trong `main.py` startup
 
 ## Backend — Endpoints

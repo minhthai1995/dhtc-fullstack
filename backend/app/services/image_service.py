@@ -52,3 +52,21 @@ def process_upload(content: bytes, upload_dir: Path) -> ProductImageOut:
         urls[size_name] = f"/uploads/products/{image_id}/{size_name}.webp"
 
     return ProductImageOut(id=image_id, urls=ProductImageUrls(**urls), order=0)
+
+
+def delete_image(image_id: str, upload_dir: Path) -> bool:
+    """Delete all WebP variants + folder for an image_id. Idempotent — returns
+    True if anything was deleted, False if folder didn't exist."""
+    folder = (upload_dir / image_id).resolve()
+    base = upload_dir.resolve()
+    if base not in folder.parents:
+        raise ImageValidationError("Invalid image_id path")
+
+    if not folder.exists() or not folder.is_dir():
+        return False
+
+    for entry in folder.iterdir():
+        if entry.is_file():
+            entry.unlink()
+    folder.rmdir()
+    return True
