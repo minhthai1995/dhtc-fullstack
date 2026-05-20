@@ -7,6 +7,7 @@ Standard OAuth 2.0 redirect flow with `email + public_profile` scope.
 from __future__ import annotations
 
 import secrets
+from typing import Any
 from urllib.parse import urlencode
 
 import httpx
@@ -81,7 +82,7 @@ async def exchange_code_for_token(code: str) -> str:
     return token
 
 
-async def fetch_user_profile(access_token: str) -> dict:
+async def fetch_user_profile(access_token: str) -> dict[str, Any]:
     """Fetch user profile from Graph API /me.
 
     Returns a dict with keys: id, email (optional), first_name, last_name,
@@ -133,7 +134,7 @@ def _unusable_password_hash() -> str:
     return hash_password(secrets.token_urlsafe(48))
 
 
-async def upsert_user_and_profile(db: AsyncSession, profile: dict) -> User:
+async def upsert_user_and_profile(db: AsyncSession, profile: dict[str, Any]) -> User:
     """Idempotent upsert keyed on fb_app_user_id, with email-merge fallback.
 
     Resolution order:
@@ -163,9 +164,9 @@ async def upsert_user_and_profile(db: AsyncSession, profile: dict) -> User:
             fb_locale=locale,
             raw_oauth_payload=raw,
         )
-        user = await user_crud.get_by_id(db, existing_profile.user_id)
-        assert user is not None  # FK guarantees this
-        return user
+        existing_user = await user_crud.get_by_id(db, existing_profile.user_id)
+        assert existing_user is not None  # FK guarantees this
+        return existing_user
 
     user: User | None = None
     if fb_email:
