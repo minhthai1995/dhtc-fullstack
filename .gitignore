@@ -26,6 +26,9 @@ dist/
 .env.*
 !.env.example
 
+# User uploads (product images, etc.) — not in git
+backend/uploads/
+
 # IDE
 .idea/
 .vscode/
