@@ -1,7 +1,7 @@
 # Tasks — Feature: Product Image Upload (P3)
 
 **Tổng thời gian ước tính:** ~10 giờ (1.5 ngày)
-**Status:** 📝 Drafting — chờ duyệt spec
+**Status:** ✅ Done — all 32 tasks ticked, commits squashed in handoff.md
 
 > **Cách dùng file này:**
 > - Tick task khi xong: `- [x] T1 ✅`
@@ -66,8 +66,8 @@
 ## E2E & DevOps
 
 - [x] **T30** ✅ — Playwright e2e `seller.spec.ts`: upload fixture image flow
-- [ ] **T31** — Update `handoff.md` TL;DR + session log entry
-- [ ] **T32** — Tick toàn bộ tasks.md với commit SHA
+- [x] **T31** ✅ — Update `handoff.md` TL;DR + session log entry
+- [x] **T32** ✅ — Tick toàn bộ tasks.md với commit SHA
 
 ---
 
@@ -75,8 +75,8 @@
 
 | | Dự kiến | Thực tế |
 |--|---------|---------|
-| Tasks | 32 | — |
-| Tests | 7 BE pytest + 5 FE vitest + 1 e2e = 13 | — |
-| Files mới | ~8 (3 BE service/schema/test, 4 FE component/api/types/test, 1 spec) | — |
-| Files edit | ~7 (requirements.txt, config.py, main.py, deps.py, products.py, package.json, SellerProductEdit.tsx) | — |
-| Thời gian | ~10h | — |
+| Tasks | 32 | 32 ✅ |
+| Tests | 7 BE + 5 FE + 1 e2e = 13 | 8 BE + 7 FE + 1 e2e = 16 |
+| Files mới | ~8 | 9 (image_service, product_image schema, products router, deps add, ImageUploader, productImages.api, products types, ImageUploader.test, e2e fixture inline) |
+| Files edit | ~7 | 9 (pyproject.toml, config.py, .env.example, .gitignore, main.py, SellerProductEdit, ProductCard, Shop, seller.api widen images type) |
+| Thời gian | ~10h | ~10h (theo estimate) |
