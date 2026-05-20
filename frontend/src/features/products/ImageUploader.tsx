@@ -1,9 +1,29 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import { ImagePlus, X } from 'lucide-react'
+import imageCompression from 'browser-image-compression'
 import { uploadProductImage } from './productImages.api'
 import type { ProductImage } from './types'
 
 export const MAX_IMAGES = 9
+// Sellers on mobile often pick 4-8MB camera shots — compress client-side
+// to stay under the 2MB server ceiling and save their data plan.
+const COMPRESS_THRESHOLD_BYTES = 1.5 * 1024 * 1024
+const COMPRESS_OPTIONS = {
+  maxSizeMB: 1.8,
+  maxWidthOrHeight: 1920,
+  useWebWorker: true,
+  fileType: 'image/jpeg',
+}
+
+async function maybeCompress(file: File): Promise<File> {
+  if (file.size < COMPRESS_THRESHOLD_BYTES) return file
+  try {
+    return await imageCompression(file, COMPRESS_OPTIONS)
+  } catch {
+    // If compression fails, fall back to original — server will validate
+    return file
+  }
+}
 
 export interface ImageUploaderProps {
   value: ProductImage[]
@@ -48,11 +68,14 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
     setPending((prev) => [...prev, ...items])
 
     items.forEach((item) => {
-      uploadProductImage(item.file, (percent) => {
-        setPending((prev) =>
-          prev.map((p) => (p.localId === item.localId ? { ...p, progress: percent } : p)),
+      maybeCompress(item.file)
+        .then((compressed) =>
+          uploadProductImage(compressed, (percent) => {
+            setPending((prev) =>
+              prev.map((p) => (p.localId === item.localId ? { ...p, progress: percent } : p)),
+            )
+          }),
         )
-      })
         .then((uploaded) => {
           onChange([...value, uploaded])
           setPending((prev) => {
