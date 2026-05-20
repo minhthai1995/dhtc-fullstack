@@ -1,6 +1,7 @@
 from app.models.base import Base, TimestampMixin
 from app.models.cart import CartItem
 from app.models.category import Category
+from app.models.chat_message import ChatMessage, MessageDirection, MessagePlatform
 from app.models.fb_profile import FBProfile
 from app.models.merchant import Merchant, MerchantStatus, MerchantTier
 from app.models.notification import Notification, NotificationType
@@ -27,6 +28,9 @@ __all__ = [
     "MerchantTier",
     "MerchantStatus",
     "Category",
+    "ChatMessage",
+    "MessageDirection",
+    "MessagePlatform",
     "FBProfile",
     "Product",
     "ProductStatus",
