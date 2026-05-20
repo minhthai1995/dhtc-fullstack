@@ -13,7 +13,7 @@
 ## Backend — Setup & dependencies
 
 - [x] **T1** ✅ — `uv add Pillow>=10.1.0 pillow-heif>=0.13.0` (pillow 12.2.0 + pillow-heif 1.3.0 installed)
-- [ ] **T2** — Config `UPLOAD_DIR` + `MAX_UPLOAD_BYTES` trong `backend/app/core/config.py` + `.env.example`
+- [x] **T2** ✅ — Config `UPLOAD_DIR` (Path) + `MAX_UPLOAD_BYTES` (2MB) trong `config.py` + `.env.example`
 - [ ] **T3** — `.gitignore` thêm `backend/uploads/`
 
 ## Backend — Schemas & service

@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -32,6 +33,10 @@ class Settings(BaseSettings):
     FACEBOOK_PAGE_ACCESS_TOKEN: str = ""
     FACEBOOK_APP_SECRET: str = ""
     FACEBOOK_WEBHOOK_VERIFY_TOKEN: str = "dhtc_webhook_2026"
+
+    # Image upload (product images)
+    UPLOAD_DIR: Path = Path("./uploads")
+    MAX_UPLOAD_BYTES: int = 2 * 1024 * 1024  # 2MB per file after client compression
 
 
 @lru_cache
