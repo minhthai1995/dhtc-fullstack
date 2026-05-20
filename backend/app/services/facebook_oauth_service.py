@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from urllib.parse import urlencode
 
+import httpx
+
 from app.core.config import settings
 
 FB_GRAPH_VERSION = "v19.0"
@@ -41,3 +43,34 @@ def build_authorize_url(state: str) -> str:
         "response_type": "code",
     }
     return f"{FB_DIALOG_URL}?{urlencode(params)}"
+
+
+async def exchange_code_for_token(code: str) -> str:
+    """Exchange the OAuth `code` from FB redirect for a short-lived access token.
+
+    The token is returned to the caller for a one-shot /me fetch then discarded.
+    Never log, persist, or echo this value.
+    """
+    params = {
+        "client_id": settings.FACEBOOK_APP_ID,
+        "client_secret": settings.FACEBOOK_APP_SECRET,
+        "redirect_uri": settings.FACEBOOK_OAUTH_REDIRECT_URI,
+        "code": code,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=FB_HTTP_TIMEOUT_S) as client:
+            resp = await client.get(f"{FB_GRAPH_BASE}/oauth/access_token", params=params)
+    except httpx.HTTPError as exc:
+        raise FacebookOAuthError("fb_unavailable", str(exc)) from exc
+
+    if resp.status_code >= 400:
+        raise FacebookOAuthError("fb_unavailable", f"status={resp.status_code}")
+
+    payload = resp.json()
+    if "error" in payload:
+        raise FacebookOAuthError("fb_unavailable", payload["error"].get("type", "error"))
+
+    token = payload.get("access_token")
+    if not isinstance(token, str) or not token:
+        raise FacebookOAuthError("fb_unavailable", "missing access_token")
+    return token
