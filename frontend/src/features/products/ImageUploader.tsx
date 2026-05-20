@@ -111,6 +111,35 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
     onChange(value.filter((img) => img.id !== id))
   }
 
+  const [dragSrc, setDragSrc] = useState<number | null>(null)
+
+  const reorder = (from: number, to: number) => {
+    if (from === to) return
+    const next = [...value]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    onChange(next.map((img, i) => ({ ...img, order: i })))
+  }
+
+  const onTileDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
+    setDragSrc(index)
+    e.dataTransfer.effectAllowed = 'move'
+    // Required for Firefox to fire dragstart
+    e.dataTransfer.setData('text/plain', String(index))
+  }
+  const onTileDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+  const onTileDrop = (e: DragEvent<HTMLDivElement>, targetIndex: number) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (dragSrc === null) return
+    reorder(dragSrc, targetIndex)
+    setDragSrc(null)
+  }
+  const onTileDragEnd = () => setDragSrc(null)
+
   const removePending = (localId: string) => {
     setPending((prev) => {
       const target = prev.find((p) => p.localId === localId)
@@ -135,12 +164,25 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
 
       {showGrid && (
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-3">
-          {value.map((img) => (
+          {value.map((img, index) => (
             <div
               key={img.id}
-              className="relative aspect-square rounded-xl overflow-hidden border border-border bg-white group"
+              draggable
+              onDragStart={(e) => onTileDragStart(e, index)}
+              onDragOver={onTileDragOver}
+              onDrop={(e) => onTileDrop(e, index)}
+              onDragEnd={onTileDragEnd}
+              className={
+                'relative aspect-square rounded-xl overflow-hidden border border-border bg-white group cursor-move transition-opacity ' +
+                (dragSrc === index ? 'opacity-40' : '')
+              }
             >
               <img src={img.urls.medium} alt="" className="w-full h-full object-cover" />
+              {index === 0 && (
+                <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-green text-white text-[10px] font-bold">
+                  Ảnh chính
+                </span>
+              )}
               <button
                 type="button"
                 onClick={() => removeUploaded(img.id)}
