@@ -6,6 +6,7 @@ import { useCart } from '@/features/cart/useCart'
 import { ShoppingCart, Search, User, Menu, X, ChevronDown } from 'lucide-react'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useNotificationSocket } from '@/lib/useNotificationSocket'
+import { useTracking } from '@/features/tracking/useTracking'
 
 const navLinks = [
   { label: 'Trang chủ', href: '/' },
@@ -26,6 +27,7 @@ export function CustomerLayout() {
   const logout = useLogout()
   const navigate = useNavigate()
   useNotificationSocket()
+  useTracking()
 
   const cartCount = cart?.length ?? 0
 
