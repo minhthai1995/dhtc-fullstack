@@ -18,7 +18,7 @@
 
 ## Backend — Schemas & service
 
-- [ ] **T4** — `schemas/product_image.py` (ProductImageUrls + ProductImageOut + ProductImageIn)
+- [x] **T4** ✅ — `schemas/product_image.py` (ProductImageUrls + ProductImageOut + ProductImageIn)
 - [ ] **T5** — `services/image_service.py` skeleton (constants SIZES + ALLOWED_MIME + ImageValidationError)
 - [ ] **T6** — `services/image_service.py::process_upload()` (validate + Pillow pipeline 4 sizes)
 - [ ] **T7** — `services/image_service.py::delete_image()` (xóa folder + files)
