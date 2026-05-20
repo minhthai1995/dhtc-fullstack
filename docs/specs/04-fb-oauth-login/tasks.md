@@ -46,8 +46,7 @@
 
 - [x] **T20** ✅ — `FacebookLoginButton.tsx` — FB-blue pill button, inline SVG "f" icon, click → `window.location.href = '/api/v1/auth/facebook/start'`. Note: chọn FB brand blue `#1877F2` thay vì green để user recognize Facebook flow ngay. — pending commit
 - [x] **T21** ✅ — Wired vào `Login.tsx` + `Register.tsx` (dưới form, divider "hoặc", custom label cho Register "Đăng ký bằng Facebook") — pending commit
-- [ ] **T22** — Page `frontend/src/pages/auth/FacebookReturnPage.tsx`: `useSearchParams` đọc `token` | `error`, success path `setAuthToken` + navigate `/`, error path toast VI + nút quay lại login
-  - Commit: `feat(frontend): /auth/fb-return page handles token/error from BE`
+- [x] **T22** ✅ — `FacebookReturnPage.tsx`: token path → `sessionStorage.access_token` + invalidate `authKeys.me` + navigate `/` replace; error path → VN error card với mapping `invalid_state`/`user_cancelled`/`fb_unavailable` + nút "Quay lại đăng nhập" — pending commit
 - [ ] **T23** — Route mới `/auth/fb-return` trong router config (`App.tsx` hoặc `frontend/src/routes.tsx`)
   - Commit: `feat(frontend): register /auth/fb-return route`
 
