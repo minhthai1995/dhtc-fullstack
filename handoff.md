@@ -7,16 +7,19 @@
 ## TL;DR (đọc đầu phiên mới — ≤ 30 dòng)
 
 - **Đây là:** DHTC marketplace fullstack (Đà Nẵng truyền thống) — đã rời template, đang build feature thật
-- **Đã có:** Auth ✅ · Admin/Seller/Customer portals ✅ · Chatbot Messenger ✅ · CRM admin 4-tab ✅ · Page tracking P2 ✅
-- **Vừa xong (2026-05-20):** Feature P3 product image upload end-to-end (spec 32 task → BE → FE → e2e)
-  - BE: `Pillow + pillow-heif` (HEIC iPhone), `POST /products/images` server-side resize 4 size WebP (original 1600/large 800/medium 400/thumb 200) + EXIF auto-rotate + anti-bomb guard, `DELETE /products/images/{id}` idempotent + path-traversal block, StaticFiles mount `/uploads`
-  - FE: `<ImageUploader>` drag-drop + multi-upload song song + onUploadProgress + client compression `browser-image-compression` cho file >1.5MB + reorder native HTML5 drag-drop + max 9 ảnh + toast VN errors + HEIC/JPG/PNG/WebP, integrate vào `SellerProductEdit.tsx` thay `<input type="url">`, `productImageSrc()` helper fallback `urls.medium ?? url` cho ProductCard + Shop
-  - Backward compat: legacy `{url:""}` rows render qua `toProductImages()` spread URL ra 4 size keys — không cần DB migration
-  - Tests: 8 pytest BE (happy/401/oversized/invalid-MIME/malformed/delete-idempotent/path-traversal/EXIF rotation) + 7 vitest FE (render/max-9/MIME/badge/compress-skip/compress-trigger/reorder) + 1 Playwright e2e (upload fixture JPEG inline) — all pass
-- **Branch:** `main` — latest commit `ff4347e` (working tree clean sau khi tick T31/T32)
-- **Blocked:** _(không)_
+- **Đã có:** Auth ✅ · Admin/Seller/Customer portals ✅ · Chatbot Messenger ✅ · CRM admin 4-tab ✅ · Page tracking P2 ✅ · Product image upload P3 ✅ · **Facebook OAuth login P5A ✅**
+- **Vừa xong (2026-05-20):** Feature P5A Facebook OAuth login (spec 30 task → BE 9/9 + FE 70/70 + type-check clean)
+  - BE: `app/services/facebook_oauth_service.py` (build_authorize_url + exchange_code_for_token + fetch_user_profile + upsert_user_and_profile), `app/api/v1/auth_facebook.py` (`GET /auth/facebook/start` CSRF state HttpOnly+SameSite=Lax cookie TTL 600s → 307 dialog; `GET /auth/facebook/callback?code=&state=` hmac.compare_digest + exchange+fetch+upsert + 302 `FRONTEND_URL/auth/fb-return?token=` hoặc `?error=`), `models/fb_profile.py` table `fb_profiles` UNIQUE(user_id, fb_app_user_id, messenger_psid nullable reserved P5C), Alembic `125a6ea`
+  - BE policy: email merge auto-link FBProfile vào user email/password đã tồn tại (password hash giữ nguyên); no-email synthetic `fb_<id>@dhtc.local` + random unusable password `secrets.token_urlsafe(48)`
+  - FE: `<FacebookLoginButton>` brand `#1877F2` pill `→ window.location.href = '/api/v1/auth/facebook/start'`, wired Login + Register dưới form với divider "hoặc"; `/auth/fb-return` page persist `sessionStorage.access_token` + invalidate `authKeys.me` + `navigate('/', replace)` cho token path, VN error card + back link cho error path (`invalid_state` / `user_cancelled` / `fb_unavailable` / fallback)
+  - Tests: 9 pytest BE (start redirect + cookie attrs · happy new user · idempotent re-login · email merge · no-email synthetic · invalid_state · fb_unavailable · user_cancelled), 7 vitest FE (button label/click/disabled · token persist+navigate · 3 error paths + token-not-persisted assertion); full BE suite 74/75 (1 pre-existing test_orders fail unrelated), FE 70/70
+  - Known limitation P6: token qua URL query `?token=<jwt>` ở redirect cuối — mitigation hiện tại FE replace-navigate clear ngay; P6 sẽ thay bằng HttpOnly cookie + `/auth/me` bootstrap hoặc one-shot code exchange
+  - Reserved cho P5C: `fb_profiles.messenger_psid` UNIQUE nullable — P5C webhook map sender_id → user khi chat sau khi FB-login web
+  - Spec: `docs/specs/04-fb-oauth-login/{spec,design,plan,tasks,handoff}.md` — 30 task ticked đầy đủ, handoff.md có user-action checklist tạo FB App + 6 manual e2e flows
+- **Branch:** `main` — latest commit `a398682` (P5A handoff doc); working tree về clean sau T28-T30
+- **Blocked:** Manual e2e với FB Test User chờ user tạo FB App + điền `.env` (xem `docs/specs/04-fb-oauth-login/handoff.md`)
 - **Files đang sửa:** _(không)_
-- **Next session:** S3 migration cho production (hiện local `backend/uploads/`); Response time / conversion compute cho ConversationsTab; Redis-based rate limit; GeoIP country_code thật
+- **Next session:** P4A DB foundation cleanup (PageView/ChatMessage server_default cho SQLite portability); P5B Messenger Customer Chat Plugin embed; P5C capture-everything Messenger webhook → fb_profiles.messenger_psid; P5D multi-signal clustering. Carry-over: S3 migration cho production uploads; Response time / conversion compute cho ConversationsTab; Redis rate limit; GeoIP country_code thật
 
 ---
 
@@ -29,6 +32,31 @@
 ---
 
 ## Session log
+
+<details>
+<summary>2026-05-20 · P5A Facebook OAuth login — FB App OAuth + email merge + sessionStorage (T1–T30)</summary>
+
+**Làm gì:**
+- BE config: `FACEBOOK_APP_ID + FACEBOOK_APP_SECRET + FACEBOOK_OAUTH_REDIRECT_URI + FRONTEND_URL` trong `app/core/config.py` Pydantic Settings + `.env.example` placeholder (secret KHÔNG commit)
+- BE model: `models/fb_profile.py` table `fb_profiles` (user_id FK UNIQUE, fb_app_user_id UNIQUE, fb_email/first_name/last_name/profile_pic_url/locale, raw_oauth_payload JSON, linked_at, messenger_psid UNIQUE nullable reserved P5C); Alembic `125a6ea` round-trip verified
+- BE service `app/services/facebook_oauth_service.py`: `build_authorize_url(state)` v19.0 dialog với scope=`email,public_profile`; `exchange_code_for_token(code)` httpx GET `graph.facebook.com/v19.0/oauth/access_token` timeout 8s + typed `FacebookOAuthError`; `fetch_user_profile(token)` httpx GET `/me?fields=id,email,first_name,last_name,picture.type(large),locale` normalize picture URL; `upsert_user_and_profile(profile)` by fb_app_user_id → refresh; email merge auto-link FBProfile vào user đã có; no-email fallback synthetic `fb_<id>@dhtc.local` + random unusable password `secrets.token_urlsafe(48)`
+- BE router `app/api/v1/auth_facebook.py`: `GET /auth/facebook/start` → 307 dialog + `Set-Cookie: fb_oauth_state=<secrets.token_urlsafe(32)>; HttpOnly; SameSite=Lax; Max-Age=600`; `GET /auth/facebook/callback?code=&state=` → `hmac.compare_digest(state_query, state_cookie)` → exchange+fetch+upsert → JWT → 302 `FRONTEND_URL/auth/fb-return?token=<jwt>` hoặc `?error=invalid_state|user_cancelled|fb_unavailable`; mount vào `api/v1/__init__.py`
+- BE tests: 9 pytest `tests/test_auth_facebook.py` + `fb_oauth_mocks` fixture (monkeypatch service layer thay vì respx — clean hơn cho async helpers) — happy/idempotent/email merge/no-email/invalid_state/fb_unavailable/user_cancelled/start redirect/cookie attrs; full suite 74/75 (1 pre-existing `test_cancel_order_restores_stock` SQLite `now()` isoformat — không liên quan P5A)
+- FE button `features/auth/FacebookLoginButton.tsx`: brand `#1877F2` pill + inline SVG "f" icon + `window.location.href = '/api/v1/auth/facebook/start'`; wired vào `Login.tsx` + `Register.tsx` dưới submit button với divider "hoặc" (Register label "Đăng ký bằng Facebook")
+- FE return page `pages/auth/FacebookReturnPage.tsx`: useEffect đọc `?token=` → `sessionStorage.setItem('access_token', …)` + `queryClient.invalidateQueries({ queryKey: authKeys.me })` + `navigate('/', { replace: true })` (clear URL khỏi history để token không leak qua Referer); `?error=` → VN error card với `ERROR_MESSAGES` mapping + "Quay lại đăng nhập" link; route `/auth/fb-return` registered trong `App.tsx` ngoài ProtectedRoute
+- FE tests: 7 vitest `tests/auth/FacebookLogin.test.tsx` — button default label + click → href + disabled blocks; token persist `sessionStorage` + navigate "/" rendered "HOME" via `MemoryRouter initialEntries`; 3 error paths (invalid_state VN + back link + token NOT persisted assertion, user_cancelled, unknown code fallback); FE suite 70/70
+- Spec: `docs/specs/04-fb-oauth-login/{spec,design,plan,tasks,handoff}.md` — 30 task ticked đầy đủ với SHA; `handoff.md` chứa TL;DR + user-action checklist (tạo FB App → test user → copy App ID+Secret → set redirect URI → điền `.env`) + known limitation token-in-URL → P6 + reserved messenger_psid P5C + 6 manual e2e flows (pre-flight/happy/re-login/email merge/cancel/tamper/server-side grep check)
+
+**Commits chính:** `1c23568` (T1 config) → `980247c` (T2 model) → `aeb5efd`+`8687ff7` (T3 registry+ChatMessage fix) → `125a6ea` (T4 migration) → `8db5261` (T5 schema) → `9f13798` (T6 CRUD) → `331b13b`–`436256e` (T7–T10 service) → `cd748ad` (T11 /start) → `fdb5cf6` (T12 /callback) → `61579c5` (T13 mount) → `b6723c1` (T14 fixture) → `1fbbd54` (T15) → `8e03b7b` (SimpleNamespace fix) → `24013f0` (T16) → `dcca9d4` (T17 email merge) → `de4a46c` (T18 no-email) → `3356224` (T19 error paths) → `489173c` (T20 button) → `ceb915d` (T21 wire) → `a65ae78` (T22 return page) → `46f38a3` (T23 route) → `d64be1f` (T24–T26 FE tests) → `a398682` (T27 handoff doc)
+
+**Carry-over tech debt:**
+- Token qua URL query string ở redirect cuối — defer P6 (HttpOnly cookie + `/auth/me` bootstrap hoặc one-shot code exchange `POST /auth/fb-exchange`)
+- Manual e2e với FB Test User chờ user tạo FB App + điền `.env` — checklist trong `docs/specs/04-fb-oauth-login/handoff.md`
+- `fb_profiles.messenger_psid` UNIQUE nullable reserved cho P5C — webhook ánh xạ Messenger sender_id → user sau khi user FB-login web
+- Pre-existing `tests/test_orders.py::test_cancel_order_restores_stock` SQLite `'now()'` server_default — P4A tech debt
+- Backend `ruff check .` chưa run final sweep — backlog cleanup F401/F811/E501
+
+</details>
 
 <details>
 <summary>2026-05-20 · P3 Product image upload — local disk → 4 WebP sizes + UI thân thiện (T1–T32)</summary>
