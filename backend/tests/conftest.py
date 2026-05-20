@@ -110,19 +110,20 @@ def fb_oauth_mocks(monkeypatch: pytest.MonkeyPatch):
         "app.api.v1.auth_facebook.fetch_user_profile", fake_fetch
     )
 
-    class _Controller:
-        calls = calls
+    def set_profile(profile: dict) -> None:
+        state["profile"] = profile
 
-        @staticmethod
-        def set_profile(profile: dict) -> None:
-            state["profile"] = profile
+    def set_token_error(code: str, detail: str | None = None) -> None:
+        state["token_error"] = (code, detail)
 
-        @staticmethod
-        def set_token_error(code: str, detail: str | None = None) -> None:
-            state["token_error"] = (code, detail)
+    def set_profile_error(code: str, detail: str | None = None) -> None:
+        state["profile_error"] = (code, detail)
 
-        @staticmethod
-        def set_profile_error(code: str, detail: str | None = None) -> None:
-            state["profile_error"] = (code, detail)
+    from types import SimpleNamespace
 
-    return _Controller()
+    return SimpleNamespace(
+        calls=calls,
+        set_profile=set_profile,
+        set_token_error=set_token_error,
+        set_profile_error=set_profile_error,
+    )
