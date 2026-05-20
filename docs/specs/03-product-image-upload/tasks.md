@@ -60,7 +60,7 @@
 
 ## Frontend — Tests
 
-- [ ] **T28** — `tests/products/ImageUploader.test.tsx` (render + max-9 + invalid MIME)
+- [x] **T28** ✅ — `tests/products/ImageUploader.test.tsx` (render + max-9 + invalid MIME)
 - [ ] **T29** — `tests/products/ImageUploader.test.tsx` (compress + upload happy + reorder state)
 
 ## E2E & DevOps
