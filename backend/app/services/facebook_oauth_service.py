@@ -74,3 +74,43 @@ async def exchange_code_for_token(code: str) -> str:
     if not isinstance(token, str) or not token:
         raise FacebookOAuthError("fb_unavailable", "missing access_token")
     return token
+
+
+async def fetch_user_profile(access_token: str) -> dict:
+    """Fetch user profile from Graph API /me.
+
+    Returns a dict with keys: id, email (optional), first_name, last_name,
+    fb_profile_pic_url (extracted from nested picture.data.url), locale (optional).
+    """
+    params = {"fields": FB_ME_FIELDS, "access_token": access_token}
+    try:
+        async with httpx.AsyncClient(timeout=FB_HTTP_TIMEOUT_S) as client:
+            resp = await client.get(f"{FB_GRAPH_BASE}/me", params=params)
+    except httpx.HTTPError as exc:
+        raise FacebookOAuthError("fb_unavailable", str(exc)) from exc
+
+    if resp.status_code >= 400:
+        raise FacebookOAuthError("fb_unavailable", f"status={resp.status_code}")
+
+    payload = resp.json()
+    if "error" in payload or "id" not in payload:
+        raise FacebookOAuthError("fb_unavailable", "invalid /me response")
+
+    picture_url: str | None = None
+    picture = payload.get("picture")
+    if isinstance(picture, dict):
+        data = picture.get("data")
+        if isinstance(data, dict):
+            url = data.get("url")
+            if isinstance(url, str):
+                picture_url = url
+
+    return {
+        "id": str(payload["id"]),
+        "email": payload.get("email"),
+        "first_name": payload.get("first_name"),
+        "last_name": payload.get("last_name"),
+        "fb_profile_pic_url": picture_url,
+        "locale": payload.get("locale"),
+        "raw": payload,
+    }
