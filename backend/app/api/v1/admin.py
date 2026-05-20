@@ -17,17 +17,30 @@ from app.crud import merchant as merchant_crud
 from app.crud import order as order_crud
 from app.crud import product as product_crud
 from app.deps import require_admin
+from app.models.cart import CartItem
 from app.models.category import Category
 from app.models.chat_message import ChatMessage, MessageDirection
 from app.models.merchant import Merchant, MerchantStatus
 from app.models.order import Order, OrderStatus
+from app.models.page_view import PageView
 from app.models.product import Product, ProductStatus
 from app.models.user import User, UserRole
 from app.models.wallet import TransactionType, WalletTransaction
+from app.schemas.admin_behavior import (
+    BehaviorFunnelStage,
+    BehaviorOverview,
+    BehaviorStats,
+    DeviceBucket,
+    HourlyBucket,
+    SessionSummary,
+    SourceBucket,
+    TopPage,
+)
 from app.schemas.category import CategoryRead
 from app.schemas.merchant import MerchantRead
 from app.schemas.order import OrderRead, OrderStatusUpdate
 from app.schemas.product import ProductRead
+from app.services.tracking import derive_device, derive_source
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -1687,3 +1700,153 @@ async def get_conversation_profile(
         message_count=len(msgs),
         intent_history=intent_history,
     )
+
+
+# ── Behavior (page tracking) ──────────────────────────────────────────────────
+
+
+def _parse_day(value: str | None) -> date:
+    if not value:
+        return date.today()
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid date — expected YYYY-MM-DD",
+        ) from exc
+
+
+@router.get("/behavior/overview", response_model=BehaviorOverview)
+async def get_behavior_overview(
+    date: str | None = None,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> BehaviorOverview:
+    day = _parse_day(date)
+    start = datetime.combine(day, datetime.min.time())
+    end = datetime.combine(day, datetime.max.time())
+
+    rows = (
+        await db.execute(
+            select(PageView)
+            .where(PageView.viewed_at >= start, PageView.viewed_at <= end)
+            .order_by(PageView.viewed_at.asc())
+        )
+    ).scalars().all()
+
+    sessions: dict[str, list[PageView]] = {}
+    for pv in rows:
+        sessions.setdefault(pv.session_id, []).append(pv)
+
+    total_sessions = len(sessions)
+    bounce_rate: float | None = None
+    avg_duration_sec: float | None = None
+    pages_per_session: float | None = None
+    if total_sessions:
+        bounced = sum(1 for pvs in sessions.values() if len(pvs) <= 1)
+        bounce_rate = round(bounced / total_sessions, 4)
+        durations = [
+            (pvs[-1].viewed_at - pvs[0].viewed_at).total_seconds()
+            for pvs in sessions.values()
+            if len(pvs) > 1
+        ]
+        avg_duration_sec = round(sum(durations) / len(durations), 2) if durations else 0.0
+        pages_per_session = round(len(rows) / total_sessions, 2)
+
+    device_counts: dict[str, int] = {"mobile": 0, "desktop": 0, "tablet": 0, "unknown": 0}
+    source_counts: dict[str, int] = {"direct": 0, "google": 0, "facebook": 0, "other": 0}
+    path_counts: dict[str, int] = {}
+    hourly_counts: dict[int, int] = dict.fromkeys(range(24), 0)
+    for pv in rows:
+        device_counts[derive_device(pv.user_agent)] += 1
+        source_counts[derive_source(pv.referrer)] += 1
+        path_counts[pv.path] = path_counts.get(pv.path, 0) + 1
+        hourly_counts[pv.viewed_at.hour] = hourly_counts.get(pv.viewed_at.hour, 0) + 1
+
+    top_pages_sorted = sorted(path_counts.items(), key=lambda kv: kv[1], reverse=True)[:10]
+
+    view_product = len({pv.visitor_id for pv in rows if pv.path.startswith("/product/")})
+    checkout = len({pv.visitor_id for pv in rows if pv.path.startswith("/checkout")})
+
+    cart_users = (
+        await db.execute(select(func.count(distinct(CartItem.customer_id))))
+    ).scalar_one() or 0
+
+    complete = (
+        await db.execute(
+            select(func.count(distinct(Order.customer_id))).where(
+                Order.created_at >= start,
+                Order.created_at <= end,
+                Order.status != OrderStatus.cancelled,
+            )
+        )
+    ).scalar_one() or 0
+
+    return BehaviorOverview(
+        stats=BehaviorStats(
+            total_sessions=total_sessions,
+            bounce_rate=bounce_rate,
+            avg_duration_sec=avg_duration_sec,
+            pages_per_session=pages_per_session,
+        ),
+        by_device=[DeviceBucket(key=k, count=v) for k, v in device_counts.items() if v > 0]
+        or [DeviceBucket(key="unknown", count=0)],
+        by_source=[SourceBucket(key=k, count=v) for k, v in source_counts.items() if v > 0]
+        or [SourceBucket(key="direct", count=0)],
+        top_pages=[TopPage(path=p, count=c) for p, c in top_pages_sorted],
+        funnel=[
+            BehaviorFunnelStage(key="view_product", count=view_product),
+            BehaviorFunnelStage(key="add_to_cart", count=int(cart_users)),
+            BehaviorFunnelStage(key="checkout", count=checkout),
+            BehaviorFunnelStage(key="complete", count=int(complete)),
+        ],
+        hourly_24h=[HourlyBucket(hour=h, count=hourly_counts[h]) for h in range(24)],
+    )
+
+
+@router.get("/behavior/sessions", response_model=list[SessionSummary])
+async def list_behavior_sessions(
+    limit: int = 50,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> list[SessionSummary]:
+    if limit < 1 or limit > 200:
+        raise HTTPException(status_code=400, detail="limit must be 1..200")
+    if offset < 0:
+        raise HTTPException(status_code=400, detail="offset must be >= 0")
+
+    agg = (
+        await db.execute(
+            select(
+                PageView.session_id,
+                func.min(PageView.visitor_id).label("visitor_id"),
+                func.max(PageView.user_id).label("user_id"),
+                func.count(PageView.id).label("page_count"),
+                func.min(PageView.viewed_at).label("first_seen"),
+                func.max(PageView.viewed_at).label("last_seen"),
+            )
+            .group_by(PageView.session_id)
+            .order_by(func.max(PageView.viewed_at).desc())
+            .limit(limit)
+            .offset(offset)
+        )
+    ).all()
+
+    out: list[SessionSummary] = []
+    for r in agg:
+        if r.first_seen and r.last_seen:
+            duration = int((r.last_seen - r.first_seen).total_seconds())
+        else:
+            duration = 0
+        out.append(SessionSummary(
+            session_id=r.session_id,
+            visitor_id=r.visitor_id,
+            user_id=r.user_id,
+            page_count=int(r.page_count),
+            duration_sec=duration,
+            first_seen=r.first_seen,
+            last_seen=r.last_seen,
+        ))
+    return out
