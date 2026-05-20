@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { screen, fireEvent } from '@testing-library/react'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
 import { ImageUploader, MAX_IMAGES } from '@/features/products/ImageUploader'
 import { ToastProvider } from '@/components/ui/Toast'
 import type { ProductImage } from '@/features/products/types'
@@ -76,5 +76,64 @@ describe('ImageUploader', () => {
     wrap(<ImageUploader value={items} onChange={() => {}} />)
     const badges = screen.getAllByText('Ảnh chính')
     expect(badges).toHaveLength(1)
+  })
+
+  it('skips compression for files under threshold and uploads them', async () => {
+    const { uploadProductImage } = await import('@/features/products/productImages.api')
+    const imageCompression = (await import('browser-image-compression')).default
+    vi.mocked(uploadProductImage).mockResolvedValueOnce(makeImage('new-1', 0))
+
+    const onChange = vi.fn()
+    const { container } = wrap(<ImageUploader value={[]} onChange={onChange} />)
+
+    // 200KB JPEG — well below 1.5MB threshold.
+    const small = new File([new Uint8Array(200 * 1024)], 'small.jpg', { type: 'image/jpeg' })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [small] } })
+
+    await waitFor(() => expect(onChange).toHaveBeenCalled())
+    expect(imageCompression).not.toHaveBeenCalled()
+    expect(uploadProductImage).toHaveBeenCalledWith(small, expect.any(Function))
+    expect(onChange.mock.calls[0][0]).toEqual([makeImage('new-1', 0)])
+  })
+
+  it('compresses files above the 1.5MB threshold before upload', async () => {
+    const { uploadProductImage } = await import('@/features/products/productImages.api')
+    const imageCompression = (await import('browser-image-compression')).default
+    vi.mocked(uploadProductImage).mockResolvedValueOnce(makeImage('big-1', 0))
+    const compressed = new File([new Uint8Array(800 * 1024)], 'compressed.jpg', { type: 'image/jpeg' })
+    vi.mocked(imageCompression).mockResolvedValueOnce(compressed)
+
+    const onChange = vi.fn()
+    const { container } = wrap(<ImageUploader value={[]} onChange={onChange} />)
+
+    // 2.5MB JPEG — triggers client-side compression (camera-shot size).
+    const big = new File([new Uint8Array(2.5 * 1024 * 1024)], 'big.jpg', { type: 'image/jpeg' })
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement
+    fireEvent.change(input, { target: { files: [big] } })
+
+    await waitFor(() => expect(uploadProductImage).toHaveBeenCalled())
+    expect(imageCompression).toHaveBeenCalledWith(big, expect.objectContaining({ maxSizeMB: 1.8 }))
+    expect(uploadProductImage).toHaveBeenCalledWith(compressed, expect.any(Function))
+  })
+
+  it('reorders tiles via native HTML5 drag-drop and re-numbers order', () => {
+    const items = [makeImage('a', 0), makeImage('b', 1), makeImage('c', 2)]
+    const onChange = vi.fn()
+    const { container } = wrap(<ImageUploader value={items} onChange={onChange} />)
+
+    const tiles = container.querySelectorAll('[draggable="true"]')
+    expect(tiles.length).toBe(3)
+
+    // dataTransfer is required by the component to flag a real drag in Firefox.
+    const dataTransfer = { setData: vi.fn(), effectAllowed: '', dropEffect: '' }
+    fireEvent.dragStart(tiles[0], { dataTransfer })
+    fireEvent.dragOver(tiles[2], { dataTransfer })
+    fireEvent.drop(tiles[2], { dataTransfer })
+
+    expect(onChange).toHaveBeenCalledTimes(1)
+    const reordered = onChange.mock.calls[0][0]
+    expect(reordered.map((i: ProductImage) => i.id)).toEqual(['b', 'c', 'a'])
+    expect(reordered.map((i: ProductImage) => i.order)).toEqual([0, 1, 2])
   })
 })
