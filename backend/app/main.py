@@ -3,12 +3,15 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pillow_heif import register_heif_opener
 
 from app.api.v1 import api_router
 from app.core.config import settings
 
 register_heif_opener()  # Enable PIL.Image.open() for HEIC files from iPhone
+
+settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @asynccontextmanager
@@ -40,6 +43,12 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api")
+
+app.mount(
+    "/uploads",
+    StaticFiles(directory=settings.UPLOAD_DIR),
+    name="uploads",
+)
 
 
 @app.get("/", include_in_schema=False)
