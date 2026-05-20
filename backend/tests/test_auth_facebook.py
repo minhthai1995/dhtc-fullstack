@@ -132,3 +132,58 @@ async def test_facebook_callback_duplicate_fb_app_user_id(
     profile = (await db_session.execute(select(FBProfile))).scalar_one()
     assert profile.fb_last_name == "User-Renamed"
     assert profile.fb_profile_pic_url == "https://scontent.example/pic2.jpg"
+
+
+async def test_facebook_callback_email_merge(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    fb_oauth_mocks,
+) -> None:
+    """User registered via email/password first → FB login with same email
+    must LINK to existing user, not create a second one."""
+    from app.core.security import hash_password
+    from app.models.user import UserRole
+
+    existing = User(
+        email="overlap@example.com",
+        hashed_password=hash_password("realpassword123"),
+        full_name="Existing User",
+        role=UserRole.customer,
+        is_active=True,
+    )
+    db_session.add(existing)
+    await db_session.commit()
+    await db_session.refresh(existing)
+    existing_id = existing.id
+    existing_pw_hash = existing.hashed_password
+
+    fb_oauth_mocks.set_profile({
+        "id": "200000002",
+        "email": "overlap@example.com",
+        "first_name": "FB",
+        "last_name": "Linked",
+        "fb_profile_pic_url": None,
+        "locale": None,
+        "raw": {"id": "200000002"},
+    })
+
+    state = await _start_and_get_state(client)
+    resp = await client.get(
+        f"/api/v1/auth/facebook/callback?state={state}&code=mergecode",
+        follow_redirects=False,
+    )
+    assert resp.status_code == 302
+    assert "token=" in resp.headers["location"]
+
+    user_count = (await db_session.execute(select(func.count(User.id)))).scalar_one()
+    fb_count = (await db_session.execute(select(func.count(FBProfile.id)))).scalar_one()
+    assert user_count == 1, "email merge must not create a second user"
+    assert fb_count == 1
+
+    # The new FBProfile linked back to the original user — original creds untouched
+    await db_session.refresh(existing)
+    assert existing.id == existing_id
+    assert existing.hashed_password == existing_pw_hash  # password not overwritten
+    profile = (await db_session.execute(select(FBProfile))).scalar_one()
+    assert profile.user_id == existing_id
+    assert profile.fb_app_user_id == "200000002"

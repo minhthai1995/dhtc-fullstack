@@ -38,8 +38,7 @@
 - [x] **T14** ✅ — `fb_oauth_mocks` fixture trong `tests/conftest.py` patch `exchange_code_for_token` + `fetch_user_profile` via monkeypatch — `b6723c1`
 - [x] **T15** ✅ — `test_facebook_start_redirects_to_fb` + `test_facebook_start_state_cookie_is_httponly_lax` — pending commit
 - [x] **T16** ✅ — `test_facebook_callback_new_user_happy` + `test_facebook_callback_duplicate_fb_app_user_id` (idempotent: same FB id → no duplicate user/profile, fields refreshed) — pending commit. Bonus `8e03b7b` fix SimpleNamespace scoping in fixture.
-- [ ] **T17** — `tests/test_auth_facebook.py`: `test_facebook_callback_email_merge` (existing user same email → link, không tạo user thứ 2)
-  - Commit: `test(backend): /auth/facebook/callback email merge path`
+- [x] **T17** ✅ — `test_facebook_callback_email_merge` — existing email/password user, FB login same email → link, no 2nd user, password hash untouched — pending commit
 - [ ] **T18** — `tests/test_auth_facebook.py`: `test_facebook_callback_no_email_granted` (FB không trả email → synthetic `fb_<id>@dhtc.local`, `fb_email=null`)
   - Commit: `test(backend): /auth/facebook/callback no-email synthetic user`
 - [ ] **T19** — `tests/test_auth_facebook.py`: `test_facebook_callback_invalid_state` + `test_facebook_callback_fb_api_error` (error path → 302 với `?error=...`)
