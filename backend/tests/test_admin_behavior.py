@@ -106,13 +106,16 @@ async def test_behavior_overview_happy_path(
     )
     db_session.add(CartItem(customer_id=customer.id, product_id=product.id, quantity=2))
 
-    # Completed order for funnel `complete`
+    # Completed order for funnel `complete`. Pin created_at to today's local
+    # boundary used by the endpoint — otherwise SQLite's UTC CURRENT_TIMESTAMP
+    # falls on the previous day when run early-morning local time.
     db_session.add(Order(
         customer_id=customer.id,
         merchant_id=product.merchant_id,
         status=OrderStatus.delivered,
         total_amount=200_000,
         shipping_address={"country": "VN"},
+        created_at=base,
     ))
     await db_session.commit()
 
