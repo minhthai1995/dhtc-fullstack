@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
 
 from app.models.base import Base
 
@@ -39,7 +40,7 @@ class Notification(Base):
     is_read: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default="now()"
+        DateTime(timezone=True), server_default=func.now()
     )
 
     user: Mapped[User] = relationship("User", backref="notifications")
