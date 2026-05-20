@@ -6,6 +6,7 @@ from app.api.v1 import (
     customer,
     health,
     notifications,
+    products,
     seller,
     tracking,
     users,
@@ -20,6 +21,7 @@ api_router.include_router(users.router)
 api_router.include_router(admin.router)
 api_router.include_router(seller.router)
 api_router.include_router(customer.router)
+api_router.include_router(products.router)
 api_router.include_router(notifications.router)
 api_router.include_router(tracking.router)
 api_router.include_router(webhooks.router)
