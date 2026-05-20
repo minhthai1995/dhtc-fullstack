@@ -7,15 +7,15 @@
 ## TL;DR (đọc đầu phiên mới — ≤ 30 dòng)
 
 - **Đây là:** DHTC marketplace fullstack (Đà Nẵng truyền thống) — đã rời template, đang build feature thật
-- **Đã có:** Auth ✅ · Admin/Seller/Customer portals ✅ · Chatbot Messenger ✅ · CRM admin 4-tab match mockup ✅
-- **Vừa xong (2026-05-20):** Restructure `/admin/crm` → 4 tab khớp mockup (`Tổng quan / Khách hàng / Hội thoại / Hành vi`), gỡ AI-feel
-  - BE: 3 endpoints mới (`/admin/crm/demographics`, `/conversation-overview`, `/conversations/{sid}/profile`) + helper `_classify_intent`
-  - FE: xoá Intent Clusters fake demo, thêm Demographics row + ConversationsTab + BehaviorTab (P2 placeholder honest)
-  - Tests: 6 pytest (3 happy + 3 401) pass · 2 Playwright e2e (4-tab navigate + no-AI-residue) pass
-- **Branch:** `main` — latest commit `0ff18bc` (working tree clean)
+- **Đã có:** Auth ✅ · Admin/Seller/Customer portals ✅ · Chatbot Messenger ✅ · CRM admin 4-tab ✅ · Page tracking P2 ✅
+- **Vừa xong (2026-05-20):** Feature P2 page tracking end-to-end (spec → BE → FE → tab Hành vi data thật)
+  - BE: `page_views` table + Alembic migration + `POST /tracking/page-view` (rate-limit 60/min/visitor) + `GET /admin/behavior/overview` + `/sessions`
+  - FE: `visitor.ts` (localStorage visitor_id, 30-min idle session reset) + `useTracking()` hook wired vào CustomerLayout (chỉ customer routes) + BehaviorTab bind real data
+  - Tests: 4 backend pytest tracking + 4 pytest admin behavior + 5 vitest visitor + 2 Playwright e2e (Hành vi real data + KPI numeric) — all pass
+- **Branch:** `main` — latest commit `33e2532` (working tree clean)
 - **Blocked:** _(không)_
-- **Files đang sửa:** _(không — work đã xong, chờ commit)_
-- **Next session:** P2 page tracking (pixel JS + `page_views` table) cho tab Hành vi; response time/conversion compute
+- **Files đang sửa:** _(không)_
+- **Next session:** Response time / conversion compute cho ConversationsTab; Redis-based rate limit (replace in-memory); GeoIP country_code thật (hiện rely CF-IPCountry header)
 
 ---
 
@@ -28,6 +28,28 @@
 ---
 
 ## Session log
+
+<details>
+<summary>2026-05-20 · P2 Page tracking — pixel + behavior tab data thật (T1–T22)</summary>
+
+**Làm gì:**
+- BE models: `app/models/page_view.py` (5 indexes — viewed_at, visitor_id, session_id, user_id, composite viewed_at+path) + Alembic migration `c3d4e5f6a7b8`
+- BE pipeline: `app/schemas/tracking.py` (PageViewIn 8-36 char ids) · `app/crud/page_view.py` · `app/services/tracking.py` (derive_device/source/country_code) · `app/core/rate_limit.py` (sliding-window deque, 60/min)
+- BE endpoint: `POST /api/v1/tracking/page-view` optional Bearer auth, CF-IPCountry passthrough
+- BE admin behavior: `app/schemas/admin_behavior.py` + `GET /admin/behavior/overview` (stats/by_device/by_source/top_pages/hourly_24h/funnel) + `/sessions` paginated — Python in-memory aggregation cho SQLite portability
+- FE tracking: `features/tracking/{visitor,tracking.api,useTracking}.ts` — fetch keepalive bypass axios 401 redirect; wired vào CustomerLayout only (admin/seller untracked)
+- FE BehaviorTab rebind: KPI thật (sessions, pageviews, bounce, avg duration) + ThinBar device/source/top_pages + funnel real counts + HourlyBarChart real data + sessions table
+- Tests: 4 pytest tracking + 4 pytest admin behavior + 5 vitest visitor + 2 Playwright e2e (Hành vi real-data + KPI numeric)
+- Spec: `docs/specs/02-page-tracking/{spec,design,plan,tasks}.md` — full 24-task spec, T1–T22 ticked (T23 = this entry)
+
+**Commits chính:** `cd22647` (PageView model) → `9480096` (migration) → `a747650`-`d7d9b8f` (T3–T7 tracking endpoint) → `be10ce8` (T12 tests) → `a244496`-`6d18682` (T8–T11, T13 admin behavior) → `07b493c`-`5c95766` (T14–T17 FE tracking client) → `1dbfe59` (T18 vitest) → `3d0a4c0`-`c5915cf` (T19–T20 API + hook) → `c71803e` (T21 BehaviorTab) → `33e2532` (T22 e2e)
+
+**Carry-over tech debt:**
+- Rate limit in-memory deque single-process (P3: switch sang Redis ZRANGEBYSCORE)
+- country_code chỉ derive khi reverse proxy gắn `CF-IPCountry` header (P3: tích hợp MaxMind/GeoLite2)
+- Bounce-rate compute định nghĩa "session = 1 pageview"; thêm dwell-time threshold sau khi có client-side beacon
+
+</details>
 
 <details>
 <summary>2026-05-20 · CRM admin restructure 4 tab khớp mockup + gỡ AI-feel</summary>

@@ -25,79 +25,35 @@
 
 ## Backend — Admin behavior aggregation
 
-- [ ] **T8** (20') — Pydantic schemas: `BehaviorOverview`, `BehaviorStats`, `DeviceBucket`, `SourceBucket`, `TopPage`, `BehaviorFunnelStage`, `HourlyBucket`, `SessionSummary`
-  File: `backend/app/schemas/admin_behavior.py`
-  Commit: `feat(admin-behavior): add behavior overview schemas`
-
-- [ ] **T9** (30') — Aggregation query (stats + by_device + by_source + top_pages + hourly_24h)
-  File: `backend/app/api/v1/admin.py` (APPEND `GET /admin/behavior/overview`)
-  Commit: `feat(admin-behavior): add /admin/behavior/overview endpoint`
-
-- [ ] **T10** (25') — Funnel logic: view_product/checkout từ page_views + add_to_cart/complete từ existing cart/orders tables
-  File: `backend/app/api/v1/admin.py` (extend T9)
-  Commit: `feat(admin-behavior): add funnel cross-join with orders/cart`
-
-- [ ] **T11** (20') — `GET /admin/behavior/sessions` paginated list
-  File: `backend/app/api/v1/admin.py`
-  Commit: `feat(admin-behavior): add /admin/behavior/sessions endpoint`
+- [x] **T8** ✅ — behavior overview schemas (commit `a244496`)
+- [x] **T9** ✅ — `/admin/behavior/overview` aggregation (commit `992fce0`)
+- [x] **T10** ✅ — funnel cross-join with cart+orders (commit `992fce0`)
+- [x] **T11** ✅ — `/admin/behavior/sessions` paginated (commit `992fce0`)
 
 ## Backend — Tests
 
 - [x] **T12** ✅ — pytest tracking: happy + bearer-link + 60-then-429 + 422 (commit `be10ce8`)
-
-- [ ] **T13** (30') — pytest: happy + 401 unauth cho 2 admin behavior endpoints (seed page_views + cart + orders)
-  File: `backend/tests/test_admin_behavior.py` (NEW)
-  Commit: `test(admin-behavior): add behavior overview tests`
+- [x] **T13** ✅ — pytest admin behavior: 2 happy + 2 unauth (commit `6d18682`)
 
 ## Frontend — Tracking client
 
-- [ ] **T14** (20') — `visitor.ts`: getVisitorId() (localStorage), getSessionId() (sessionStorage + 30' idle reset)
-  File: `frontend/src/features/tracking/visitor.ts`
-  Commit: `feat(tracking): add visitor + session id helpers`
-
-- [ ] **T15** (15') — `tracking.api.ts`: sendPageView() fire-and-forget
-  File: `frontend/src/features/tracking/tracking.api.ts`
-  Commit: `feat(tracking): add sendPageView API function`
-
-- [ ] **T16** (20') — `useTracking()` hook gắn vào React Router listener
-  File: `frontend/src/features/tracking/useTracking.ts`
-  Commit: `feat(tracking): add useTracking hook`
-
-- [ ] **T17** (15') — Wire `useTracking()` vào `CustomerLayout.tsx` (CHỈ customer routes, KHÔNG admin/seller)
-  File: `frontend/src/components/layout/CustomerLayout.tsx`
-  Commit: `feat(tracking): wire tracking into CustomerLayout`
-
-- [ ] **T18** (15') — Unit test: visitor_id persistence, session reset sau 30' idle (mock localStorage + Date.now)
-  File: `frontend/tests/tracking/visitor.test.ts`
-  Commit: `test(tracking): add visitor.ts unit tests`
+- [x] **T14** ✅ — `visitor.ts` getVisitorId + getSessionId (commit `07b493c`)
+- [x] **T15** ✅ — `tracking.api.ts` sendPageView fire-and-forget (commit `7de5d9a`)
+- [x] **T16** ✅ — `useTracking()` hook (commit `0029849`)
+- [x] **T17** ✅ — wired vào `CustomerLayout` (commit `5c95766`)
+- [x] **T18** ✅ — vitest 5 tests (commit `1dbfe59`)
 
 ## Frontend — Admin Behavior tab
 
-- [ ] **T19** (15') — Types `BehaviorOverview` + API function `getBehaviorOverview()` trong `admin.api.ts`
-  File: `frontend/src/features/admin/admin.api.ts`
-  Commit: `feat(admin-behavior): add behavior overview API types`
-
-- [ ] **T20** (10') — Hook `useBehaviorOverview()` trong `useAdmin.ts`
-  File: `frontend/src/features/admin/useAdmin.ts`
-  Commit: `feat(admin-behavior): add useBehaviorOverview hook`
-
-- [ ] **T21** (30') — Rebind `BehaviorTab` trong `AdminCRM.tsx`: thay empty state bằng data thực, giữ P2 banner thành P2 ribbon nhỏ (đã shipped)
-  File: `frontend/src/pages/admin/AdminCRM.tsx`
-  Commit: `feat(admin-behavior): bind BehaviorTab to real data`
-
-- [ ] **T22** (20') — Playwright e2e: behavior tab có data thực (count > 0 sau khi seed)
-  File: `frontend/e2e/admin.spec.ts`
-  Commit: `test(admin-behavior): e2e for BehaviorTab real data`
+- [x] **T19** ✅ — BehaviorOverview types + API (commit `3d0a4c0`)
+- [x] **T20** ✅ — `useBehaviorOverview` + `useBehaviorSessions` hooks (commit `c5915cf`)
+- [x] **T21** ✅ — BehaviorTab bind real data (commit `c71803e`)
+- [x] **T22** ✅ — Playwright e2e BehaviorTab (commit `33e2532`)
 
 ## DevOps & Verification
 
-- [ ] **T23** (10') — Update `handoff.md` TL;DR + thêm session log entry
-  File: `handoff.md`
-  Commit: `docs: update handoff for page-tracking feature`
-
-- [ ] **T24** (5') — Tick toàn bộ `tasks.md` ✅ + tick `checklist.md`
-  Files: `docs/specs/02-page-tracking/tasks.md`, `checklist.md`
-  Commit: `docs(02-page-tracking): mark feature complete`
+- [x] **T23** ✅ — handoff.md TL;DR + session log entry
+- [x] **T24** ✅ — tick toàn bộ tasks.md (checklist.md không tồn tại — bỏ qua)
 
 ---
 
@@ -105,8 +61,8 @@
 
 | | Dự kiến | Thực tế |
 |--|---------|---------|
-| Tasks | 24 | _ |
-| Tests | 4 (2 BE pytest + 1 FE unit + 1 e2e) | _ |
-| Files mới | 11 | _ |
-| Files edit | 5 | _ |
-| Thời gian | ~12h | _ |
+| Tasks | 24 | 24 ✅ |
+| Tests | 4 (2 BE pytest + 1 FE unit + 1 e2e) | 4 BE pytest tracking + 4 BE pytest admin behavior + 5 vitest visitor + 2 Playwright = 15 |
+| Files mới | 11 | 11 (5 BE, 4 FE tracking, 1 FE test, 1 spec) |
+| Files edit | 5 | 6 (admin.py, admin.api.ts, useAdmin.ts, AdminCRM.tsx, CustomerLayout.tsx, admin.spec.ts) |
+| Thời gian | ~12h | ~1 phiên (compressed via parallel ops) |
