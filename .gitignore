@@ -20,6 +20,8 @@ node_modules/
 dist/
 .cache/
 *.local
+frontend/playwright-report/
+frontend/test-results/
 
 # Env files
 .env
