@@ -41,7 +41,7 @@
 
 - [x] **T16** ✅ — Cài `browser-image-compression` vào `frontend/package.json`
 - [x] **T17** ✅ — Types `ProductImage` + `ProductImageUrls` trong `features/products/types.ts`
-- [ ] **T18** — `features/products/productImages.api.ts` (uploadImage + deleteImage)
+- [x] **T18** ✅ — `features/products/productImages.api.ts` (uploadImage + deleteImage)
 
 ## Frontend — ImageUploader component
 
