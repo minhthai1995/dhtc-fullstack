@@ -12,7 +12,7 @@
   - BE: 3 endpoints mới (`/admin/crm/demographics`, `/conversation-overview`, `/conversations/{sid}/profile`) + helper `_classify_intent`
   - FE: xoá Intent Clusters fake demo, thêm Demographics row + ConversationsTab + BehaviorTab (P2 placeholder honest)
   - Tests: 6 pytest (3 happy + 3 401) pass · 2 Playwright e2e (4-tab navigate + no-AI-residue) pass
-- **Branch:** `main` — chuẩn bị commit lớn (toàn bộ DHTC app chưa từng vào git)
+- **Branch:** `main` — latest commit `0ff18bc` (working tree clean)
 - **Blocked:** _(không)_
 - **Files đang sửa:** _(không — work đã xong, chờ commit)_
 - **Next session:** P2 page tracking (pixel JS + `page_views` table) cho tab Hành vi; response time/conversion compute
@@ -40,7 +40,7 @@
 - FE thêm `SourceBadge`, `CountryFlag`, `MiniBarChart`, `HourlyBarChart`, `EmptyState`, `ConversationDetailDrawer` 3-pane
 - Tests: `tests/test_admin_crm.py` (6 pytest, happy + 401 cho mỗi endpoint) + 2 Playwright e2e (4-tab navigate, no-AI-residue) — tất cả pass
 
-**Commit:** sẽ điền sau khi commit
+**Commit:** `0ff18bc` — feat: build DHTC marketplace + CRM admin 4-tab match mockup
 
 </details>
 
