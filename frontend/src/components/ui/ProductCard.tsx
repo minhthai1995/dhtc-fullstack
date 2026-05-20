@@ -1,6 +1,6 @@
 import { cn } from '@/lib/cn'
 import { Star } from 'lucide-react'
-import type { ProductRead } from '@/types/api'
+import { productImageSrc, type ProductRead } from '@/types/api'
 
 interface ProductCardProps {
   product: ProductRead
@@ -16,7 +16,8 @@ function formatPrice(price: number): string {
 }
 
 export function ProductCard({ product, onClick, className }: ProductCardProps) {
-  const image = product.images?.[0]?.url
+  const primary = product.images?.find((i) => i.is_primary) ?? product.images?.[0]
+  const image = productImageSrc(primary, 'medium')
 
   return (
     <div

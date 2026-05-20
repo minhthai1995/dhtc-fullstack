@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useProducts, useCategories } from '@/features/products/useProducts'
 import { useAddToCart } from '@/features/cart/useCart'
 import { Search, ShoppingCart, Star } from 'lucide-react'
-import type { ProductRead } from '@/types/api'
+import { productImageSrc, type ProductRead } from '@/types/api'
 
 const RECENTLY_VIEWED_KEY = 'dhtc_rv'
 const MAX_RV = 8
@@ -20,7 +20,8 @@ function getRV(): RVItem[] {
 
 export function addToRecentlyViewed(product: ProductRead) {
   const items = getRV().filter((i) => i.id !== product.id)
-  const primaryImage = product.images?.find((i) => i.is_primary)?.url ?? null
+  const primary = product.images?.find((i) => i.is_primary) ?? product.images?.[0]
+  const primaryImage = primary ? productImageSrc(primary, 'medium') : null
   items.unshift({ id: product.id, name: product.name_vi, price: product.price, image: primaryImage })
   localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(items.slice(0, MAX_RV)))
 }
@@ -66,7 +67,8 @@ const REGION_ORIGIN_MAP: Record<string, string> = {
 
 function ProductCard({ product }: { product: ProductRead }) {
   const addToCart = useAddToCart()
-  const primaryImage = product.images?.find((i) => i.is_primary)?.url
+  const primary = product.images?.find((i) => i.is_primary) ?? product.images?.[0]
+  const primaryImage = primary ? productImageSrc(primary, 'medium') : undefined
   const hasOcop = product.certifications?.some((c) => c.includes('OCOP'))
   const hasOrganic = product.certifications?.some((c) => c.toLowerCase().includes('organic'))
 

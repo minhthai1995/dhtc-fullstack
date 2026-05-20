@@ -70,10 +70,18 @@ export interface CategoryRead {
 export type ProductStatus = 'active' | 'pending' | 'inactive'
 
 export interface ProductImage {
-  id?: number
-  url: string
+  id?: number | string
+  url?: string
   alt?: string
   is_primary?: boolean
+  // New P3 shape — populated when the seller uploaded via ImageUploader.
+  urls?: { original: string; large: string; medium: string; thumb: string }
+  order?: number
+}
+
+export function productImageSrc(img: ProductImage | undefined, size: 'thumb' | 'medium' | 'large' = 'medium'): string {
+  if (!img) return ''
+  return img.urls?.[size] ?? img.url ?? ''
 }
 
 export interface ProductRead {
