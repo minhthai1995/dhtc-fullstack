@@ -33,7 +33,10 @@ export interface CreateProductPayload {
   description_en?: string
   origin?: string
   certifications?: string[]
-  images?: { url: string; alt?: string; is_primary?: boolean }[]
+  images?: (
+    | { url: string; alt?: string; is_primary?: boolean }
+    | { id: string; urls: { original: string; large: string; medium: string; thumb: string }; order: number }
+  )[]
 }
 
 export interface CreatePromotionPayload {

@@ -2,9 +2,35 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useCreateProduct, useUpdateProduct } from '@/features/seller/useSeller'
 import { useProduct } from '@/features/products/useProducts'
+import { ImageUploader } from '@/features/products/ImageUploader'
+import type { ProductImage } from '@/features/products/types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Spinner } from '@/components/ui/Spinner'
 import { ArrowLeft, Plus, X } from 'lucide-react'
+
+// Backend stores images as flexible list[dict]; we normalise both legacy
+// `{url}` rows and the new `{id, urls, order}` rows into ProductImage so
+// the uploader only ever deals with one shape.
+function toProductImages(raw: unknown): ProductImage[] {
+  if (!Array.isArray(raw)) return []
+  return raw.map((entry, i) => {
+    const item = entry as Record<string, unknown>
+    if (item && typeof item === 'object' && 'urls' in item && 'id' in item) {
+      return {
+        id: String(item.id),
+        urls: item.urls as ProductImage['urls'],
+        order: typeof item.order === 'number' ? item.order : i,
+      }
+    }
+    // Legacy shape: spread the single URL across all sizes so the UI works.
+    const url = typeof item.url === 'string' ? item.url : ''
+    return {
+      id: `legacy-${i}-${url.slice(-12)}`,
+      urls: { original: url, large: url, medium: url, thumb: url },
+      order: i,
+    }
+  })
+}
 
 export function SellerProductEdit() {
   const { id } = useParams<{ id: string }>()
@@ -26,7 +52,7 @@ export function SellerProductEdit() {
     certifications: [] as string[],
     newCert: '',
   })
-  const [imageUrl, setImageUrl] = useState('')
+  const [images, setImages] = useState<ProductImage[]>([])
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -42,7 +68,7 @@ export function SellerProductEdit() {
         certifications: existingProduct.certifications ?? [],
         newCert: '',
       })
-      setImageUrl(existingProduct.images?.[0]?.url ?? '')
+      setImages(toProductImages(existingProduct.images))
     }
   }, [isEdit, existingProduct])
 
@@ -80,7 +106,7 @@ export function SellerProductEdit() {
       description_vi: form.description_vi || undefined,
       description_en: form.description_en || undefined,
       certifications: form.certifications.length > 0 ? form.certifications : undefined,
-      images: imageUrl ? [{ url: imageUrl }] : [],
+      images: images.map((img, i) => ({ ...img, order: i })),
     }
 
     if (isEdit) {
@@ -168,21 +194,7 @@ export function SellerProductEdit() {
                   <label className="block text-xs font-bold uppercase tracking-wider text-ink-mute mb-1.5">
                     Ảnh sản phẩm
                   </label>
-                  <input
-                    type="url"
-                    placeholder="https://example.com/image.jpg"
-                    value={imageUrl}
-                    onChange={e => setImageUrl(e.target.value)}
-                    className="w-full px-3 py-2 border border-border rounded-xl text-sm bg-white focus:outline-none focus:border-green transition-all"
-                  />
-                  {imageUrl && (
-                    <img
-                      src={imageUrl}
-                      alt="preview"
-                      className="mt-2 w-20 h-20 object-cover rounded-xl border border-border"
-                      onError={e => { e.currentTarget.style.display = 'none' }}
-                    />
-                  )}
+                  <ImageUploader value={images} onChange={setImages} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

@@ -54,8 +54,8 @@
 
 ## Frontend — Integrate
 
-- [ ] **T25** — Thay `<input type="url">` bằng `<ImageUploader>` trong `SellerProductEdit.tsx`
-- [ ] **T26** — Backward compat: render legacy `{url:""}` entries (fallback `urls.medium ?? url`)
+- [x] **T25** ✅ — Thay `<input type="url">` bằng `<ImageUploader>` trong `SellerProductEdit.tsx`
+- [x] **T26** ✅ — Backward compat: render legacy `{url:""}` entries (fallback `urls.medium ?? url`)
 - [ ] **T27** — Update `ProductCard.tsx` + `ShopPage.tsx` dùng `urls.medium` cho thumbnail
 
 ## Frontend — Tests
