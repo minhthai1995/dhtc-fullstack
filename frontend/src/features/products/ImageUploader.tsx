@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import { ImagePlus, X } from 'lucide-react'
 import imageCompression from 'browser-image-compression'
+import { useToast } from '@/components/ui/Toast'
 import { uploadProductImage } from './productImages.api'
 import type { ProductImage } from './types'
 
 export const MAX_IMAGES = 9
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'])
+const HARD_LIMIT_BYTES = 10 * 1024 * 1024  // raw camera shot ceiling before compression
 // Sellers on mobile often pick 4-8MB camera shots — compress client-side
 // to stay under the 2MB server ceiling and save their data plan.
 const COMPRESS_THRESHOLD_BYTES = 1.5 * 1024 * 1024
@@ -43,6 +46,7 @@ const nextLocalId = () => `pending-${++pendingCounter}`
 
 export function ImageUploader({ value, onChange }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const toast = useToast()
   const [dragOver, setDragOver] = useState(false)
   const [pending, setPending] = useState<PendingItem[]>([])
 
@@ -55,10 +59,38 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
   const handlePick = () => inputRef.current?.click()
   const remaining = MAX_IMAGES - value.length - pending.length
 
+  const validate = (file: File): string | null => {
+    // Empty content_type sneaks past on some mobile pickers — fall back to extension
+    const type = file.type || `image/${file.name.split('.').pop()?.toLowerCase() ?? ''}`
+    if (!ALLOWED_MIME.has(type)) {
+      return `"${file.name}" không phải định dạng ảnh hỗ trợ (JPG/PNG/WebP/HEIC)`
+    }
+    if (file.size > HARD_LIMIT_BYTES) {
+      const mb = (file.size / 1024 / 1024).toFixed(1)
+      return `"${file.name}" quá lớn (${mb}MB) — chọn ảnh nhỏ hơn 10MB`
+    }
+    return null
+  }
+
   const startUpload = (files: File[]) => {
     if (files.length === 0) return
+
     const slots = Math.max(0, MAX_IMAGES - value.length - pending.length)
-    const accepted = files.slice(0, slots)
+    if (files.length > slots) {
+      toast(`Chỉ thêm được ${slots} ảnh nữa — bỏ qua ${files.length - slots} ảnh dư`, 'info')
+    }
+
+    const accepted: File[] = []
+    for (const file of files.slice(0, slots)) {
+      const err = validate(file)
+      if (err) {
+        toast(err, 'error')
+        continue
+      }
+      accepted.push(file)
+    }
+    if (accepted.length === 0) return
+
     const items: PendingItem[] = accepted.map((file) => ({
       localId: nextLocalId(),
       file,
@@ -84,10 +116,14 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
             return prev.filter((p) => p.localId !== item.localId)
           })
         })
-        .catch(() => {
+        .catch((err: unknown) => {
+          const detail =
+            (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+          const msg = typeof detail === 'string' ? detail : 'Tải lên thất bại — thử lại'
+          toast(msg, 'error')
           setPending((prev) =>
             prev.map((p) =>
-              p.localId === item.localId ? { ...p, error: 'Tải lên thất bại' } : p,
+              p.localId === item.localId ? { ...p, error: msg } : p,
             ),
           )
         })

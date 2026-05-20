@@ -50,7 +50,7 @@
 - [x] **T21** ✅ — Multi-upload với progress (axios onUploadProgress) + parallel mutations
 - [x] **T22** ✅ — Client compression (browser-image-compression) cho file > 1.5MB
 - [x] **T23** ✅ — Reorder qua native HTML5 drag-drop (draggable + onDragOver + onDrop)
-- [ ] **T24** — Toast errors tiếng Việt + validation client-side (MIME + size)
+- [x] **T24** ✅ — Toast errors tiếng Việt + validation client-side (MIME + size)
 
 ## Frontend — Integrate
 
