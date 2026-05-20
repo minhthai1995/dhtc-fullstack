@@ -1,12 +1,32 @@
 from collections.abc import AsyncIterator
+from io import BytesIO
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from PIL import Image
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.db import get_db
 from app.main import app
 from app.models import Base
+
+
+def make_test_image(
+    size: tuple[int, int] = (300, 300),
+    fmt: str = "JPEG",
+    color: tuple[int, int, int] = (200, 50, 50),
+    exif: bytes | None = None,
+) -> bytes:
+    """Build an in-memory test image for upload endpoint tests.
+
+    Returns encoded bytes ready to attach to multipart form data."""
+    img = Image.new("RGB", size, color)
+    buf = BytesIO()
+    if exif is not None:
+        img.save(buf, format=fmt, exif=exif)
+    else:
+        img.save(buf, format=fmt)
+    return buf.getvalue()
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
