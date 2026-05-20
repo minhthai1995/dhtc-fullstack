@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     FACEBOOK_APP_SECRET: str = ""
     FACEBOOK_WEBHOOK_VERIFY_TOKEN: str = "dhtc_webhook_2026"
 
+    # Facebook OAuth Login (P5A)
+    FACEBOOK_APP_ID: str = ""
+    FACEBOOK_OAUTH_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/facebook/callback"
+    FRONTEND_URL: str = "http://localhost:5173"
+
     # Image upload (product images)
     UPLOAD_DIR: Path = Path("./uploads")
     MAX_UPLOAD_BYTES: int = 2 * 1024 * 1024  # 2MB per file after client compression
