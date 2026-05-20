@@ -5,6 +5,7 @@ from app.models.merchant import Merchant, MerchantStatus, MerchantTier
 from app.models.notification import Notification, NotificationType
 from app.models.order import Order, OrderItem, OrderStatus
 from app.models.order_event import OrderEvent
+from app.models.page_view import PageView
 from app.models.platform_config import PlatformConfig
 from app.models.product import Product, ProductStatus
 from app.models.promotion import Promotion, PromotionType
@@ -31,6 +32,7 @@ __all__ = [
     "OrderItem",
     "OrderStatus",
     "OrderEvent",
+    "PageView",
     "CartItem",
     "Notification",
     "NotificationType",
