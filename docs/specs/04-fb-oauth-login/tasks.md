@@ -35,10 +35,8 @@
 
 ## Backend — Tests
 
-- [ ] **T14** — pytest fixtures `tests/conftest.py`: `fb_oauth_mocks` helper mock httpx responses cho /token + /me (dùng `monkeypatch` hoặc `respx`)
-  - Commit: `test(backend): fb_oauth_mocks fixture for httpx mocking`
-- [ ] **T15** — `tests/test_auth_facebook.py`: `test_facebook_start_redirects_to_fb` + `test_facebook_start_state_cookie_is_httponly_lax`
-  - Commit: `test(backend): /auth/facebook/start redirect + cookie attrs`
+- [x] **T14** ✅ — `fb_oauth_mocks` fixture trong `tests/conftest.py` patch `exchange_code_for_token` + `fetch_user_profile` via monkeypatch — `b6723c1`
+- [x] **T15** ✅ — `test_facebook_start_redirects_to_fb` + `test_facebook_start_state_cookie_is_httponly_lax` — pending commit
 - [ ] **T16** — `tests/test_auth_facebook.py`: `test_facebook_callback_new_user_happy` + `test_facebook_callback_duplicate_fb_app_user_id` (idempotent re-login)
   - Commit: `test(backend): /auth/facebook/callback new user + idempotent re-login`
 - [ ] **T17** — `tests/test_auth_facebook.py`: `test_facebook_callback_email_merge` (existing user same email → link, không tạo user thứ 2)
