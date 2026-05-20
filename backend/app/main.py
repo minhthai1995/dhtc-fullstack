@@ -3,9 +3,12 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pillow_heif import register_heif_opener
 
 from app.api.v1 import api_router
 from app.core.config import settings
+
+register_heif_opener()  # Enable PIL.Image.open() for HEIC files from iPhone
 
 
 @asynccontextmanager

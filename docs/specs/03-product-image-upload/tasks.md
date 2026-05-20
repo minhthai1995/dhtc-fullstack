@@ -22,7 +22,7 @@
 - [x] **T5** ✅ — `services/image_service.py` skeleton (SIZES + ALLOWED_MIME + ImageValidationError + MAX_IMAGE_PIXELS)
 - [x] **T6** ✅ — `services/image_service.py::process_upload()` (validate + EXIF + 4 WebP sizes)
 - [x] **T7** ✅ — `services/image_service.py::delete_image()` (idempotent + path traversal block)
-- [ ] **T8** — `register_heif_opener()` trong `main.py` startup
+- [x] **T8** ✅ — `register_heif_opener()` trong `main.py` (iPhone HEIC decoding)
 
 ## Backend — Endpoints
 
