@@ -13,38 +13,25 @@
 
 ## Backend — Config & model
 
-- [ ] **T1** — Thêm `FACEBOOK_APP_ID`, `FACEBOOK_OAUTH_REDIRECT_URI`, `FRONTEND_URL` vào `app/core/config.py` (Pydantic Settings) + `.env.example` (placeholder values)
-  - Commit: `chore(backend): add FB OAuth env keys to config + .env.example`
-- [ ] **T2** — Tạo model `app/models/fb_profile.py`: table `fb_profiles`, columns `id`, `user_id` FK UNIQUE, `fb_app_user_id` UNIQUE, `fb_email`, `fb_first_name`, `fb_last_name`, `fb_profile_pic_url`, `fb_locale`, `raw_oauth_payload` (JSON), `linked_at`, `messenger_psid` UNIQUE nullable (reserved P5C), inherit `TimestampMixin`
-  - Commit: `feat(backend): add FBProfile model with reserved messenger_psid column`
-- [ ] **T3** — Import `FBProfile` vào `app/models/__init__.py` (yêu cầu cho Alembic autogen + test conftest)
-  - Commit: `chore(backend): register FBProfile in models __init__`
-- [ ] **T4** — Alembic migration `create_fb_profiles`: `uv run alembic revision --autogenerate -m "create fb_profiles"` → manual review (UNIQUE constraints, `JSON` không `JSONB`, `messenger_psid` nullable+UNIQUE)
-  - Commit: `feat(backend): alembic migration create fb_profiles table`
+- [x] **T1** ✅ — Thêm `FACEBOOK_APP_ID`, `FACEBOOK_OAUTH_REDIRECT_URI`, `FRONTEND_URL` vào `app/core/config.py` (Pydantic Settings) + `.env.example` (placeholder values) — `1c23568`
+- [x] **T2** ✅ — Tạo model `app/models/fb_profile.py`: table `fb_profiles`, columns `id`, `user_id` FK UNIQUE, `fb_app_user_id` UNIQUE, `fb_email`, `fb_first_name`, `fb_last_name`, `fb_profile_pic_url`, `fb_locale`, `raw_oauth_payload` (JSON), `linked_at`, `messenger_psid` UNIQUE nullable (reserved P5C), inherit `TimestampMixin` — `980247c`
+- [x] **T3** ✅ — Import `FBProfile` vào `app/models/__init__.py` (yêu cầu cho Alembic autogen + test conftest) — `aeb5efd` + bonus `8687ff7` (register ChatMessage để fix alembic autogen drift)
+- [x] **T4** ✅ — Alembic migration `create_fb_profiles`: autogen + manual cleanup (UNIQUE constraints, `JSON` không `JSONB`, `messenger_psid` nullable+UNIQUE). Round-trip upgrade/downgrade verified. — `125a6ea`
 
 ## Backend — Schemas, service, CRUD
 
-- [ ] **T5** — Schema `app/schemas/fb_profile.py`: `FBProfileOut` (read with `from_attributes=True`), `FBProfileCreate` (internal-only)
-  - Commit: `feat(backend): add FBProfile pydantic schemas`
-- [ ] **T6** — CRUD `app/crud/fb_profile.py`: `get_by_fb_app_user_id`, `get_by_user_id`, `create`, `update_oauth_payload`
-  - Commit: `feat(backend): add fb_profile CRUD operations`
-- [ ] **T7** — Service `app/services/facebook_oauth_service.py` skeleton: `build_authorize_url(state)`, error helpers, constants (FB_DIALOG_URL, GRAPH_BASE, SCOPES, FIELDS)
-  - Commit: `feat(backend): facebook_oauth_service skeleton + authorize URL builder`
-- [ ] **T8** — Service `exchange_code_for_token(code) -> str`: httpx POST `graph.facebook.com/v19.0/oauth/access_token`, timeout 8s, raise typed exception on FB error payload
-  - Commit: `feat(backend): FB OAuth code-to-token exchange`
-- [ ] **T9** — Service `fetch_user_profile(access_token) -> dict`: httpx GET `/me?fields=id,email,first_name,last_name,picture.width(400).height(400)`, normalize picture URL
-  - Commit: `feat(backend): FB Graph /me profile fetch`
-- [ ] **T10** — Service `upsert_user_and_profile(payload) -> User`: email merge nếu trùng, tạo user mới với `secrets.token_urlsafe(48)` + bcrypt nếu không, link/upsert FBProfile (idempotent on `fb_app_user_id`)
-  - Commit: `feat(backend): FB OAuth user upsert with email merge`
+- [x] **T5** ✅ — Schema `app/schemas/fb_profile.py`: `FBProfileOut` (read with `from_attributes=True`), `FBProfileCreate` (internal-only) — `8db5261`
+- [x] **T6** ✅ — CRUD `app/crud/fb_profile.py`: `get_by_fb_app_user_id`, `get_by_user_id`, `create`, `update_oauth_payload` — `9f13798`
+- [x] **T7** ✅ — Service `app/services/facebook_oauth_service.py` skeleton: `build_authorize_url(state)`, error helpers, constants — `331b13b`
+- [x] **T8** ✅ — Service `exchange_code_for_token(code) -> str`: httpx GET `graph.facebook.com/v19.0/oauth/access_token`, timeout 8s, raise typed exception — `6ec52d4`
+- [x] **T9** ✅ — Service `fetch_user_profile(access_token) -> dict`: httpx GET `/me?fields=...`, normalize picture URL — `4529178`
+- [x] **T10** ✅ — Service `upsert_user_and_profile(profile) -> User`: by `fb_app_user_id` → refresh; email merge; new user fallback — `436256e`
 
 ## Backend — Endpoints
 
-- [ ] **T11** — Router `app/api/v1/auth_facebook.py` + endpoint `GET /auth/facebook/start`: sinh state `secrets.token_urlsafe(32)`, set HttpOnly+Secure+SameSite=Lax cookie TTL 600s, 307 redirect dialog URL
-  - Commit: `feat(backend): GET /auth/facebook/start with CSRF state cookie`
-- [ ] **T12** — Endpoint `GET /auth/facebook/callback?code=&state=`: verify state cookie `hmac.compare_digest`, gọi service exchange + fetch + upsert, issue JWT, 302 `FRONTEND_URL/auth/fb-return?token=<jwt>`; error path → `?error=<vi_code>`
-  - Commit: `feat(backend): GET /auth/facebook/callback issues JWT and redirects FE`
-- [ ] **T13** — Mount router vào `app/main.py` (prefix `/api/v1`)
-  - Commit: `chore(backend): mount auth_facebook router`
+- [x] **T11** ✅ — Router `app/api/v1/auth_facebook.py` + `GET /auth/facebook/start`: state + HttpOnly+SameSite=Lax cookie TTL 600s + 307 dialog redirect — `cd748ad`
+- [x] **T12** ✅ — `GET /auth/facebook/callback?code=&state=`: `hmac.compare_digest` state, exchange+fetch+upsert, JWT, 302 `FRONTEND_URL/auth/fb-return?token=` or `?error=` — `fdb5cf6`
+- [x] **T13** ✅ — Mount router vào `app/api/v1/__init__.py` (prefix `/v1` đã có ở `api_router`) — `61579c5`. Smoke verified via TestClient: `/start` → 307 facebook.com + cookie set; `/callback` (no params) → 302 FE `?error=invalid_state`.
 
 ## Backend — Tests
 
