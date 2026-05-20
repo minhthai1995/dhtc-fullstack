@@ -35,7 +35,7 @@
 
 - [x] **T13** ✅ — pytest fixtures: `make_test_image(size)` helper trong `tests/conftest.py`
 - [x] **T14** ✅ — `tests/test_product_images.py`: happy + 401 + oversized + invalid MIME
-- [ ] **T15** — `tests/test_product_images.py`: malformed image + delete + EXIF rotation
+- [x] **T15** ✅ — `tests/test_product_images.py`: malformed image + delete + EXIF rotation
 
 ## Frontend — Types & API client
 

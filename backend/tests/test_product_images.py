@@ -93,3 +93,91 @@ async def test_upload_rejects_invalid_mime(
     )
     assert resp.status_code == 422
     assert "không được hỗ trợ" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_upload_rejects_malformed_image(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    """JPEG content-type but garbage bytes — Pillow verify() must reject."""
+    token = await _seller_token(client, db_session, "malformed-seller@test.com")
+    resp = await client.post(
+        "/api/v1/products/images",
+        headers={"Authorization": f"Bearer {token}"},
+        files={"file": ("fake.jpg", b"NOT_REALLY_AN_IMAGE" * 50, "image/jpeg")},
+    )
+    assert resp.status_code == 422
+    assert "không phải ảnh hợp lệ" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_delete_image_idempotent(
+    client: AsyncClient, db_session: AsyncSession, _isolated_upload_dir: Path
+) -> None:
+    token = await _seller_token(client, db_session, "delete-seller@test.com")
+    headers = {"Authorization": f"Bearer {token}"}
+
+    upload = await client.post(
+        "/api/v1/products/images",
+        headers=headers,
+        files={"file": ("photo.jpg", make_test_image((200, 200)), "image/jpeg")},
+    )
+    assert upload.status_code == 201
+    image_id = upload.json()["id"]
+    folder = _isolated_upload_dir / "products" / image_id
+    assert folder.exists()
+
+    first = await client.delete(
+        f"/api/v1/products/images/{image_id}", headers=headers
+    )
+    assert first.status_code == 204
+    assert not folder.exists()
+
+    # Idempotent: deleting again still returns 204
+    second = await client.delete(
+        f"/api/v1/products/images/{image_id}", headers=headers
+    )
+    assert second.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_delete_blocks_path_traversal(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    token = await _seller_token(client, db_session, "traversal-seller@test.com")
+    resp = await client.delete(
+        "/api/v1/products/images/..%2Fescape",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    # FastAPI may 404 the path, or service raises 400 — both block traversal
+    assert resp.status_code in (400, 404)
+
+
+@pytest.mark.asyncio
+async def test_upload_exif_rotation_applied(
+    client: AsyncClient, db_session: AsyncSession, _isolated_upload_dir: Path
+) -> None:
+    """EXIF orientation 6 = rotate 90° CCW — saved image must end up upright.
+
+    Source: 400 wide × 200 tall, with orientation=6 marker. After
+    exif_transpose, dimensions should swap to (200 wide × 400 tall)."""
+    from PIL import Image as PILImage
+
+    exif = PILImage.Exif()
+    exif[0x0112] = 6  # ExifTags.Base.Orientation = rotate 270° CW (i.e. CCW 90°)
+    raw = make_test_image((400, 200), exif=exif.tobytes())
+
+    token = await _seller_token(client, db_session, "exif-seller@test.com")
+    resp = await client.post(
+        "/api/v1/products/images",
+        headers={"Authorization": f"Bearer {token}"},
+        files={"file": ("rotated.jpg", raw, "image/jpeg")},
+    )
+    assert resp.status_code == 201, resp.text
+    image_id = resp.json()["id"]
+    original_path = _isolated_upload_dir / "products" / image_id / "original.webp"
+    with PILImage.open(original_path) as img:
+        # After transpose: raw 400×200 landscape → upright 200×400 portrait.
+        # ImageOps.contain may rescale, but height > width must hold.
+        w, h = img.size
+        assert h > w, f"EXIF rotation not applied — got {w}×{h}, expected portrait"
