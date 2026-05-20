@@ -337,3 +337,63 @@ export async function getCRMConversationMessages(sessionId: string): Promise<Cha
   const { data } = await api.get<ChatMessageOut[]>(`/admin/crm/conversations/${sessionId}`)
   return data
 }
+
+// ── Behavior analytics (page tracking P2) ─────────────────────────────────────
+
+export interface BehaviorStats {
+  total_sessions: number
+  bounce_rate: number | null
+  avg_duration_sec: number | null
+  pages_per_session: number | null
+}
+
+export interface BehaviorBucket {
+  key: string
+  count: number
+}
+
+export interface TopPage {
+  path: string
+  count: number
+}
+
+export interface BehaviorFunnelStage {
+  key: 'view_product' | 'add_to_cart' | 'checkout' | 'complete'
+  count: number
+}
+
+export interface HourlyBucket {
+  hour: number
+  count: number
+}
+
+export interface BehaviorOverview {
+  stats: BehaviorStats
+  by_device: BehaviorBucket[]
+  by_source: BehaviorBucket[]
+  top_pages: TopPage[]
+  funnel: BehaviorFunnelStage[]
+  hourly_24h: HourlyBucket[]
+}
+
+export interface SessionSummary {
+  session_id: string
+  visitor_id: string
+  user_id: number | null
+  page_count: number
+  duration_sec: number
+  first_seen: string
+  last_seen: string
+}
+
+export async function getBehaviorOverview(date?: string): Promise<BehaviorOverview> {
+  const { data } = await api.get<BehaviorOverview>('/admin/behavior/overview', {
+    params: date ? { date } : undefined,
+  })
+  return data
+}
+
+export async function getBehaviorSessions(params: { date?: string; limit?: number; offset?: number } = {}): Promise<SessionSummary[]> {
+  const { data } = await api.get<SessionSummary[]>('/admin/behavior/sessions', { params })
+  return data
+}
