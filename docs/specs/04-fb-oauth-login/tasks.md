@@ -51,12 +51,11 @@
 
 ## Frontend — Tests
 
-- [ ] **T24** — `frontend/tests/auth/FacebookLogin.test.tsx`: render button trong `LoginPage` + click → `window.location.href` set đúng
-  - Commit: `test(frontend): FacebookLoginButton renders and triggers redirect`
-- [ ] **T25** — `frontend/tests/auth/FacebookLogin.test.tsx`: `/auth/fb-return?token=...` happy path (call `setAuthToken` + navigate `/`)
-  - Commit: `test(frontend): /auth/fb-return token path`
-- [ ] **T26** — `frontend/tests/auth/FacebookLogin.test.tsx`: `/auth/fb-return?error=invalid_state` render toast VI + nút back
-  - Commit: `test(frontend): /auth/fb-return error path`
+- [x] **T24** ✅ — Button tests: default label, click → `window.location.href = /api/v1/auth/facebook/start`, disabled blocks navigation — pending commit
+- [x] **T25** ✅ — `/auth/fb-return?token=...` happy: token persisted to `sessionStorage.access_token` + navigated to `/` via replace — pending commit
+- [x] **T26** ✅ — `/auth/fb-return?error=...` paths: `invalid_state` (VN msg + back link), `user_cancelled` (VN msg), unknown code (fallback shows raw code). Bonus: assert token NOT persisted on error — pending commit. **All 3 in one commit** (single file, tightly coupled).
+
+  **Full FE suite: 70/70 pass.**
 
 ## Integration & handoff
 
