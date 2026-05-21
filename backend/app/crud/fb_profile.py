@@ -71,6 +71,32 @@ _MESSENGER_CACHE_KEYS = {
 }
 
 
+def _is_postgres(db: AsyncSession) -> bool:
+    bind = db.bind
+    return bind is not None and bind.dialect.name == "postgresql"
+
+
+async def _portable_upsert(
+    db: AsyncSession, *, psid: str, payload: dict[str, Any]
+) -> None:
+    """Upsert keyed on messenger_psid. Atomic on Postgres, SELECT/UPDATE
+    fallback elsewhere (sqlite test env)."""
+    if _is_postgres(db):
+        stmt = pg_insert(FBProfile).values(messenger_psid=psid, **payload)
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[FBProfile.messenger_psid],
+            set_={k: stmt.excluded[k] for k in payload},
+        )
+        await db.execute(stmt)
+        return
+    existing = await get_by_psid(db, psid)
+    if existing is None:
+        db.add(FBProfile(messenger_psid=psid, **payload))
+    else:
+        for k, v in payload.items():
+            setattr(existing, k, v)
+
+
 async def upsert_messenger_cache(
     db: AsyncSession,
     *,
@@ -91,7 +117,6 @@ async def upsert_messenger_cache(
     now = datetime.now(UTC).replace(tzinfo=None)
     payload.update(
         {
-            "messenger_psid": psid,
             "page_id": page_id,
             "messenger_fetched_at": now,
             "messenger_status": "active",
@@ -99,15 +124,7 @@ async def upsert_messenger_cache(
         }
     )
 
-    stmt = pg_insert(FBProfile).values(**payload)
-    update_cols = {
-        k: stmt.excluded[k] for k in payload if k != "messenger_psid"
-    }
-    stmt = stmt.on_conflict_do_update(
-        index_elements=[FBProfile.messenger_psid],
-        set_=update_cols,
-    )
-    await db.execute(stmt)
+    await _portable_upsert(db, psid=psid, payload=payload)
     await db.commit()
     profile = await get_by_psid(db, psid)
     assert profile is not None
@@ -128,22 +145,13 @@ async def upsert_messenger_error(
     we don't immediately retry a known-bad PSID.
     """
     now = datetime.now(UTC).replace(tzinfo=None)
-    stmt = pg_insert(FBProfile).values(
-        messenger_psid=psid,
-        page_id=page_id,
-        messenger_fetched_at=now,
-        messenger_status=status,
-        messenger_error_message=error_message,
-    )
-    stmt = stmt.on_conflict_do_update(
-        index_elements=[FBProfile.messenger_psid],
-        set_={
-            "messenger_fetched_at": stmt.excluded.messenger_fetched_at,
-            "messenger_status": stmt.excluded.messenger_status,
-            "messenger_error_message": stmt.excluded.messenger_error_message,
-        },
-    )
-    await db.execute(stmt)
+    payload = {
+        "page_id": page_id,
+        "messenger_fetched_at": now,
+        "messenger_status": status,
+        "messenger_error_message": error_message,
+    }
+    await _portable_upsert(db, psid=psid, payload=payload)
     await db.commit()
     profile = await get_by_psid(db, psid)
     assert profile is not None
