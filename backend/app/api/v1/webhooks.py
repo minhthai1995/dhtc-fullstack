@@ -6,11 +6,15 @@ import hmac
 import logging
 
 import httpx
-from fastapi import APIRouter, Header, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request, status
 from pydantic import BaseModel
 
 from app.core.config import settings
-from app.core.db import get_db
+from app.core.db import AsyncSessionLocal, get_db
+from app.crud import fb_profile as fb_profile_crud
+from app.services.fb_graph_service import (
+    fetch_messenger_profile_safe,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhook", tags=["webhooks"])
@@ -54,10 +58,35 @@ class FBWebhookBody(BaseModel):
     object: str
     entry: list[FBEntry] = []
 
+async def _bg_fetch_profile(psid: str, page_token: str, page_id: str) -> None:
+    """Background task: open dedicated session, enrich PSID profile via Graph.
+
+    Runs after the webhook response is sent so latency-sensitive Meta retries
+    aren't blocked. Never raises — fetch_messenger_profile_safe swallows.
+    """
+    async with AsyncSessionLocal() as session:
+        await fetch_messenger_profile_safe(
+            psid, page_token, session, page_id=page_id
+        )
+
+
+def _profile_cache_fresh(profile: object | None) -> bool:
+    """Cheap inline cache check so we skip scheduling when row is recent."""
+    if profile is None:
+        return False
+    fetched_at = getattr(profile, "messenger_fetched_at", None)
+    if fetched_at is None:
+        return False
+    from datetime import UTC, datetime, timedelta
+    age = datetime.now(UTC).replace(tzinfo=None) - fetched_at
+    return age < timedelta(days=settings.MESSENGER_PROFILE_CACHE_DAYS)
+
+
 @router.post("/facebook", status_code=200)
 async def handle_facebook_webhook(
     request: Request,
     body: FBWebhookBody,
+    background_tasks: BackgroundTasks,
     x_hub_signature_256: str | None = Header(default=None),
 ) -> dict:
     raw = await request.body()
@@ -74,12 +103,26 @@ async def handle_facebook_webhook(
 
     async for db in get_db():
         for entry in body.entry:
+            page_id: str = entry.id
             for event in entry.messaging:
                 sender_id: str = event.get("sender", {}).get("id", "")
                 if not sender_id:
                     continue
 
                 session_id = f"fb_sess_{sender_id}"
+
+                # ── P5C profile enrichment ────────────────────────────────
+                # First-seen / stale PSID → schedule Graph profile fetch.
+                # Token check protects dev environments without FB creds.
+                if FB_PAGE_TOKEN:
+                    cached = await fb_profile_crud.get_by_psid(db, sender_id)
+                    if not _profile_cache_fresh(cached):
+                        background_tasks.add_task(
+                            _bg_fetch_profile,
+                            sender_id,
+                            FB_PAGE_TOKEN,
+                            page_id,
+                        )
 
                 # ── Postback ──────────────────────────────────────────────
                 if "postback" in event:
