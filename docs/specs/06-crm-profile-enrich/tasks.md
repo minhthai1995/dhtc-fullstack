@@ -11,32 +11,32 @@
 
 ## Phase 1 — Schema + model
 
-- [ ] **T1** (20') — Extend `app/models/fb_profile.py`: add `page_id`, `messenger_name`, `messenger_pic_url`, `messenger_age_range_min/max`, `messenger_gender`, `messenger_locale`, `messenger_fetched_at`, `messenger_status`, `messenger_error_message`. Make `user_id` + `fb_app_user_id` nullable.
+- [x] **T1** ✅ a77fed1 — Extend `app/models/fb_profile.py`: add `page_id`, `messenger_name`, `messenger_pic_url`, `messenger_age_range_min/max`, `messenger_gender`, `messenger_locale`, `messenger_fetched_at`, `messenger_status`, `messenger_error_message`. Make `user_id` + `fb_app_user_id` nullable.
   - Commit: `feat(backend): extend fb_profiles with messenger cache fields`
 
-- [ ] **T2** (15') — Tạo `app/models/fb_graph_call_log.py`: `FBGraphCallLog` debug table. Register vào `__init__.py`.
+- [x] **T2** ✅ 5c30f70 — Tạo `app/models/fb_graph_call_log.py`: `FBGraphCallLog` debug table. Register vào `__init__.py`.
   - Commit: `feat(backend): add FBGraphCallLog model`
 
-- [ ] **T3** (25') — Alembic migration `extend_fb_profiles_messenger_cache + create_fb_graph_call_log`. Round-trip verify upgrade/downgrade.
+- [x] **T3** ✅ 5ae59c1 — Alembic migration `extend_fb_profiles_messenger_cache + create_fb_graph_call_log`. Round-trip verify upgrade/downgrade.
   - Commit: `chore(backend): migration extend fb_profiles + graph log`
 
 ## Phase 2 — Service + CRUD
 
-- [ ] **T4** (15') — Extend `app/crud/fb_profile.py`: add `get_by_psid`, `upsert_messenger_cache(psid, page_id, data)`, `upsert_messenger_error(psid, err)`, `get_stale(older_than)`.
+- [x] **T4** ✅ 35d180a — Extend `app/crud/fb_profile.py`: add `get_by_psid`, `upsert_messenger_cache(psid, page_id, data)`, `upsert_messenger_error(psid, err)`, `get_stale(older_than)`.
   - Commit: `feat(backend): fb_profile CRUD upsert messenger cache`
 
-- [ ] **T5** (30') — `app/services/fb_graph_service.py` — `fetch_messenger_profile` với httpx, timeout 5s, cache check 30 ngày, log call. Thêm `PAGE_ACCESS_TOKEN` vào `config.py` + `.env.example`.
+- [x] **T5** ✅ 88c3c2a — `app/services/fb_graph_service.py` — `fetch_messenger_profile` với httpx, timeout 5s, cache check 30 ngày, log call. Thêm `PAGE_ACCESS_TOKEN` vào `config.py` + `.env.example`.
   - Commit: `feat(backend): FBGraphService.fetch_messenger_profile`
 
-- [ ] **T6** (25') — `app/services/customer_derive.py`: `derive_country`, `derive_language`, `extract_declared_birthday` với regex + VN city keyword dict. Unit test fixtures.
+- [x] **T6** ✅ c9d61e2 — `app/services/customer_derive.py`: `derive_country`, `derive_language`, `extract_declared_birthday` với regex + VN city keyword dict. Unit test fixtures.
   - Commit: `feat(backend): customer_derive helpers (country/lang/birthday)`
 
 ## Phase 3 — Webhook integration
 
-- [ ] **T7** (20') — Edit `app/api/v1/webhooks.py`: sau save inbound message, check cache + add `BackgroundTasks` task gọi `fetch_messenger_profile_safe` (mở session DB riêng).
+- [x] **T7** ✅ d0351fc — Edit `app/api/v1/webhooks.py`: sau save inbound message, check cache + add `BackgroundTasks` task gọi `fetch_messenger_profile_safe` (mở session DB riêng).
   - Commit: `feat(backend): trigger profile fetch on first webhook seen`
 
-- [ ] **T8** (25') — Tests `tests/test_webhook_profile_fetch.py`: mock httpx Graph response → POST webhook PSID mới → assert messenger_profiles row created sau await BackgroundTasks. Test cache hit (không gọi Graph lần 2 trong 30 ngày).
+- [x] **T8** ✅ 1351d71 — Tests `tests/test_webhook_profile_fetch.py`: mock httpx Graph response → POST webhook PSID mới → assert messenger_profiles row created sau await BackgroundTasks. Test cache hit (không gọi Graph lần 2 trong 30 ngày).
   - Commit: `test(backend): webhook triggers Graph cache fetch`
 
 ## Phase 4 — Admin endpoint enrich

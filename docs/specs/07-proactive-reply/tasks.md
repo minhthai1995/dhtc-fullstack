@@ -19,30 +19,30 @@
 
 ## Phase 1 — Schema
 
-- [ ] **T1** (25') — Models: `ProactiveReply`, `CommentThread`, `ProactiveTemplateConfig`. Enums cho intent + status. Register `__init__.py`.
+- [x] **T1** ✅ 1aa0b7d — Models: `ProactiveReply`, `CommentThread`, `ProactiveTemplateConfig`. Enums cho intent + status. Register `__init__.py`.
   - Commit: `feat(backend): add proactive_reply models`
 
-- [ ] **T2** (30') — Alembic migration `create_proactive_reply_tables` + seed 5 row vào `proactive_template_config` (checkin/praise enabled; complaint/question/other disabled). Round-trip verify.
+- [x] **T2** ✅ 951194c — Alembic migration `create_proactive_reply_tables` + seed 5 row vào `proactive_template_config` (checkin/praise enabled; complaint/question/other disabled). Round-trip verify.
   - Commit: `chore(backend): migration proactive_reply + seed configs`
 
 ## Phase 2 — Service layer
 
-- [ ] **T3** (20') — `app/services/post_intent.py` — `classify_post_intent(text, has_checkin)`. Unit test 20 fixtures.
+- [x] **T3** ✅ 48957db — `app/services/post_intent.py` — `classify_post_intent(text, has_checkin)`. Unit test 20 fixtures.
   - Commit: `feat(backend): post intent classifier (5 categories)`
 
-- [ ] **T4** (20') — `app/services/reply_templates.py` — TEMPLATES dict + `pick_template(intent)`. 3-5 variants per intent.
+- [x] **T4** ✅ b0b3849 — `app/services/reply_templates.py` — TEMPLATES dict + `pick_template(intent)`. 3-5 variants per intent.
   - Commit: `feat(backend): VN reply templates per intent`
 
-- [ ] **T5** (25') — `app/services/page_comment_service.py` — `post_comment(post_id, message, page_token)` với httpx, timeout 10s, raise on HTTP error.
+- [x] **T5** ✅ 89c92cb — `app/services/page_comment_service.py` — `post_comment(post_id, message, page_token)` với httpx, timeout 10s, raise on HTTP error.
   - Commit: `feat(backend): page comment service (Graph API wrapper)`
 
-- [ ] **T6** (30') — `app/crud/proactive_reply.py` — `get_by_post_id`, `count_replies_today(page_id)`, `psid_replied_within_24h(psid)`, `create_audit(...)`, `get_template_config(intent)`, `update_template_config(intent, is_enabled, user_id)`.
+- [x] **T6** ✅ 2dd4577 — `app/crud/proactive_reply.py` — `get_by_post_id`, `count_replies_today(page_id)`, `psid_replied_within_24h(psid)`, `create_audit(...)`, `get_template_config(intent)`, `update_template_config(intent, is_enabled, user_id)`.
   - Commit: `feat(backend): proactive_reply CRUD`
 
-- [ ] **T7** (40') — `app/services/proactive_reply_service.py` — `handle_feed_event(event, db)` với full flow: dedup → rate limit → classify → config check → cooldown → pick template → dry-run/send → audit. Add `PROACTIVE_REPLY_ENABLED` to config.
+- [x] **T7** ✅ 34d48d6 — `app/services/proactive_reply_service.py` — `handle_feed_event(event, db)` với full flow: dedup → rate limit → classify → config check → cooldown → pick template → dry-run/send → audit. Add `PROACTIVE_REPLY_ENABLED` to config.
   - Commit: `feat(backend): proactive reply orchestrator service`
 
-- [ ] **T8** (35') — Tests `tests/test_proactive_reply_service.py`: mock httpx + DB → assert each branch (dedup, rate limit, disabled intent, cooldown, dry-run, sent, error). ≥10 case.
+- [x] **T8** ✅ d2974c1 — Tests `tests/test_proactive_reply_service.py`: mock httpx + DB → assert each branch (dedup, rate limit, disabled intent, cooldown, dry-run, sent, error). ≥10 case.
   - Commit: `test(backend): proactive_reply_service all branches`
 
 ## Phase 3 — Webhook integration
