@@ -9,6 +9,14 @@ from app.models.order import Order, OrderItem, OrderStatus
 from app.models.order_event import OrderEvent
 from app.models.page_view import PageView
 from app.models.platform_config import PlatformConfig
+from app.models.proactive_reply import (
+    CommentThread,
+    DMStatus,
+    ProactiveIntent,
+    ProactiveReply,
+    ProactiveStatus,
+    ProactiveTemplateConfig,
+)
 from app.models.product import Product, ProductStatus
 from app.models.promotion import Promotion, PromotionType
 from app.models.return_request import ReturnRequest, ReturnStatus
@@ -43,6 +51,12 @@ __all__ = [
     "Notification",
     "NotificationType",
     "PlatformConfig",
+    "ProactiveReply",
+    "ProactiveIntent",
+    "ProactiveStatus",
+    "CommentThread",
+    "DMStatus",
+    "ProactiveTemplateConfig",
     "Promotion",
     "PromotionType",
     "ReturnRequest",
