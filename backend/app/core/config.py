@@ -39,6 +39,17 @@ class Settings(BaseSettings):
     FACEBOOK_OAUTH_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/facebook/callback"
     FRONTEND_URL: str = "http://localhost:5173"
 
+    # Facebook Graph API (P5C-enrich + P5E)
+    FACEBOOK_GRAPH_API_VERSION: str = "v22.0"
+    MESSENGER_PROFILE_CACHE_DAYS: int = 30
+
+    # Proactive reply (P5E) — default OFF until Meta App Review approves
+    # pages_manage_engagement + pages_read_user_content.
+    PROACTIVE_REPLY_ENABLED: bool = False
+    PROACTIVE_REPLY_DRY_RUN: bool = True
+    PROACTIVE_REPLY_RATE_LIMIT_PER_HOUR: int = 30
+    PROACTIVE_REPLY_PER_PSID_COOLDOWN_HOURS: int = 24
+
     # Image upload (product images)
     UPLOAD_DIR: Path = Path("./uploads")
     MAX_UPLOAD_BYTES: int = 2 * 1024 * 1024  # 2MB per file after client compression
