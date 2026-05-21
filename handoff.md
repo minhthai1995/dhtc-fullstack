@@ -7,7 +7,7 @@
 ## TL;DR (đọc đầu phiên mới — ≤ 30 dòng)
 
 - **Đây là:** DHTC marketplace fullstack (Đà Nẵng truyền thống) — đã rời template, đang build feature thật
-- **Đã có:** Auth ✅ · Admin/Seller/Customer portals ✅ · Chatbot Messenger ✅ · CRM admin 4-tab ✅ · Page tracking P2 ✅ · Product image upload P3 ✅ · **Facebook OAuth login P5A ✅**
+- **Đã có:** Auth ✅ · Admin/Seller/Customer portals ✅ · Chatbot Messenger ✅ · CRM admin 4-tab ✅ · Page tracking P2 ✅ · Product image upload P3 ✅ · **Facebook OAuth login P5A ✅** · **P4A DB foundation 🔄 5/13** (Phase 1+2 đầu xong, T6-T13 còn)
 - **Vừa xong (2026-05-20):** Feature P5A Facebook OAuth login (spec 30 task → BE 9/9 + FE 70/70 + type-check clean)
   - BE: `app/services/facebook_oauth_service.py` (build_authorize_url + exchange_code_for_token + fetch_user_profile + upsert_user_and_profile), `app/api/v1/auth_facebook.py` (`GET /auth/facebook/start` CSRF state HttpOnly+SameSite=Lax cookie TTL 600s → 307 dialog; `GET /auth/facebook/callback?code=&state=` hmac.compare_digest + exchange+fetch+upsert + 302 `FRONTEND_URL/auth/fb-return?token=` hoặc `?error=`), `models/fb_profile.py` table `fb_profiles` UNIQUE(user_id, fb_app_user_id, messenger_psid nullable reserved P5C), Alembic `125a6ea`
   - BE policy: email merge auto-link FBProfile vào user email/password đã tồn tại (password hash giữ nguyên); no-email synthetic `fb_<id>@dhtc.local` + random unusable password `secrets.token_urlsafe(48)`
@@ -25,9 +25,10 @@
 
 ## Active context
 
-→ Sau commit lớn này, dirty tree sẽ về clean. Lần sau nhớ commit theo task để tránh dồn.
-→ Pre-existing test failure trong `test_orders.py::test_cancel_order_restores_stock` (OrderEvent.created_at `'now()'` isoformat) — không phải do CRM work, để xử lý riêng.
-→ Backend ruff có 66 lỗi pre-existing (F401/F811/E501/F841) — không gate CI hiện tại, cleanup sau.
+→ **P4A checkpoint 2026-05-21:** Phase 1 + nửa Phase 2 xong. Suite **77/77** PASS (fix `notification.created_at` portability + pin behavior test order `created_at`). Spec ở `docs/specs/05-db-foundation/{requirements,design,tasks,checklist}.md`.
+  - Done (5): T1 fix notification.py `func.now()` (`3dfa0b6`); T2 portability smoke test (`2ad708a`); T3 verify 77/77 + behavior TZ flake fix (`c6535d7`); T4 ChatMessage +7 cột P5C (`bd704e8`); T5 Alembic migration `extend_chat_messages_p5c` upgrade/downgrade round-trip clean (`c64c765`).
+  - Remaining (8): T6 tests FK SET NULL + indexes; T7-T11 customer_clusters + customer_cluster_members + 7 seed + CRUD + tests; T12 ruff 29→0; T13 update handoff + tick 100%.
+→ Backend ruff có 29 lỗi pre-existing (F401/F811/E501/F841) — chờ T12 cleanup.
 
 ---
 
