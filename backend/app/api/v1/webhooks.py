@@ -6,8 +6,17 @@ import hmac
 import logging
 
 import httpx
-from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    Header,
+    HTTPException,
+    Request,
+    status,
+)
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.db import AsyncSessionLocal, get_db
@@ -88,6 +97,7 @@ async def handle_facebook_webhook(
     body: FBWebhookBody,
     background_tasks: BackgroundTasks,
     x_hub_signature_256: str | None = Header(default=None),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
     raw = await request.body()
     if not _verify_signature(raw, x_hub_signature_256 or ""):
@@ -101,78 +111,77 @@ async def handle_facebook_webhook(
 
     agent = get_agent()
 
-    async for db in get_db():
-        for entry in body.entry:
-            page_id: str = entry.id
-            for event in entry.messaging:
-                sender_id: str = event.get("sender", {}).get("id", "")
-                if not sender_id:
-                    continue
+    for entry in body.entry:
+        page_id: str = entry.id
+        for event in entry.messaging:
+            sender_id: str = event.get("sender", {}).get("id", "")
+            if not sender_id:
+                continue
 
-                session_id = f"fb_sess_{sender_id}"
+            session_id = f"fb_sess_{sender_id}"
 
-                # ── P5C profile enrichment ────────────────────────────────
-                # First-seen / stale PSID → schedule Graph profile fetch.
-                # Token check protects dev environments without FB creds.
-                if FB_PAGE_TOKEN:
-                    cached = await fb_profile_crud.get_by_psid(db, sender_id)
-                    if not _profile_cache_fresh(cached):
-                        background_tasks.add_task(
-                            _bg_fetch_profile,
-                            sender_id,
-                            FB_PAGE_TOKEN,
-                            page_id,
-                        )
-
-                # ── Postback ──────────────────────────────────────────────
-                if "postback" in event:
-                    payload = event["postback"].get("payload", "")
-                    await _handle_postback(sender_id, payload)
-                    continue
-
-                # ── Text messages ─────────────────────────────────────────
-                msg = event.get("message", {})
-                if msg.get("is_echo"):
-                    continue
-                text: str = msg.get("text", "").strip()
-                if not text:
-                    continue
-
-                logger.info("[Messenger] %s: %r", sender_id, text[:80])
-
-                # Save inbound message
-                db.add(ChatMessage(
-                    session_id=session_id,
-                    fb_user_id=sender_id,
-                    direction=MessageDirection.inbound,
-                    platform=MessagePlatform.messenger,
-                    content=text,
-                ))
-                await db.commit()
-
-                await _send_action(sender_id, "typing_on")
-
-                try:
-                    response = await agent.chat(
-                        message=text,
-                        user_id=f"fb_{sender_id}",
-                        session_id=session_id,
+            # ── P5C profile enrichment ────────────────────────────────
+            # First-seen / stale PSID → schedule Graph profile fetch.
+            # Token check protects dev environments without FB creds.
+            if FB_PAGE_TOKEN:
+                cached = await fb_profile_crud.get_by_psid(db, sender_id)
+                if not _profile_cache_fresh(cached):
+                    background_tasks.add_task(
+                        _bg_fetch_profile,
+                        sender_id,
+                        FB_PAGE_TOKEN,
+                        page_id,
                     )
-                except Exception as exc:
-                    logger.error("[Chatbot] Error: %s", exc)
-                    response = "Xin lỗi, tôi đang gặp sự cố. Vui lòng thử lại sau ít phút."
 
-                # Save outbound response
-                db.add(ChatMessage(
+            # ── Postback ──────────────────────────────────────────────
+            if "postback" in event:
+                payload = event["postback"].get("payload", "")
+                await _handle_postback(sender_id, payload)
+                continue
+
+            # ── Text messages ─────────────────────────────────────────
+            msg = event.get("message", {})
+            if msg.get("is_echo"):
+                continue
+            text: str = msg.get("text", "").strip()
+            if not text:
+                continue
+
+            logger.info("[Messenger] %s: %r", sender_id, text[:80])
+
+            # Save inbound message
+            db.add(ChatMessage(
+                session_id=session_id,
+                fb_user_id=sender_id,
+                direction=MessageDirection.inbound,
+                platform=MessagePlatform.messenger,
+                content=text,
+            ))
+            await db.commit()
+
+            await _send_action(sender_id, "typing_on")
+
+            try:
+                response = await agent.chat(
+                    message=text,
+                    user_id=f"fb_{sender_id}",
                     session_id=session_id,
-                    fb_user_id=sender_id,
-                    direction=MessageDirection.outbound,
-                    platform=MessagePlatform.messenger,
-                    content=response,
-                ))
-                await db.commit()
+                )
+            except Exception as exc:
+                logger.error("[Chatbot] Error: %s", exc)
+                response = "Xin lỗi, tôi đang gặp sự cố. Vui lòng thử lại sau ít phút."
 
-                await _send_text(sender_id, response)
+            # Save outbound response
+            db.add(ChatMessage(
+                session_id=session_id,
+                fb_user_id=sender_id,
+                direction=MessageDirection.outbound,
+                platform=MessagePlatform.messenger,
+                content=response,
+            ))
+            await db.commit()
+
+            await _send_text(sender_id, response)
 
     return {"status": "ok"}
 
