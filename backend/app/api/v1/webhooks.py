@@ -24,6 +24,7 @@ from app.crud import fb_profile as fb_profile_crud
 from app.services.fb_graph_service import (
     fetch_messenger_profile_safe,
 )
+from app.services.proactive_reply_service import handle_feed_event
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhook", tags=["webhooks"])
@@ -62,10 +63,16 @@ async def verify_webhook(request: Request) -> int | str:
 class FBEntry(BaseModel):
     id: str
     messaging: list[dict] = []
+    changes: list[dict] = []  # Page-level events (feed, mentions, etc.)
 
 class FBWebhookBody(BaseModel):
     object: str
     entry: list[FBEntry] = []
+
+
+# Page-level webhook fields routed to P5E proactive reply orchestrator.
+# Extending this set requires Meta App Review for the matching permission.
+ALLOWED_FIELDS: frozenset[str] = frozenset({"feed", "mentions"})
 
 async def _bg_fetch_profile(psid: str, page_token: str, page_id: str) -> None:
     """Background task: open dedicated session, enrich PSID profile via Graph.
@@ -182,6 +189,23 @@ async def handle_facebook_webhook(
             await db.commit()
 
             await _send_text(sender_id, response)
+
+        # ── P5E proactive reply on page-level events (feed, mentions) ────
+        # Each change is {"field": "feed", "value": {...}}. The orchestrator
+        # owns dedup, rate limit, cooldown, dry-run, and audit — we just
+        # filter by allowed field and dispatch.
+        for change in entry.changes:
+            field = change.get("field")
+            if field not in ALLOWED_FIELDS:
+                continue
+            try:
+                await handle_feed_event(change, page_id=page_id, db=db)
+            except Exception:
+                # Never crash the webhook on a single bad event — Meta
+                # would retry the whole batch and likely double-fire it.
+                logger.exception(
+                    "proactive reply failed page_id=%s field=%s", page_id, field
+                )
 
     return {"status": "ok"}
 
