@@ -22,6 +22,7 @@ FROM python:3.12-slim AS runtime
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    PORT=8001 \
     PATH="/app/.venv/bin:$PATH"
 
 RUN apt-get update \
@@ -38,14 +39,11 @@ COPY --chown=app:app alembic.ini ./
 
 USER app
 
-EXPOSE 8000
+EXPOSE 8001
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -fsS http://localhost:8000/api/v1/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -fsS http://localhost:${PORT}/api/v1/health || exit 1
 
-CMD ["gunicorn", "app.main:app", \
-     "--workers", "4", \
-     "--worker-class", "uvicorn.workers.UvicornWorker", \
-     "--bind", "0.0.0.0:8000", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-"]
+# Single uvicorn process per Fargate task — scale by raising desired_count.
+# Logs go to stdout/stderr → CloudWatch via awslogs driver.
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips '*'"]
