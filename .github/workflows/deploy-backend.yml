@@ -1,0 +1,103 @@
+name: deploy-backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # required for OIDC
+  contents: read
+
+env:
+  AWS_REGION: ap-southeast-1
+  ECR_REPOSITORY: dhtcdanang-prod-backend
+  ECS_CLUSTER: dhtcdanang-prod-cluster
+  ECS_SERVICE: dhtcdanang-prod-backend
+  TASK_FAMILY: dhtcdanang-prod-backend
+  CONTAINER_NAME: backend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push image
+        id: build
+        env:
+          REGISTRY: ${{ steps.ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          IMAGE="${REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG}"
+          docker build -t "${IMAGE}" -f backend/Dockerfile backend/
+          docker push "${IMAGE}"
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+
+      - name: Render new task definition
+        id: taskdef
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition "${TASK_FAMILY}" \
+            --query 'taskDefinition' > /tmp/task-current.json
+
+          jq --arg IMAGE "${{ steps.build.outputs.image }}" --arg NAME "${CONTAINER_NAME}" '
+            {
+              family: .family,
+              networkMode: .networkMode,
+              requiresCompatibilities: .requiresCompatibilities,
+              cpu: .cpu,
+              memory: .memory,
+              executionRoleArn: .executionRoleArn,
+              taskRoleArn: .taskRoleArn,
+              runtimePlatform: .runtimePlatform,
+              containerDefinitions: (.containerDefinitions | map(
+                if .name == $NAME then .image = $IMAGE else . end
+              ))
+            }
+          ' /tmp/task-current.json > /tmp/task-new.json
+
+          NEW_ARN=$(aws ecs register-task-definition \
+            --cli-input-json file:///tmp/task-new.json \
+            --query 'taskDefinition.taskDefinitionArn' --output text)
+          echo "arn=${NEW_ARN}" >> "$GITHUB_OUTPUT"
+
+      - name: Update service & wait for steady state
+        run: |
+          aws ecs update-service \
+            --cluster "${ECS_CLUSTER}" \
+            --service "${ECS_SERVICE}" \
+            --task-definition "${{ steps.taskdef.outputs.arn }}" \
+            --force-new-deployment > /dev/null
+
+          aws ecs wait services-stable \
+            --cluster "${ECS_CLUSTER}" \
+            --services "${ECS_SERVICE}"
+
+      - name: Smoke test
+        run: |
+          for i in 1 2 3 4 5; do
+            if curl -fsS --max-time 10 https://api.dhtcdanang.com/api/v1/health; then
+              echo " ✓ healthy"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 10
+          done
+          echo "Smoke test failed"
+          exit 1
