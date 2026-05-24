@@ -2,6 +2,7 @@ from app.models.base import Base, TimestampMixin
 from app.models.cart import CartItem
 from app.models.category import Category
 from app.models.chat_message import ChatMessage, MessageDirection, MessagePlatform
+from app.models.customer_cluster import CustomerCluster, CustomerClusterMember
 from app.models.fb_graph_call_log import FBGraphCallLog
 from app.models.fb_profile import FBProfile
 from app.models.merchant import Merchant, MerchantStatus, MerchantTier
@@ -40,6 +41,8 @@ __all__ = [
     "ChatMessage",
     "MessageDirection",
     "MessagePlatform",
+    "CustomerCluster",
+    "CustomerClusterMember",
     "FBProfile",
     "FBGraphCallLog",
     "Product",
