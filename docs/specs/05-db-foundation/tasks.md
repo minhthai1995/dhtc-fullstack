@@ -13,25 +13,25 @@
 
 ## Phase 1 — SQLite portability fix + regression test
 
-- [ ] **T1** (15') — Fix `notification.py:42` `server_default="now()"` → `func.now()`; import `from sqlalchemy.sql import func`. Repro: chạy `pytest tests/test_orders.py::test_cancel_order_restores_stock` → expect PASS sau fix.
-  - Commit: `fix(backend): notification.created_at server_default portability`
+- [x] **T1** ✅ (15') — Fix `notification.py:42` `server_default="now()"` → `func.now()`; import `from sqlalchemy.sql import func`. Repro: chạy `pytest tests/test_orders.py::test_cancel_order_restores_stock` → expect PASS sau fix.
+  - Commit: `fix(backend): notification.created_at server_default portability` (3dfa0b6)
 
-- [ ] **T2** (25') — Tạo `tests/test_db_portability.py`: tạo tất cả tables trên SQLite `:memory:` engine, insert 1 row vào mỗi table có server_default datetime (notification, page_view, fb_profile, chat_message, order_event, return_request, …) bằng raw SQL không set giá trị → SELECT → assert `isinstance(row.created_at, datetime)` (không phải string `'now()'`).
-  - Commit: `test(backend): SQLite portability for all server_default datetime cols`
+- [x] **T2** ✅ (25') — Tạo `tests/test_db_portability.py`: tạo tất cả tables trên SQLite `:memory:` engine, insert 1 row vào mỗi table có server_default datetime (notification, page_view, fb_profile, chat_message, order_event, return_request, …) bằng raw SQL không set giá trị → SELECT → assert `isinstance(row.created_at, datetime)` (không phải string `'now()'`).
+  - Commit: `test(backend): SQLite portability for all server_default datetime cols` (2ad708a)
 
-- [ ] **T3** (10') — Verify full backend suite: `cd backend && uv run pytest -q` → 75/75 pass (1 trước đó fail giờ pass nhờ T1). Update handoff: drop "pre-existing fail" note.
-  - Commit: `chore(backend): note suite 75/75 after p4a t1-t2`
+- [x] **T3** ✅ (10') — Verify full backend suite: `cd backend && uv run pytest -q` → 75/75 pass (1 trước đó fail giờ pass nhờ T1). Update handoff: drop "pre-existing fail" note.
+  - Commit: `chore(backend): note suite 75/75 after p4a t1-t2` (c6535d7)
 
 ## Phase 2 — Extend ChatMessage cho P5C reserve
 
-- [ ] **T4** (20') — Edit `app/models/chat_message.py`: thêm 7 cột nullable (`intent_cluster`, `captured_phone`, `captured_email`, `captured_address`, `linked_user_id` FK, `referenced_product_id` FK, `referenced_order_id` FK). FK `ondelete="SET NULL"`. Indices trên 3 FK columns.
-  - Commit: `feat(backend): extend ChatMessage with P5C capture fields`
+- [x] **T4** ✅ (20') — Edit `app/models/chat_message.py`: thêm 7 cột nullable (`intent_cluster`, `captured_phone`, `captured_email`, `captured_address`, `linked_user_id` FK, `referenced_product_id` FK, `referenced_order_id` FK). FK `ondelete="SET NULL"`. Indices trên 3 FK columns.
+  - Commit: `feat(backend): extend ChatMessage with P5C capture fields` (bd704e8)
 
-- [ ] **T5** (20') — Alembic migration: `uv run alembic revision --autogenerate -m "extend chat_messages p5c"`. Review autogen SQL — FK constraint naming match `NAMING_CONVENTION`, indices đúng. Round-trip test: `upgrade head` → `downgrade -1` → `upgrade head` clean.
-  - Commit: `chore(backend): migration extend_chat_messages_p5c`
+- [x] **T5** ✅ (20') — Alembic migration: `uv run alembic revision --autogenerate -m "extend chat_messages p5c"`. Review autogen SQL — FK constraint naming match `NAMING_CONVENTION`, indices đúng. Round-trip test: `upgrade head` → `downgrade -1` → `upgrade head` clean.
+  - Commit: `chore(backend): migration extend_chat_messages_p5c` (c64c765)
 
-- [ ] **T6** (25') — Tests `tests/test_chat_messages_p5c.py`: (a) insert ChatMessage với tất cả 7 fields, commit, reload, assert; (b) FK SET NULL behavior — insert msg với `linked_user_id=X`, delete user X, reload msg, assert `linked_user_id IS NULL`, msg vẫn tồn tại; (c) index existence — `await engine.dialect.has_index(...)` hoặc grep migration.
-  - Commit: `test(backend): chat_messages p5c fields + FK SET NULL`
+- [x] **T6** ✅ (25') — Tests `tests/test_chat_messages_p5c.py`: (a) insert ChatMessage với tất cả 7 fields, commit, reload, assert; (b) FK SET NULL behavior — insert msg với `linked_user_id=X`, delete user X, reload msg, assert `linked_user_id IS NULL`, msg vẫn tồn tại; (c) index existence — `await engine.dialect.has_index(...)` hoặc grep migration.
+  - Commit: `test(backend): chat_messages p5c fields + FK SET NULL` (4e53a1c)
 
 ## Phase 3 — Customer clusters cho P5D reserve
 
