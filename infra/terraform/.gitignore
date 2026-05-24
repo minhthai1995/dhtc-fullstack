@@ -1,0 +1,19 @@
+# Local Terraform state — real state lives in S3 backend
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+*.tfplan
+plan.out
+crash.log
+crash.*.log
+
+# Sensitive overrides
+*.auto.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Keep the lock file under VCS for reproducible plans
+!.terraform.lock.hcl
