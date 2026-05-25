@@ -1,8 +1,8 @@
 # Design — Feature: P4A · DB Foundation
 
-**Version:** 0.1 (draft)
-**Status:** 🔴 Draft — chờ duyệt
-**Last updated:** 2026-05-20
+**Version:** 1.0
+**Status:** ✅ Implemented
+**Last updated:** 2026-05-25
 
 ---
 

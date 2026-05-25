@@ -7,7 +7,14 @@
 ## TL;DR (đọc đầu phiên mới — ≤ 30 dòng)
 
 - **Đây là:** DHTC marketplace fullstack (Đà Nẵng truyền thống) — đã rời template, đang build feature thật
-- **Đã có:** Auth ✅ · Admin/Seller/Customer portals ✅ · Chatbot Messenger ✅ · CRM admin 4-tab ✅ · Page tracking P2 ✅ · Product image upload P3 ✅ · **Facebook OAuth login P5A ✅** · **P4A DB foundation 🔄 5/13** (Phase 1+2 đầu xong, T6-T13 còn)
+- **Đã có:** Auth ✅ · Admin/Seller/Customer portals ✅ · Chatbot Messenger ✅ · CRM admin 4-tab ✅ · Page tracking P2 ✅ · Product image upload P3 ✅ · Facebook OAuth login P5A ✅ · **P4A DB foundation ✅ 13/13** (ChatMessage +7 cột P5C-ready · customer_clusters + members + 7 system-slug seed P5D-ready · suite 77/77 · ruff 0)
+- **Vừa xong (2026-05-25):** P4A T7–T13 — customer_cluster schema + CRUD + tests + ruff cleanup (29→0) + spec ticked 100%
+  - BE models: `app/models/customer_cluster.py` — `CustomerCluster` (slug UNIQUE, criteria_json JSON, is_system/is_active Boolean với portable `server_default="true"/"false"`) + `CustomerClusterMember` (user_id+cluster_id FK CASCADE, UNIQUE composite, score Float, signals_json JSON, assigned_at func.now()); registered in `models/__init__.py` (`1a50b89` + `abfc168`)
+  - BE migration `6a06c8b` `create_customer_clusters` — autogen + manual `op.bulk_insert` 7 system clusters trong `upgrade()`; `op.execute("DELETE FROM customer_clusters WHERE is_system = true")` trong `downgrade()`; round-trip clean
+  - BE CRUD `app/crud/customer_cluster.py` (`aee76f6`) — `get_by_slug` · `list_active` · `assign_user` idempotent (PG `ON CONFLICT DO UPDATE constraint=...` ngắn gọn, SQLite SELECT→UPDATE/INSERT fallback) · `list_for_user` sort by id
+  - Tests `tests/test_customer_clusters.py` (`b888db3`, 5 cases): autouse fixture `PRAGMA foreign_keys=ON` cho SQLite; seed=7 slugs khớp spec contract; UNIQUE conflict → 1 row score refreshed; CASCADE delete user → members gone (dùng raw SQL `text("DELETE FROM users WHERE id = :uid")` để bypass ORM cascade); `list_for_user` sort
+  - Ruff cleanup (`3311bae`): autofix sweep + manual wrap 29 E501 trên 5 file (4 migrations cũ + test_admin.py:65 tuple); quyết định KHÔNG dùng `ruff format` (16-file blast radius); 15 migration importlib roundtrip xác nhận import-clean; pytest 77/77 PASS không regression
+  - Spec `docs/specs/05-db-foundation/` (this commit): 13/13 ticked với SHA; Tổng kết table filled; requirements/design/tasks header → ✅ Implemented
 - **Vừa xong (2026-05-20):** Feature P5A Facebook OAuth login (spec 30 task → BE 9/9 + FE 70/70 + type-check clean)
   - BE: `app/services/facebook_oauth_service.py` (build_authorize_url + exchange_code_for_token + fetch_user_profile + upsert_user_and_profile), `app/api/v1/auth_facebook.py` (`GET /auth/facebook/start` CSRF state HttpOnly+SameSite=Lax cookie TTL 600s → 307 dialog; `GET /auth/facebook/callback?code=&state=` hmac.compare_digest + exchange+fetch+upsert + 302 `FRONTEND_URL/auth/fb-return?token=` hoặc `?error=`), `models/fb_profile.py` table `fb_profiles` UNIQUE(user_id, fb_app_user_id, messenger_psid nullable reserved P5C), Alembic `125a6ea`
   - BE policy: email merge auto-link FBProfile vào user email/password đã tồn tại (password hash giữ nguyên); no-email synthetic `fb_<id>@dhtc.local` + random unusable password `secrets.token_urlsafe(48)`
@@ -16,23 +23,40 @@
   - Known limitation P6: token qua URL query `?token=<jwt>` ở redirect cuối — mitigation hiện tại FE replace-navigate clear ngay; P6 sẽ thay bằng HttpOnly cookie + `/auth/me` bootstrap hoặc one-shot code exchange
   - Reserved cho P5C: `fb_profiles.messenger_psid` UNIQUE nullable — P5C webhook map sender_id → user khi chat sau khi FB-login web
   - Spec: `docs/specs/04-fb-oauth-login/{spec,design,plan,tasks,handoff}.md` — 30 task ticked đầy đủ, handoff.md có user-action checklist tạo FB App + 6 manual e2e flows
-- **Branch:** `main` — latest commit `a398682` (P5A handoff doc); working tree về clean sau T28-T30
-- **Blocked:** Manual e2e với FB Test User chờ user tạo FB App + điền `.env` (xem `docs/specs/04-fb-oauth-login/handoff.md`)
+- **Branch:** `main` — latest commit (T13 this commit); working tree clean sau P4A 13/13
+- **Blocked:** Manual e2e P5A với FB Test User chờ user tạo FB App + điền `.env` (xem `docs/specs/04-fb-oauth-login/handoff.md`)
 - **Files đang sửa:** _(không)_
-- **Next session:** P4A DB foundation cleanup (PageView/ChatMessage server_default cho SQLite portability); P5B Messenger Customer Chat Plugin embed; P5C capture-everything Messenger webhook → fb_profiles.messenger_psid; P5D multi-signal clustering. Carry-over: S3 migration cho production uploads; Response time / conversion compute cho ConversationsTab; Redis rate limit; GeoIP country_code thật
+- **Next session:** P5B Messenger Customer Chat Plugin embed; P5C capture-everything Messenger webhook → `fb_profiles.messenger_psid` + JOIN `chat_messages.linked_user_id` vào AdminCRM CustomersTab; P5D multi-signal clustering áp `customer_cluster_members` runtime (segment derive → assign); P5E proactive reply check-in posts; P6 AWS deploy. Carry-over: S3 migration cho production uploads; Response time / conversion compute cho ConversationsTab; Redis rate limit; GeoIP country_code thật
 
 ---
 
 ## Active context
 
-→ **P4A checkpoint 2026-05-21:** Phase 1 + nửa Phase 2 xong. Suite **77/77** PASS (fix `notification.created_at` portability + pin behavior test order `created_at`). Spec ở `docs/specs/05-db-foundation/{requirements,design,tasks,checklist}.md`.
-  - Done (5): T1 fix notification.py `func.now()` (`3dfa0b6`); T2 portability smoke test (`2ad708a`); T3 verify 77/77 + behavior TZ flake fix (`c6535d7`); T4 ChatMessage +7 cột P5C (`bd704e8`); T5 Alembic migration `extend_chat_messages_p5c` upgrade/downgrade round-trip clean (`c64c765`).
-  - Remaining (8): T6 tests FK SET NULL + indexes; T7-T11 customer_clusters + customer_cluster_members + 7 seed + CRUD + tests; T12 ruff 29→0; T13 update handoff + tick 100%.
-→ Backend ruff có 29 lỗi pre-existing (F401/F811/E501/F841) — chờ T12 cleanup.
+→ **P4A ✅ done 2026-05-25:** Suite **77/77** PASS · ruff 0 errors · 13/13 task ticked với SHA · spec status ✅ Implemented. Schema P5C-ready (`chat_messages` +7 cột capture/linked) và P5D-ready (`customer_clusters` 7 system slugs + `customer_cluster_members` UNIQUE composite + CRUD `assign_user` idempotent). Spec ở `docs/specs/05-db-foundation/`.
 
 ---
 
 ## Session log
+
+<details>
+<summary>2026-05-21 → 2026-05-25 · P4A DB foundation (T1–T13) — SQLite portability + ChatMessage P5C + customer_clusters P5D + ruff 29→0</summary>
+
+**Làm gì:**
+- **Phase 1 — SQLite portability fix (T1–T3):** Fix `notification.py:42` `server_default="now()"` → `func.now()` (root cause: SQLite literal-quotes string → kén kiểu DateTime); `tests/test_db_portability.py` smoke insert all server_default datetime tables qua raw SQL → assert `isinstance(row.created_at, datetime)`; verify full backend 77/77 (1 pre-existing fail giờ pass)
+- **Phase 2 — Extend ChatMessage cho P5C (T4–T6):** `app/models/chat_message.py` thêm 7 cột nullable (`intent_cluster` · `captured_phone/email/address` · `linked_user_id` FK SET NULL · `referenced_product_id` FK SET NULL · `referenced_order_id` FK SET NULL) + 3 indexes; Alembic `c64c765` `extend_chat_messages_p5c` round-trip clean; tests insert all 7 + FK SET NULL behavior + index existence
+- **Phase 3 — Customer clusters cho P5D (T7–T11):** `app/models/customer_cluster.py` 2 model (CustomerCluster slug UNIQUE + criteria_json JSON + is_system/is_active Boolean portable `server_default="true"/"false"`; CustomerClusterMember user+cluster FK CASCADE + UNIQUE composite + score Float + signals_json + assigned_at func.now()); register `models/__init__.py`; migration `6a06c8b` autogen + `op.bulk_insert` 7 system clusters (`messenger_engaged` · `web_only_visitor` · `lead_no_purchase` · `first_buyer` · `repeat_buyer` · `lapsed_60d` · `high_value_vn`); CRUD `app/crud/customer_cluster.py` 4 helper: `get_by_slug` · `list_active` · `assign_user` idempotent (PG `pg_insert.on_conflict_do_update(constraint=...)`, SQLite SELECT→UPDATE/INSERT fallback qua `_is_postgres(db)` dialect check) · `list_for_user` sort by id; tests 5 case với autouse SQLite `PRAGMA foreign_keys=ON` (seed=7 + slugs khớp spec contract + UNIQUE conflict refresh + CASCADE qua raw SQL bypass ORM + list_for_user order)
+- **Phase 4 — Ruff cleanup (T12):** `ruff check . --fix` autofix sweep; manual wrap 29 E501 trên 5 file (4 migrations cũ với FK constraint name dài + Enum multi-value + `op.create_index` + tuple wrap test_admin.py:65); quyết định KHÔNG `ruff format` (16-file blast radius); verify 0 errors + importlib roundtrip 15 migration import-clean + pytest 77/77 không regression
+- **T13 spec close:** tick `tasks.md` T1–T13 với SHA + fill Tổng kết table với số liệu thực tế (3 test file mới / 11 case · 7 file mới · 8 file edit · 2 migration · ~5h thực tế); requirements.md + design.md + tasks.md header → ✅ Implemented
+
+**Commits chính:** `3dfa0b6` (T1 notif func.now) → `2ad708a` (T2 portability test) → `c6535d7` (T3 verify 77/77) → `bd704e8` (T4 ChatMessage +7) → `c64c765` (T5 migration extend_chat_messages_p5c) → `4e53a1c` (T6 tests p5c FK SET NULL) → `f50ff29` (T1–T6 ticked) → `1a50b89` (T7 cluster models) → `abfc168` (T8 register) → `6a06c8b` (T9 migration + 7 seed) → `aee76f6` (T10 CRUD idempotent PG/SQLite) → `b888db3` (T11 tests CASCADE + UNIQUE) → `3311bae` (T12 ruff 29→0)
+
+**Carry-over tech debt:**
+- `customer_cluster_members.assigned_at` chưa có `on_update=func.now()` — P5D `assign_user` refresh path đã set thủ công, nhưng nếu bulk update outside CRUD thì không tự refresh — review nếu cần
+- 7 system slugs hardcoded ở `migration upgrade()` + `tests/test_customer_clusters.py EXPECTED_SYSTEM_SLUGS` — single source of truth nên move vào `app/core/constants.py` SYSTEM_CLUSTER_SLUGS khi P5D dùng runtime (lúc đó CRUD `assign_user` cần lookup by slug → cluster_id)
+- Migration filename `2026_MM_DD_HHMM_*.py` không importable as Python module (starts with digits) → tests phải hardcode 7 slug constant, không thể `from ... import SYSTEM_CLUSTERS`
+- `_classify_intent` ở P5C CRM endpoints chạy on-the-fly mỗi request — chưa persist vào `chat_messages.intent_cluster` cột mới; P5D nên backfill batch job + write-through ở webhook ingest
+
+</details>
 
 <details>
 <summary>2026-05-20 · P5A Facebook OAuth login — FB App OAuth + email merge + sessionStorage (T1–T30)</summary>
