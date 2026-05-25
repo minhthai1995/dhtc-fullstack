@@ -27,7 +27,10 @@ def upgrade() -> None:
     sa.Column('parent_id', sa.Integer(), nullable=True),
     sa.Column('icon_url', sa.String(length=500), nullable=True),
     sa.Column('sort_order', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['parent_id'], ['categories.id'], name=op.f('categories_parent_id_fkey')),
+    sa.ForeignKeyConstraint(
+        ['parent_id'], ['categories.id'],
+        name=op.f('categories_parent_id_fkey'),
+    ),
     sa.PrimaryKeyConstraint('id', name=op.f('categories_pkey'))
     )
     op.create_index(op.f('categories_parent_id_idx'), 'categories', ['parent_id'], unique=False)
@@ -53,8 +56,16 @@ def upgrade() -> None:
     sa.Column('logo_url', sa.String(length=500), nullable=True),
     sa.Column('banner_url', sa.String(length=500), nullable=True),
     sa.Column('region', sa.String(length=100), nullable=True),
-    sa.Column('tier', sa.Enum('bronze', 'silver', 'gold', name='merchanttier'), nullable=False),
-    sa.Column('status', sa.Enum('pending', 'active', 'suspended', name='merchantstatus'), nullable=False),
+    sa.Column(
+        'tier',
+        sa.Enum('bronze', 'silver', 'gold', name='merchanttier'),
+        nullable=False,
+    ),
+    sa.Column(
+        'status',
+        sa.Enum('pending', 'active', 'suspended', name='merchantstatus'),
+        nullable=False,
+    ),
     sa.Column('established_year', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
@@ -67,14 +78,27 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('customer_id', sa.Integer(), nullable=False),
     sa.Column('merchant_id', sa.Integer(), nullable=False),
-    sa.Column('status', sa.Enum('pending', 'processing', 'shipped', 'delivered', 'cancelled', name='orderstatus'), nullable=False),
+    sa.Column(
+        'status',
+        sa.Enum(
+            'pending', 'processing', 'shipped', 'delivered', 'cancelled',
+            name='orderstatus',
+        ),
+        nullable=False,
+    ),
     sa.Column('total_amount', sa.Numeric(precision=12, scale=2), nullable=False),
     sa.Column('shipping_address', sa.JSON(), nullable=False),
     sa.Column('tracking_number', sa.String(length=100), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['customer_id'], ['users.id'], name=op.f('orders_customer_id_fkey')),
-    sa.ForeignKeyConstraint(['merchant_id'], ['merchants.id'], name=op.f('orders_merchant_id_fkey')),
+    sa.ForeignKeyConstraint(
+        ['customer_id'], ['users.id'],
+        name=op.f('orders_customer_id_fkey'),
+    ),
+    sa.ForeignKeyConstraint(
+        ['merchant_id'], ['merchants.id'],
+        name=op.f('orders_merchant_id_fkey'),
+    ),
     sa.PrimaryKeyConstraint('id', name=op.f('orders_pkey'))
     )
     op.create_index(op.f('orders_customer_id_idx'), 'orders', ['customer_id'], unique=False)
@@ -89,7 +113,11 @@ def upgrade() -> None:
     sa.Column('price', sa.Numeric(precision=10, scale=2), nullable=False),
     sa.Column('stock', sa.Integer(), nullable=False),
     sa.Column('sold_count', sa.Integer(), nullable=False),
-    sa.Column('status', sa.Enum('active', 'pending', 'inactive', name='productstatus'), nullable=False),
+    sa.Column(
+        'status',
+        sa.Enum('active', 'pending', 'inactive', name='productstatus'),
+        nullable=False,
+    ),
     sa.Column('description_vi', sa.Text(), nullable=True),
     sa.Column('description_en', sa.Text(), nullable=True),
     sa.Column('origin', sa.String(length=200), nullable=True),
@@ -97,8 +125,14 @@ def upgrade() -> None:
     sa.Column('images', sa.JSON(), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['category_id'], ['categories.id'], name=op.f('products_category_id_fkey')),
-    sa.ForeignKeyConstraint(['merchant_id'], ['merchants.id'], name=op.f('products_merchant_id_fkey')),
+    sa.ForeignKeyConstraint(
+        ['category_id'], ['categories.id'],
+        name=op.f('products_category_id_fkey'),
+    ),
+    sa.ForeignKeyConstraint(
+        ['merchant_id'], ['merchants.id'],
+        name=op.f('products_merchant_id_fkey'),
+    ),
     sa.PrimaryKeyConstraint('id', name=op.f('products_pkey'))
     )
     op.create_index(op.f('products_category_id_idx'), 'products', ['category_id'], unique=False)
@@ -117,7 +151,10 @@ def upgrade() -> None:
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['merchant_id'], ['merchants.id'], name=op.f('promotions_merchant_id_fkey')),
+    sa.ForeignKeyConstraint(
+        ['merchant_id'], ['merchants.id'],
+        name=op.f('promotions_merchant_id_fkey'),
+    ),
     sa.PrimaryKeyConstraint('id', name=op.f('promotions_pkey'))
     )
     op.create_index(op.f('promotions_code_idx'), 'promotions', ['code'], unique=False)
@@ -133,10 +170,16 @@ def upgrade() -> None:
     sa.Column('estimated_days_max', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['merchant_id'], ['merchants.id'], name=op.f('shipping_zones_merchant_id_fkey')),
+    sa.ForeignKeyConstraint(
+        ['merchant_id'], ['merchants.id'],
+        name=op.f('shipping_zones_merchant_id_fkey'),
+    ),
     sa.PrimaryKeyConstraint('id', name=op.f('shipping_zones_pkey'))
     )
-    op.create_index(op.f('shipping_zones_merchant_id_idx'), 'shipping_zones', ['merchant_id'], unique=False)
+    op.create_index(
+        op.f('shipping_zones_merchant_id_idx'),
+        'shipping_zones', ['merchant_id'], unique=False,
+    )
     op.create_table('cart_items',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('customer_id', sa.Integer(), nullable=False),
@@ -144,8 +187,14 @@ def upgrade() -> None:
     sa.Column('quantity', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['customer_id'], ['users.id'], name=op.f('cart_items_customer_id_fkey')),
-    sa.ForeignKeyConstraint(['product_id'], ['products.id'], name=op.f('cart_items_product_id_fkey')),
+    sa.ForeignKeyConstraint(
+        ['customer_id'], ['users.id'],
+        name=op.f('cart_items_customer_id_fkey'),
+    ),
+    sa.ForeignKeyConstraint(
+        ['product_id'], ['products.id'],
+        name=op.f('cart_items_product_id_fkey'),
+    ),
     sa.PrimaryKeyConstraint('id', name=op.f('cart_items_pkey')),
     sa.UniqueConstraint('customer_id', 'product_id', name=op.f('cart_items_customer_id_key'))
     )
@@ -158,7 +207,10 @@ def upgrade() -> None:
     sa.Column('quantity', sa.Integer(), nullable=False),
     sa.Column('unit_price', sa.Numeric(precision=10, scale=2), nullable=False),
     sa.ForeignKeyConstraint(['order_id'], ['orders.id'], name=op.f('order_items_order_id_fkey')),
-    sa.ForeignKeyConstraint(['product_id'], ['products.id'], name=op.f('order_items_product_id_fkey')),
+    sa.ForeignKeyConstraint(
+        ['product_id'], ['products.id'],
+        name=op.f('order_items_product_id_fkey'),
+    ),
     sa.PrimaryKeyConstraint('id', name=op.f('order_items_pkey'))
     )
     op.create_index(op.f('order_items_order_id_idx'), 'order_items', ['order_id'], unique=False)
@@ -181,24 +233,43 @@ def upgrade() -> None:
     op.create_table('wallet_transactions',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('merchant_id', sa.Integer(), nullable=False),
-    sa.Column('type', sa.Enum('sale', 'withdrawal', 'fee', 'adjustment', name='transactiontype'), nullable=False),
+    sa.Column(
+        'type',
+        sa.Enum(
+            'sale', 'withdrawal', 'fee', 'adjustment',
+            name='transactiontype',
+        ),
+        nullable=False,
+    ),
     sa.Column('amount', sa.Numeric(precision=12, scale=2), nullable=False),
     sa.Column('balance_after', sa.Numeric(precision=12, scale=2), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('reference_order_id', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['merchant_id'], ['merchants.id'], name=op.f('wallet_transactions_merchant_id_fkey')),
-    sa.ForeignKeyConstraint(['reference_order_id'], ['orders.id'], name=op.f('wallet_transactions_reference_order_id_fkey')),
+    sa.ForeignKeyConstraint(
+        ['merchant_id'], ['merchants.id'],
+        name=op.f('wallet_transactions_merchant_id_fkey'),
+    ),
+    sa.ForeignKeyConstraint(
+        ['reference_order_id'], ['orders.id'],
+        name=op.f('wallet_transactions_reference_order_id_fkey'),
+    ),
     sa.PrimaryKeyConstraint('id', name=op.f('wallet_transactions_pkey'))
     )
-    op.create_index(op.f('wallet_transactions_merchant_id_idx'), 'wallet_transactions', ['merchant_id'], unique=False)
+    op.create_index(
+        op.f('wallet_transactions_merchant_id_idx'),
+        'wallet_transactions', ['merchant_id'], unique=False,
+    )
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_index(op.f('wallet_transactions_merchant_id_idx'), table_name='wallet_transactions')
+    op.drop_index(
+        op.f('wallet_transactions_merchant_id_idx'),
+        table_name='wallet_transactions',
+    )
     op.drop_table('wallet_transactions')
     op.drop_index(op.f('reviews_product_id_idx'), table_name='reviews')
     op.drop_index(op.f('reviews_customer_id_idx'), table_name='reviews')

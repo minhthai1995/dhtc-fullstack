@@ -39,7 +39,14 @@ def upgrade() -> None:
     op.create_table('order_events',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('order_id', sa.Integer(), nullable=False),
-    sa.Column('status', postgresql.ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled', name='orderstatus', create_type=False), nullable=False),
+    sa.Column(
+        'status',
+        postgresql.ENUM(
+            'pending', 'processing', 'shipped', 'delivered', 'cancelled',
+            name='orderstatus', create_type=False,
+        ),
+        nullable=False,
+    ),
     sa.Column('note', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
@@ -53,12 +60,18 @@ def upgrade() -> None:
     sa.Column('product_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
-    sa.ForeignKeyConstraint(['product_id'], ['products.id'], name=op.f('wishlist_items_product_id_fkey')),
+    sa.ForeignKeyConstraint(
+        ['product_id'], ['products.id'],
+        name=op.f('wishlist_items_product_id_fkey'),
+    ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('wishlist_items_user_id_fkey')),
     sa.PrimaryKeyConstraint('id', name=op.f('wishlist_items_pkey')),
     sa.UniqueConstraint('user_id', 'product_id', name=op.f('wishlist_items_user_id_key'))
     )
-    op.create_index(op.f('wishlist_items_product_id_idx'), 'wishlist_items', ['product_id'], unique=False)
+    op.create_index(
+        op.f('wishlist_items_product_id_idx'),
+        'wishlist_items', ['product_id'], unique=False,
+    )
     op.create_index(op.f('wishlist_items_user_id_idx'), 'wishlist_items', ['user_id'], unique=False)
     # ### end Alembic commands ###
 

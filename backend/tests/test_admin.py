@@ -62,7 +62,10 @@ async def test_admin_dashboard(client: AsyncClient, db_session: AsyncSession) ->
     )
     assert response.status_code == 200, response.text
     data = response.json()
-    for key in ("total_merchants", "total_products", "total_orders", "pending_approvals", "gmv_total"):
+    for key in (
+        "total_merchants", "total_products", "total_orders",
+        "pending_approvals", "gmv_total",
+    ):
         assert key in data, f"Missing key: {key}"
     assert isinstance(data["total_merchants"], int)
     assert isinstance(data["total_orders"], int)

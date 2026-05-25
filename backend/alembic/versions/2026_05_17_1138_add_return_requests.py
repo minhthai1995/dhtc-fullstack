@@ -25,16 +25,39 @@ def upgrade() -> None:
     sa.Column('order_id', sa.Integer(), nullable=False),
     sa.Column('customer_id', sa.Integer(), nullable=False),
     sa.Column('reason', sa.Text(), nullable=False),
-    sa.Column('status', sa.Enum('pending', 'approved', 'rejected', name='returnstatus'), nullable=False),
+    sa.Column(
+        'status',
+        sa.Enum('pending', 'approved', 'rejected', name='returnstatus'),
+        nullable=False,
+    ),
     sa.Column('seller_note', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column(
+        'created_at',
+        sa.DateTime(timezone=True),
+        server_default=sa.text('now()'),
+        nullable=False,
+    ),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
-    sa.ForeignKeyConstraint(['customer_id'], ['users.id'], name=op.f('return_requests_customer_id_fkey'), ondelete='CASCADE'),
-    sa.ForeignKeyConstraint(['order_id'], ['orders.id'], name=op.f('return_requests_order_id_fkey'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(
+        ['customer_id'], ['users.id'],
+        name=op.f('return_requests_customer_id_fkey'),
+        ondelete='CASCADE',
+    ),
+    sa.ForeignKeyConstraint(
+        ['order_id'], ['orders.id'],
+        name=op.f('return_requests_order_id_fkey'),
+        ondelete='CASCADE',
+    ),
     sa.PrimaryKeyConstraint('id', name=op.f('return_requests_pkey'))
     )
-    op.create_index(op.f('return_requests_customer_id_idx'), 'return_requests', ['customer_id'], unique=False)
-    op.create_index(op.f('return_requests_order_id_idx'), 'return_requests', ['order_id'], unique=True)
+    op.create_index(
+        op.f('return_requests_customer_id_idx'),
+        'return_requests', ['customer_id'], unique=False,
+    )
+    op.create_index(
+        op.f('return_requests_order_id_idx'),
+        'return_requests', ['order_id'], unique=True,
+    )
     op.alter_column('notifications', 'created_at',
                existing_type=postgresql.TIMESTAMP(timezone=True),
                server_default='now()',

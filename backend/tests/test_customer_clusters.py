@@ -28,7 +28,6 @@ from app.crud import customer_cluster as crud
 from app.models.customer_cluster import CustomerCluster, CustomerClusterMember
 from app.models.user import User, UserRole
 
-
 EXPECTED_SYSTEM_SLUGS = [
     "messenger_engaged",
     "web_only_visitor",

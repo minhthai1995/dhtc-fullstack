@@ -22,7 +22,17 @@ def upgrade() -> None:
     op.create_table('notifications',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('type', sa.Enum('order_new', 'order_confirmed', 'order_shipped', 'order_delivered', 'order_cancelled', 'product_approved', 'product_rejected', 'withdrawal_approved', 'withdrawal_rejected', 'review_received', name='notificationtype'), nullable=False),
+    sa.Column(
+        'type',
+        sa.Enum(
+            'order_new', 'order_confirmed', 'order_shipped',
+            'order_delivered', 'order_cancelled', 'product_approved',
+            'product_rejected', 'withdrawal_approved',
+            'withdrawal_rejected', 'review_received',
+            name='notificationtype',
+        ),
+        nullable=False,
+    ),
     sa.Column('title', sa.String(length=255), nullable=False),
     sa.Column('message', sa.Text(), nullable=False),
     sa.Column('link', sa.String(length=500), nullable=True),
@@ -30,7 +40,11 @@ def upgrade() -> None:
     sa.Column('is_read', sa.Boolean(), server_default='false', nullable=False),
     sa.Column('read_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default='now()', nullable=False),
-    sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('notifications_user_id_fkey'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(
+        ['user_id'], ['users.id'],
+        name=op.f('notifications_user_id_fkey'),
+        ondelete='CASCADE',
+    ),
     sa.PrimaryKeyConstraint('id', name=op.f('notifications_pkey'))
     )
     op.create_index(op.f('notifications_user_id_idx'), 'notifications', ['user_id'], unique=False)
