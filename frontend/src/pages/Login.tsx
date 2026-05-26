@@ -19,7 +19,7 @@ export function Login() {
       { username: email, password },
       {
         onSuccess: () => {
-          navigate('/')
+          navigate('/app')
         },
         onError: () => {
           setError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.')

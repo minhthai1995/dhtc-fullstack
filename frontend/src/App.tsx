@@ -3,13 +3,14 @@ import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { RoleRedirect } from '@/components/layout/RoleRedirect'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { SellerLayout } from '@/components/layout/SellerLayout'
-import { CustomerLayout } from '@/components/layout/CustomerLayout'
 
 // Public pages
-import { Login } from '@/pages/Login'
-import { Register } from '@/pages/Register'
-import { FacebookReturnPage } from '@/pages/auth/FacebookReturnPage'
+import { Landing } from '@/pages/Landing'
 import { NotFound } from '@/pages/NotFound'
+import { PrivacyPolicy } from '@/pages/legal/PrivacyPolicy'
+import { TermsOfService } from '@/pages/legal/TermsOfService'
+import { DataDeletion } from '@/pages/legal/DataDeletion'
+import { FacebookReturnPage } from '@/pages/auth/FacebookReturnPage'
 
 // Admin pages
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
@@ -40,28 +41,30 @@ import { SellerWallet } from '@/pages/seller/SellerWallet'
 import { SellerProfile } from '@/pages/seller/SellerProfile'
 import { SellerReturns } from '@/pages/seller/SellerReturns'
 
-// Customer pages
-import { Shop } from '@/pages/customer/Shop'
-import { ProductDetail } from '@/pages/customer/ProductDetail'
-import { MerchantPage } from '@/pages/customer/MerchantPage'
-import { Cart } from '@/pages/customer/Cart'
-import { Checkout } from '@/pages/customer/Checkout'
-import { Tracking } from '@/pages/customer/Tracking'
-import { Account } from '@/pages/customer/Account'
-
 export function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* Public landing — Chợ Đêm Sơn Trà showcase for visitors and Meta App Review */}
+        <Route path="/" element={<Landing />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/data-deletion" element={<DataDeletion />} />
+
+        {/* Facebook OAuth callback — kept functional for App Review even with login UI hidden */}
         <Route path="/auth/fb-return" element={<FacebookReturnPage />} />
 
-        {/* Root redirect — authenticated users go to their role home */}
-        <Route path="/" element={<RoleRedirect />} />
+        {/* Customer-facing auth + shop hidden during approval phase — redirect to landing */}
+        <Route path="/login" element={<Navigate to="/" replace />} />
+        <Route path="/register" element={<Navigate to="/" replace />} />
+        <Route path="/shop/*" element={<Navigate to="/" replace />} />
+        <Route path="/cart" element={<Navigate to="/" replace />} />
+        <Route path="/account" element={<Navigate to="/" replace />} />
 
-        {/* Admin portal */}
+        {/* Role redirect — authenticated users land here post-login (admin/seller dev access) */}
+        <Route path="/app" element={<RoleRedirect />} />
+
+        {/* Admin portal — internal access only */}
         <Route element={<ProtectedRoute requiredRole="admin" />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
@@ -82,9 +85,8 @@ export function App() {
           </Route>
         </Route>
 
-        {/* Seller portal */}
+        {/* Seller portal — internal access only */}
         <Route element={<ProtectedRoute requiredRole="seller" />}>
-          {/* Setup is outside the layout — full page standalone */}
           <Route path="/seller/setup" element={<SellerSetup />} />
           <Route element={<SellerLayout />}>
             <Route path="/seller" element={<Navigate to="/seller/dashboard" replace />} />
@@ -101,24 +103,6 @@ export function App() {
             <Route path="/seller/returns" element={<SellerReturns />} />
           </Route>
         </Route>
-
-        {/* Customer / shop portal — accessible without login (public browse) */}
-        <Route element={<CustomerLayout />}>
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/shop/products/:id" element={<ProductDetail />} />
-          <Route path="/shop/merchants/:id" element={<MerchantPage />} />
-          <Route path="/shop/tracking" element={<Tracking />} />
-          {/* Cart, checkout, account require auth */}
-          <Route element={<ProtectedRoute requiredRole="customer" />}>
-            <Route path="/shop/cart" element={<Cart />} />
-            <Route path="/shop/checkout" element={<Checkout />} />
-            <Route path="/shop/account" element={<Account />} />
-          </Route>
-        </Route>
-
-        {/* Legacy /cart shorthand */}
-        <Route path="/cart" element={<Navigate to="/shop/cart" replace />} />
-        <Route path="/account" element={<Navigate to="/shop/account" replace />} />
 
         <Route path="*" element={<NotFound />} />
       </Routes>

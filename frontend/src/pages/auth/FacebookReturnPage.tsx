@@ -38,7 +38,7 @@ export function FacebookReturnPage() {
       sessionStorage.setItem('access_token', token)
       queryClient.invalidateQueries({ queryKey: authKeys.me })
       setStatus('success')
-      navigate('/', { replace: true })
+      navigate('/app', { replace: true })
       return
     }
     if (error) {
