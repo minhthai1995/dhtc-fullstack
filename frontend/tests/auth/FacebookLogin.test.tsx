@@ -65,12 +65,12 @@ describe('FacebookReturnPage — token (happy path)', () => {
     sessionStorage.clear()
   })
 
-  it('persists token to sessionStorage and navigates to /', async () => {
+  it('persists token to sessionStorage and navigates to /app', async () => {
     render(
       withProviders(
         <Routes>
           <Route path="/auth/fb-return" element={<FacebookReturnPage />} />
-          <Route path="/" element={<div>HOME</div>} />
+          <Route path="/app" element={<div>APP</div>} />
         </Routes>,
         ['/auth/fb-return?token=jwt.payload.sig']
       )
@@ -79,9 +79,9 @@ describe('FacebookReturnPage — token (happy path)', () => {
     await waitFor(() => {
       expect(sessionStorage.getItem('access_token')).toBe('jwt.payload.sig')
     })
-    // Replace-navigated to "/"
+    // Replace-navigated to "/app" (RoleRedirect entry — picks admin/seller dashboard)
     await waitFor(() => {
-      expect(screen.getByText('HOME')).toBeInTheDocument()
+      expect(screen.getByText('APP')).toBeInTheDocument()
     })
   })
 })
