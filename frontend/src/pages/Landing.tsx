@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ArrowUpRight,
   ArrowRight,
@@ -32,57 +32,45 @@ import {
   ShieldCheck,
   FileText,
   Trash2,
+  IceCream,
+  Shell,
+  Fish,
+  Cookie,
+  Egg,
 } from 'lucide-react'
+import { useT } from '@/i18n/useT'
+import { LangSwitcher } from '@/components/LangSwitcher'
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Landing — Chợ Đêm Sơn Trà · Đà Nẵng
- *
- * Public homepage for dhtcdanang.com. Doubles as Meta App Review homepage
- * and tourism showcase. Auth and shop surfaces are hidden during approval phase.
- *
- * Source data (real research, May 2026):
- * - Address: Lý Nam Đế × Mai Hắc Đế, phường An Hải Tây, quận Sơn Trà
- * - Hours: 17:30–23:45 weekdays · 17:00–23:59 cuối tuần (peak 19:00–21:30)
- * - 150+ gian hàng · ~1.500 m² (mở rộng từ tháng 8/2025)
- * - 4 khu vực: Ẩm thực · Quà lưu niệm · Túi xách & Phụ kiện · Thời trang
- * - Real menu prices verified across VinWonders / Sovaba / Sun World / DulichLive
+ * VI/EN locale-aware (custom i18n) · editorial typography · zero auth surface.
  * ─────────────────────────────────────────────────────────────────────────── */
-
-// ─── Data ──────────────────────────────────────────────────────────────────
 
 const LOGO = 'https://dhtcdanang.com/wp-content/uploads/2023/07/cropped-Logo_Food-01-e1693969421521.png'
 
-// Hero rotates 5 high-resolution night images: Đà Nẵng landmarks + lantern atmosphere
-// (Unsplash · free for commercial use · attribution given in footer for transparency)
 const HERO_SLIDES = [
   {
     src: 'https://images.unsplash.com/photo-1701396173275-835886dd72ce?fm=jpg&q=80&w=2400&auto=format&fit=crop',
-    alt: 'Cầu Rồng Đà Nẵng lên đèn buổi tối, nhìn từ bờ Đông sông Hàn',
-    credit: 'allPhoto Bangkok / Unsplash',
+    altKey: 'hero.slide1.alt',
   },
   {
     src: 'https://images.unsplash.com/photo-1620976128192-7181e9f91342?fm=jpg&q=80&w=2400&auto=format&fit=crop',
-    alt: 'Cầu Rồng Đà Nẵng về đêm với hệ thống đèn vàng đỏ chiếu sáng',
-    credit: 'Andrea De Santis / Unsplash',
+    altKey: 'hero.slide2.alt',
   },
   {
     src: 'https://images.unsplash.com/photo-1741274236412-b6760ff6c01b?fm=jpg&q=80&w=2400&auto=format&fit=crop',
-    alt: 'Đêm hội đèn lồng trên cầu, du khách dạo bước giữa hàng trăm chiếc đèn rực rỡ',
-    credit: 'Daniele Franchi / Unsplash',
+    altKey: 'hero.slide3.alt',
   },
   {
     src: 'https://images.unsplash.com/photo-1639458110591-17c4cede0c4b?fm=jpg&q=80&w=2400&auto=format&fit=crop',
-    alt: 'Không gian phố cổ Việt Nam ngập tràn đèn lồng vàng đỏ',
-    credit: 'Hoang Hung / Unsplash',
+    altKey: 'hero.slide4.alt',
   },
   {
     src: 'https://images.unsplash.com/photo-1760546100206-de205df95289?fm=jpg&q=80&w=2400&auto=format&fit=crop',
-    alt: 'Khu chợ đêm rực sáng dưới đèn lồng đỏ truyền thống',
-    credit: 'Raymond Yeung / Unsplash',
+    altKey: 'hero.slide5.alt',
   },
 ]
 
-// Story + Dragon + Gallery — keep dhtcdanang.com photos (real venue) for editorial trust.
 const STORY_IMG = 'https://dhtcdanang.com/wp-content/uploads/2023/05/anhsang1.jpg'
 const DRAGON_IMG = 'https://dhtcdanang.com/wp-content/uploads/2023/05/img-20200628-153608.jpg'
 const GALLERY_A = 'https://dhtcdanang.com/wp-content/uploads/2023/05/091704-cho-dem-son-tra.jpg'
@@ -90,223 +78,58 @@ const GALLERY_B = 'https://dhtcdanang.com/wp-content/uploads/2023/05/anhsang1.jp
 const GALLERY_C = 'https://dhtcdanang.com/wp-content/uploads/2023/05/img-20200628-153608.jpg'
 const GALLERY_D = 'https://dhtcdanang.com/wp-content/uploads/2023/05/1-1552259562.jpg'
 
-// Dish photography — Unsplash food shots curated to match each Đà Nẵng signature dish.
-const DISH_IMG = {
-  banh_trang_nuong:
-    'https://images.unsplash.com/photo-1606755962773-d324e0a13086?fm=jpg&q=80&w=1200&auto=format&fit=crop',
-  mi_quang:
-    'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?fm=jpg&q=80&w=1200&auto=format&fit=crop',
-  banh_xeo:
-    'https://images.unsplash.com/photo-1525755662778-989d0524087e?fm=jpg&q=80&w=1200&auto=format&fit=crop',
-  banh_beo:
-    'https://images.unsplash.com/photo-1559314809-0d155014e29e?fm=jpg&q=80&w=1200&auto=format&fit=crop',
-  oc:
-    'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?fm=jpg&q=80&w=1200&auto=format&fit=crop',
-  hai_san_nuong:
-    'https://images.unsplash.com/photo-1515443961218-a51367888e4b?fm=jpg&q=80&w=1200&auto=format&fit=crop',
-  kem_bo:
-    'https://images.unsplash.com/photo-1488900128323-21503983a07e?fm=jpg&q=80&w=1200&auto=format&fit=crop',
-  hai_san_kho:
-    'https://images.unsplash.com/photo-1559070135-f259b369bf87?fm=jpg&q=80&w=1200&auto=format&fit=crop',
-}
+// ─── Static structural data (text comes from i18n) ─────────────────────────
 
 const navLinks = [
-  { href: '#story', label: 'Câu chuyện' },
-  { href: '#flavors', label: 'Ẩm thực' },
-  { href: '#zones', label: '4 khu vực' },
-  { href: '#events', label: 'Lịch đêm' },
-  { href: '#visit', label: 'Đường đến' },
-  { href: '#faq', label: 'Hỏi đáp' },
+  { href: '#story', key: 'nav.story' },
+  { href: '#flavors', key: 'nav.flavors' },
+  { href: '#zones', key: 'nav.zones' },
+  { href: '#events', key: 'nav.events' },
+  { href: '#visit', key: 'nav.visit' },
+  { href: '#faq', key: 'nav.faq' },
 ]
 
-const heroFacts = [
-  { value: '150+', label: 'gian hàng', sub: '4 khu vực · ~1.500 m²' },
-  { value: '365', label: 'đêm mỗi năm', sub: 'mở cửa từ 17:30 mỗi ngày' },
-  { value: '2018', label: 'năm khai trương', sub: 'biểu tượng đêm Đà Nẵng' },
-]
+const heroFacts = [1, 2, 3] as const
+const statsMeta = [
+  { numRaw: 150, num: '150', unit: 'stats.1.unit', label: 'stats.1.label', Icon: Users },
+  { numRaw: 1500, num: '1.500', unit: 'stats.2.unit', label: 'stats.2.label', Icon: Ruler },
+  { numRaw: 4, num: '4', unit: 'stats.3.unit', label: 'stats.3.label', Icon: Sparkles },
+  { numRaw: 8, num: '8', unit: 'stats.4.unit', label: 'stats.4.label', Icon: Award },
+] as const
 
-// Verified facts only — no fabricated visitor counts.
-const stats = [
-  { num: '150', unit: '+', label: 'GIAN HÀNG', icon: <Users size={16} /> },
-  { num: '1.500', unit: 'm²', label: 'DIỆN TÍCH SAU MỞ RỘNG 08/2025', icon: <Ruler size={16} /> },
-  { num: '4', unit: ' khu', label: 'ẨM THỰC · QUÀ · PHỤ KIỆN · THỜI TRANG', icon: <Sparkles size={16} /> },
-  { num: '8', unit: ' năm', label: 'HOẠT ĐỘNG LIÊN TỤC TỪ 2018', icon: <Award size={16} /> },
-]
-
-// Ảnh chính thức từ dhtcdanang.com — caption giữ chung chung để trung thực với nội dung ảnh.
 const gallery = [
-  {
-    src: GALLERY_A,
-    alt: 'Chợ Đêm Sơn Trà về đêm dưới chân Cầu Rồng',
-    caption: 'Toàn cảnh chợ đêm về khuya',
-    span: 'md:col-span-2 md:row-span-2',
-    w: 1600,
-    h: 1067,
-  },
-  {
-    src: GALLERY_B,
-    alt: 'Đèn và không gian chợ',
-    caption: 'Ánh đèn chợ đêm',
-    span: '',
-    w: 1200,
-    h: 800,
-  },
-  {
-    src: GALLERY_C,
-    alt: 'Khoảnh khắc đêm tại Chợ Đêm Sơn Trà',
-    caption: 'Khoảnh khắc một đêm',
-    span: '',
-    w: 1200,
-    h: 800,
-  },
-  {
-    src: GALLERY_D,
-    alt: 'Không khí chợ đêm Đà Nẵng',
-    caption: 'Không khí đêm Đà Nẵng',
-    span: '',
-    w: 1200,
-    h: 800,
-  },
+  { src: GALLERY_A, key: 'gallery.1', span: 'md:col-span-2 md:row-span-2', w: 1600, h: 1067 },
+  { src: GALLERY_B, key: 'gallery.2', span: '', w: 1200, h: 800 },
+  { src: GALLERY_C, key: 'gallery.3', span: '', w: 1200, h: 800 },
+  { src: GALLERY_D, key: 'gallery.4', span: '', w: 1200, h: 800 },
 ]
 
-// Giá tham khảo từ VinWonders, Sovaba, Sun World, DulichLive, DulichCheckin (2025).
-const dishes = [
-  {
-    name: 'Bánh tráng nướng',
-    desc: 'Bánh tráng nướng trứng + ruốc + pate trên than hoa — street food kinh điển của chợ đêm Đà Nẵng.',
-    price: '10 – 15k',
-    tag: 'Street food',
-    img: DISH_IMG.banh_trang_nuong,
-  },
-  {
-    name: 'Mì Quảng tôm thịt',
-    desc: 'Sợi mì vàng nghệ, nước dùng sánh đậm, ăn kèm bánh tráng nướng — đặc sản Quảng Nam – Đà Nẵng.',
-    price: '40 – 70k',
-    tag: 'Đặc sản miền Trung',
-    img: DISH_IMG.mi_quang,
-  },
-  {
-    name: 'Bánh xèo miền Trung',
-    desc: 'Vỏ giòn rụm vàng nghệ, nhân tôm thịt & giá đỗ, ăn cùng rau rừng và nước mắm chua ngọt.',
-    price: '35 – 50k',
-    tag: 'Crispy crepe',
-    img: DISH_IMG.banh_xeo,
-  },
-  {
-    name: 'Bánh bèo chén',
-    desc: 'Bánh bèo trắng mềm trong chén nhỏ, tôm cháy, hành phi, nước mắm chua ngọt — đậm chất Huế – Đà Nẵng.',
-    price: '25 – 40k',
-    tag: 'Comfort food',
-    img: DISH_IMG.banh_beo,
-  },
-  {
-    name: 'Ốc các loại',
-    desc: 'Ốc hương xào bơ tỏi, ốc móng tay rang me, ốc giác hấp sả — món nhậu đêm cực phổ biến.',
-    price: '50 – 120k',
-    tag: 'Hơn 12 loại',
-    img: DISH_IMG.oc,
-  },
-  {
-    name: 'Hải sản nướng & hấp',
-    desc: 'Tôm sú, cua, ghẹ, sò điệp, mực — chọn tươi tại quầy, nướng than hoa hoặc hấp sả ngay.',
-    price: '100 – 800k',
-    tag: 'Seafood',
-    img: DISH_IMG.hai_san_nuong,
-  },
-  {
-    name: 'Kem bơ Đà Nẵng',
-    desc: 'Bơ sáp xay nhuyễn, kem dừa, đậu phộng — món tráng miệng huyền thoại của Đà Nẵng.',
-    price: '10 – 25k',
-    tag: 'Dessert',
-    img: DISH_IMG.kem_bo,
-  },
-  {
-    name: 'Hải sản khô làm quà',
-    desc: 'Mực một nắng, tôm khô, cá bống sông Trà, ghẹ sữa rim me — đóng gói hút chân không mang về.',
-    price: '200 – 500k/kg',
-    tag: 'Quà mang về',
-    img: DISH_IMG.hai_san_kho,
-  },
-]
+const dishMeta = [
+  { n: 1, Icon: Flame },
+  { n: 2, Icon: Soup },
+  { n: 3, Icon: Egg },
+  { n: 4, Icon: Cookie },
+  { n: 5, Icon: Shell },
+  { n: 6, Icon: Fish },
+  { n: 7, Icon: IceCream },
+  { n: 8, Icon: Gift },
+] as const
 
-// Verified 4-zone structure (per VinWonders / Sun World — replaced fabricated vendor names).
-const zones = [
-  {
-    code: 'A',
-    name: 'Khu ẩm thực',
-    icon: <Utensils size={22} />,
-    desc: 'Hải sản tươi sống, mì Quảng, bánh xèo, bánh tráng nướng, ốc, kem bơ — gần như mọi món Đà Nẵng đều có.',
-    countLabel: '~60 quầy',
-    priceLabel: '10k – 800k',
-    img: GALLERY_A,
-  },
-  {
-    code: 'B',
-    name: 'Quà lưu niệm',
-    icon: <Gift size={22} />,
-    desc: 'Đèn lồng Hội An mini, nón lá thêu tay, tượng đá Non Nước, móc khoá Cầu Rồng — quà tặng đặc trưng miền Trung.',
-    countLabel: '~35 quầy',
-    priceLabel: '50k – 150k',
-    img: GALLERY_B,
-  },
-  {
-    code: 'C',
-    name: 'Túi xách & Phụ kiện',
-    icon: <Briefcase size={22} />,
-    desc: 'Túi vải đan tay, ví da bò, balo du lịch, mắt kính, đồng hồ — mặt hàng cho du khách đi biển dài ngày.',
-    countLabel: '~30 quầy',
-    priceLabel: '80k – 400k',
-    img: GALLERY_C,
-  },
-  {
-    code: 'D',
-    name: 'Thời trang & Lưu trú',
-    icon: <Shirt size={22} />,
-    desc: 'Áo phông in cảnh Đà Nẵng, đầm maxi đi biển, dép sandal, mũ rộng vành — phục vụ phong cách du lịch ven biển.',
-    countLabel: '~25 quầy',
-    priceLabel: '60k – 350k',
-    img: GALLERY_D,
-  },
-]
+const zonesMeta = [
+  { code: 'A', Icon: Utensils, img: GALLERY_A },
+  { code: 'B', Icon: Gift, img: GALLERY_B },
+  { code: 'C', Icon: Briefcase, img: GALLERY_C },
+  { code: 'D', Icon: Shirt, img: GALLERY_D },
+] as const
 
-const events = [
-  {
-    time: '17:30 – 18:30',
-    title: 'Khai mạc & lên đèn',
-    icon: <Sparkles size={18} />,
-    desc: 'Tiểu thương dựng quầy, bật đèn lồng. Đến sớm để tránh đông và chọn quầy ưng ý.',
-  },
-  {
-    time: '18:30 – 19:00',
-    title: 'Acoustic mở màn',
-    icon: <Music size={18} />,
-    desc: 'Ban nhạc đường phố biểu diễn nhạc Việt – Quốc tế, không khí dần nhộn nhịp.',
-  },
-  {
-    time: '19:00 – 21:30',
-    title: 'Giờ vàng ẩm thực',
-    icon: <Soup size={18} />,
-    desc: 'Toàn bộ 150+ gian hàng phục vụ đồng loạt — đông và sôi động nhất, nên đặt bàn trước nếu nhóm 6+.',
-  },
-  {
-    time: '21:00 (T7 & CN)',
-    title: 'Cầu Rồng phun lửa',
-    icon: <Flame size={18} />,
-    desc: 'Đi bộ 3 phút sang Cầu Rồng xem màn phun lửa & phun nước — quay lại chợ ăn khuya.',
-  },
-  {
-    time: '21:30 – 23:00',
-    title: 'Quà & lưu niệm',
-    icon: <Gift size={18} />,
-    desc: 'Sau bữa tối, ghé khu quà lưu niệm & thời trang dạo bộ — không gian dịu lại, đèn lồng rực rỡ nhất khung giờ này.',
-  },
-  {
-    time: '23:00 – 23:59',
-    title: 'Late-night hải sản',
-    icon: <Coffee size={18} />,
-    desc: 'Khu nướng đêm vẫn mở, đặc biệt sôi động cuối tuần. Đi nhóm bạn rủ nhau ăn nhẹ trước khi về.',
-  },
-]
+const eventsMeta = [
+  { n: 1, Icon: Sparkles },
+  { n: 2, Icon: Music },
+  { n: 3, Icon: Soup },
+  { n: 4, Icon: Flame },
+  { n: 5, Icon: Gift },
+  { n: 6, Icon: Coffee },
+] as const
 
 const testimonials = [
   {
@@ -353,77 +176,61 @@ const testimonials = [
   },
 ]
 
-const tips = [
-  {
-    title: 'Đến đúng "giờ vàng"',
-    desc: 'Từ 19:00 – 21:30 toàn bộ gian hàng đã sẵn sàng, không khí náo nhiệt nhất. Tránh đến sau 22:30 vì nhiều quầy ăn đã dọn.',
-  },
-  {
-    title: 'Hỏi giá trước khi gọi',
-    desc: 'Một số quầy hải sản có thể giá cao. Hỏi giá theo kg/phần trước khi gật đầu — tránh bất ngờ khi tính tiền.',
-  },
-  {
-    title: 'Canh giờ Cầu Rồng',
-    desc: 'Tối T7 & CN lúc 21:00 Cầu Rồng phun lửa — đi bộ 3 phút. Ăn nhẹ trước, no sau.',
-  },
-  {
-    title: 'Chọn quán đông khách Việt',
-    desc: 'Ưu tiên quán có khách Việt ngồi sẵn — đây là chỉ báo tốt nhất về vệ sinh & giá hợp lý.',
-  },
-  {
-    title: 'Gửi xe ngay cổng',
-    desc: 'Bãi xe máy ngay cổng chợ. Ô tô gửi tại đường Trần Hưng Đạo (cách ~200m) hoặc gọi Grab/taxi.',
-  },
-  {
-    title: 'Đem theo tiền mặt VND',
-    desc: 'Phần lớn quầy ăn vặt quen tiền mặt mệnh giá nhỏ (10k – 100k). Một số quầy có dán mã QR ngân hàng để tiện hơn.',
-  },
-]
+const tipsMeta = [1, 2, 3, 4, 5, 6] as const
+const faqsMeta = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const
 
-const faqs = [
-  {
-    q: 'Chợ Đêm Sơn Trà mở cửa mấy giờ?',
-    a: 'Chợ mở cửa hàng ngày từ 17:30 đến 23:45 (Thứ 2 – Thứ 6) và 17:00 đến 23:59 (Thứ 7 – Chủ nhật). Khung giờ vàng đông khách nhất là 19:00 – 21:30. Một số quầy hải sản mở khuya hơn vào cuối tuần.',
-  },
-  {
-    q: 'Địa chỉ chính xác của chợ ở đâu?',
-    a: 'Chợ nằm trên đường Lý Nam Đế giao Mai Hắc Đế, phường An Hải Tây, quận Sơn Trà, thành phố Đà Nẵng — ngay dưới chân Cầu Rồng, đi bộ 3 phút từ bờ Đông sông Hàn. Từ tháng 8/2025 chợ đã được di dời sang vị trí mới với diện tích rộng hơn (~1.500 m²).',
-  },
-  {
-    q: 'Vào chợ có mất phí không?',
-    a: 'Hoàn toàn miễn phí vào cổng. Phí gửi xe máy ~5.000đ/lượt, ô tô gửi tại đường Trần Hưng Đạo cách chợ 200m.',
-  },
-  {
-    q: 'Trung bình ăn uống mất bao nhiêu tiền?',
-    a: 'Ăn vặt nhẹ (bánh tráng, kem bơ, chè): 20.000đ – 70.000đ/món. Bữa chính (mì Quảng, bánh xèo, bánh bèo): 50.000đ – 150.000đ/người. Hải sản tươi cao cấp như tôm hùm, cua hoàng đế dao động 300k – 800k tuỳ trọng lượng — hãy hỏi giá theo kg trước khi gọi.',
-  },
-  {
-    q: 'Nên mang tiền mặt hay dùng app ngân hàng?',
-    a: 'Khuyến nghị mang tiền mặt VND mệnh giá nhỏ (10k – 100k) — quầy ăn vặt quen tiền mặt nhất. Một số quầy có dán mã QR ngân hàng nội địa để khách trả tiện hơn. Thẻ tín dụng quốc tế hiếm khi được chấp nhận tại các quầy nhỏ.',
-  },
-  {
-    q: 'Có thể đặt món trước qua Facebook / Messenger không?',
-    a: 'Có. Bạn có thể nhắn tin trực tiếp với fanpage chính thức "Chợ Đêm Sơn Trà – Wonders Night Market" hoặc với từng tiểu thương để đặt món, đặt bàn, hỏi giá trước khi đến.',
-  },
-  {
-    q: 'Đi từ trung tâm Đà Nẵng / sân bay đến chợ thế nào?',
-    a: 'Từ Cầu Rồng: đi bộ 3 phút. Từ trung tâm bờ Tây sông Hàn: ~5 phút taxi/Grab (~30k). Từ sân bay Đà Nẵng quốc tế: ~15 phút taxi (~80k – 100k). Từ biển Mỹ Khê: ~10 phút đi bộ hoặc 3 phút xe máy.',
-  },
-  {
-    q: 'Có món chay không?',
-    a: 'Có một vài gian hàng chay với mì Quảng chay, bánh xèo nấm, gỏi cuốn chay, chè & nước trái cây ép tươi. Số lượng quầy chay hạn chế, nên đến sớm trước 19:30.',
-  },
-  {
-    q: 'Đặt đặc sản giao về nhà / quốc tế được không?',
-    a: 'Có. Truy cập trang Cửa hàng của chúng tôi để đặt đặc sản đóng gói (mì Quảng khô, bánh tráng, mắm nêm, kem bơ đông lạnh) — giao DHL Express toàn cầu 5–10 ngày làm việc.',
-  },
-]
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+function computeOpenNow(now: Date): boolean {
+  const day = now.getDay() // 0 Sun, 6 Sat
+  const isWeekend = day === 0 || day === 6
+  const minutes = now.getHours() * 60 + now.getMinutes()
+  const open = isWeekend ? 17 * 60 : 17 * 60 + 30
+  const close = isWeekend ? 23 * 60 + 59 : 23 * 60 + 45
+  return minutes >= open && minutes <= close
+}
+
+function easeOutCubic(t: number): number {
+  return 1 - Math.pow(1 - t, 3)
+}
+
+function CountUp({ end, format = 'auto', duration = 1400 }: { end: number; format?: 'auto' | 'plain'; duration?: number }) {
+  const [val, setVal] = useState(0)
+  const ref = useRef<HTMLSpanElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let started = false
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting && !started) {
+            started = true
+            const start = performance.now()
+            const tick = (now: number) => {
+              const t = Math.min(1, (now - start) / duration)
+              setVal(Math.round(end * easeOutCubic(t)))
+              if (t < 1) requestAnimationFrame(tick)
+            }
+            requestAnimationFrame(tick)
+            io.disconnect()
+          }
+        })
+      },
+      { threshold: 0.3 },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [end, duration])
+  const formatted = format === 'plain' || end < 1000 ? String(val) : val.toLocaleString('de-DE')
+  return <span ref={ref}>{formatted}</span>
+}
 
 // ─── Small subcomponents ───────────────────────────────────────────────────
 
 function SectionLabel({ no, title }: { no: string; title: string }) {
   return (
-    <div className="flex items-baseline gap-3.5 mb-6">
+    <div className="flex items-baseline gap-3.5 mb-6" data-reveal>
       <span
         className="text-xs font-semibold text-gold-deep tracking-[0.08em]"
         style={{ fontFamily: 'var(--font-mono)' }}
@@ -456,16 +263,34 @@ function Pill({ children, tone = 'cream' }: { children: React.ReactNode; tone?: 
 // ─── Main component ────────────────────────────────────────────────────────
 
 export function Landing() {
+  const { t, lang } = useT()
   const [scrolled, setScrolled] = useState(false)
+  const [scrollPct, setScrollPct] = useState(0)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [heroSlide, setHeroSlide] = useState(0)
   const [heroPaused, setHeroPaused] = useState(false)
+  const [isOpenNow, setIsOpenNow] = useState<boolean>(() => computeOpenNow(new Date()))
 
+  // Scroll tracking — combined scrolled flag + scroll-progress bar (rAF-throttled)
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 60)
+    let raf = 0
+    const onScroll = () => {
+      if (raf) return
+      raf = window.requestAnimationFrame(() => {
+        const y = window.scrollY
+        setScrolled(y > 60)
+        const doc = document.documentElement
+        const total = doc.scrollHeight - window.innerHeight
+        setScrollPct(total > 0 ? Math.min(100, (y / total) * 100) : 0)
+        raf = 0
+      })
+    }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (raf) window.cancelAnimationFrame(raf)
+    }
   }, [])
 
   // Lock body scroll when mobile menu open
@@ -476,7 +301,7 @@ export function Landing() {
     }
   }, [mobileOpen])
 
-  // Hero carousel — auto-advance every 6s; pause on hover or when tab not visible
+  // Hero carousel — auto-advance every 6s; pause on hover
   useEffect(() => {
     if (heroPaused) return
     const id = window.setInterval(() => {
@@ -484,6 +309,37 @@ export function Landing() {
     }, 6000)
     return () => window.clearInterval(id)
   }, [heroPaused])
+
+  // Open-now status — refresh every 60s
+  useEffect(() => {
+    const tick = () => setIsOpenNow(computeOpenNow(new Date()))
+    tick()
+    const id = window.setInterval(tick, 60_000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  // Reveal-on-scroll: single observer watching every [data-reveal] element
+  useEffect(() => {
+    const els = document.querySelectorAll<HTMLElement>('[data-reveal]')
+    if (!els.length) return
+    if (typeof IntersectionObserver === 'undefined') {
+      els.forEach((el) => el.classList.add('is-in'))
+      return
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-in')
+            io.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -8% 0px' },
+    )
+    els.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [lang])
 
   const nextHero = () => setHeroSlide((s) => (s + 1) % HERO_SLIDES.length)
   const prevHero = () => setHeroSlide((s) => (s - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)
@@ -493,16 +349,38 @@ export function Landing() {
       className="min-h-screen relative overflow-x-hidden"
       style={{ background: 'var(--color-cream)', scrollBehavior: 'smooth' }}
     >
+      {/* Reveal-on-scroll + Ken Burns animations */}
+      <style>{`
+        [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity 700ms ease,transform 700ms cubic-bezier(.2,.7,.2,1)}
+        [data-reveal].is-in{opacity:1;transform:none}
+        @media (prefers-reduced-motion: reduce){[data-reveal]{opacity:1;transform:none;transition:none}}
+        @keyframes dhtc-kenburns{0%{transform:scale(1.04) translateY(0)}100%{transform:scale(1.12) translateY(-1.5%)}}
+        .dhtc-kenburns-active{animation:dhtc-kenburns 9s ease-out forwards}
+        @media (prefers-reduced-motion: reduce){.dhtc-kenburns-active{animation:none;transform:none}}
+      `}</style>
+
+      {/* Scroll progress bar */}
+      <div
+        aria-hidden="true"
+        className="fixed top-0 left-0 z-[60] h-[2px] bg-gold transition-[width] duration-100 ease-out"
+        style={{ width: `${scrollPct}%` }}
+      />
+
       {/* ── Top notice strip ──────────────────────────────────────────── */}
       <div
         className="text-cream text-[11px] sm:text-[12px] text-center py-2 px-4"
         style={{ background: 'var(--color-green-deep)', fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}
       >
         <span className="inline-flex items-center gap-2 flex-wrap justify-center">
-          <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse shrink-0" />
-          <span className="hidden sm:inline">MỞ CỬA HÔM NAY · 17:30 – 23:45 · </span>
-          <span className="sm:hidden">17:30 – 23:45 · </span>
-          ĐỊA ĐIỂM MỚI TỪ 08/2025 · CHÂN CẦU RỒNG
+          <span
+            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+              isOpenNow ? 'bg-gold animate-pulse' : 'bg-cream/40'
+            }`}
+          />
+          <span className="font-bold">{isOpenNow ? t('notice.openLive') : t('notice.closedLive')}</span>
+          <span className="hidden sm:inline">· {t('notice.openNow')} ·</span>
+          <span className="sm:hidden">· {t('notice.openShort')} ·</span>
+          {t('notice.newLocation')}
         </span>
       </div>
 
@@ -532,7 +410,7 @@ export function Landing() {
                 Chợ Đêm Sơn Trà
               </strong>
               <span className="text-[9px] sm:text-[9.5px] text-ink-mute uppercase tracking-[0.15em] sm:tracking-[0.18em] font-semibold">
-                Đà Nẵng · since 2018
+                {t('nav.brandSub')}
               </span>
             </div>
           </Link>
@@ -544,13 +422,14 @@ export function Landing() {
                   href={link.href}
                   className="text-[13px] font-medium text-ink-soft hover:text-green no-underline transition-colors"
                 >
-                  {link.label}
+                  {t(link.key)}
                 </a>
               </li>
             ))}
           </ul>
 
           <div className="flex items-center gap-2">
+            <LangSwitcher className="hidden sm:inline-flex" />
             <a
               href="https://m.me/NightMarketSonTraDaNangVietNam"
               target="_blank"
@@ -558,12 +437,12 @@ export function Landing() {
               className="hidden sm:inline-flex px-3.5 sm:px-4 py-2 border border-ink/15 hover:border-ink text-ink text-[13px] font-semibold rounded-xl transition-colors no-underline items-center gap-1.5"
               style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}
             >
-              Liên hệ
+              {t('nav.contact')}
               <ArrowUpRight size={14} />
             </a>
             <button
               type="button"
-              aria-label={mobileOpen ? 'Đóng menu' : 'Mở menu'}
+              aria-label={mobileOpen ? t('nav.menuClose') : t('nav.menuOpen')}
               aria-expanded={mobileOpen}
               onClick={() => setMobileOpen((o) => !o)}
               className="lg:hidden w-10 h-10 inline-flex items-center justify-center rounded-xl border border-border bg-white text-ink hover:bg-cream transition-colors"
@@ -584,11 +463,14 @@ export function Landing() {
                     onClick={() => setMobileOpen(false)}
                     className="block px-4 py-3 rounded-xl bg-white border border-border text-[14px] font-medium text-ink no-underline hover:border-green hover:text-green transition-colors"
                   >
-                    {link.label}
+                    {t(link.key)}
                   </a>
                 </li>
               ))}
-              <li className="col-span-2 pt-2">
+              <li className="col-span-2 pt-1">
+                <LangSwitcher className="w-full justify-center" />
+              </li>
+              <li className="col-span-2 pt-1">
                 <a
                   href="https://m.me/NightMarketSonTraDaNangVietNam"
                   target="_blank"
@@ -597,7 +479,7 @@ export function Landing() {
                   className="block w-full px-4 py-3 text-center rounded-xl border border-ink/15 bg-white text-[13px] font-semibold text-ink no-underline inline-flex items-center justify-center gap-1.5"
                   style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.04em' }}
                 >
-                  Liên hệ Messenger <ArrowUpRight size={14} />
+                  {t('nav.contactMsg')} <ArrowUpRight size={14} />
                 </a>
               </li>
             </ul>
@@ -605,22 +487,21 @@ export function Landing() {
         )}
       </nav>
 
-      {/* ── HERO — full-bleed carousel with overlay ──────────────────── */}
+      {/* ── HERO — full-bleed carousel with Ken Burns ────────────────── */}
       <header
         className="relative min-h-[78vh] sm:min-h-[88vh] flex items-end overflow-hidden"
         onMouseEnter={() => setHeroPaused(true)}
         onMouseLeave={() => setHeroPaused(false)}
       >
-        {/* Crossfading slides */}
         {HERO_SLIDES.map((slide, i) => (
           <img
             key={slide.src}
             src={slide.src}
-            alt={slide.alt}
+            alt={t(slide.altKey)}
             width={2400}
             height={1600}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1400ms] ease-in-out ${
-              i === heroSlide ? 'opacity-100' : 'opacity-0'
+              i === heroSlide ? 'opacity-100 dhtc-kenburns-active' : 'opacity-0'
             }`}
             loading={i === 0 ? 'eager' : 'lazy'}
             fetchPriority={i === 0 ? 'high' : 'low'}
@@ -635,7 +516,6 @@ export function Landing() {
               'linear-gradient(180deg, rgba(15,25,20,0.65) 0%, rgba(15,25,20,0.45) 35%, rgba(15,25,20,0.85) 100%)',
           }}
         />
-        {/* Decorative grain */}
         <div
           className="absolute inset-0 opacity-[0.08] mix-blend-overlay pointer-events-none"
           style={{
@@ -646,11 +526,11 @@ export function Landing() {
 
         <div className="relative z-10 max-w-[1240px] w-full mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-16 pt-24 sm:pt-32 lg:pt-40">
           <div className="max-w-[860px]">
-            <div className="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-6 flex-wrap">
+            <div className="flex items-center gap-2 sm:gap-3 mb-5 sm:mb-6 flex-wrap" data-reveal>
               <Pill tone="gold">
-                <Sparkles size={11} /> Wonders Night Market · Since 2018
+                <Sparkles size={11} /> {t('hero.pill1')}
               </Pill>
-              <Pill>Đà Nẵng · An Hải Tây</Pill>
+              <Pill>{t('hero.pill2')}</Pill>
             </div>
             <h1
               className="font-normal text-cream leading-[1.02] sm:leading-[0.98] tracking-[-0.025em] mb-5 sm:mb-6"
@@ -658,79 +538,79 @@ export function Landing() {
                 fontFamily: 'var(--font-display)',
                 fontSize: 'clamp(38px, 7.5vw, 96px)',
               }}
+              data-reveal
             >
-              Đêm Đà Nẵng{' '}
+              {t('hero.headlinePre')}{' '}
               <em className="italic not-italic" style={{ color: 'var(--color-gold)', fontWeight: 300 }}>
-                bắt đầu
+                {t('hero.headlineEm')}
               </em>{' '}
-              ở đây.
+              {t('hero.headlinePost')}
             </h1>
             <p
               className="text-[15px] sm:text-[19px] text-cream/85 leading-relaxed max-w-[640px] mb-7 sm:mb-9"
               style={{ fontFamily: 'var(--font-body)' }}
+              data-reveal
             >
-              Hơn <strong className="text-cream">150 gian hàng</strong> trong 4 khu vực dưới chân Cầu Rồng. Hải sản
-              tươi, mì Quảng, bánh tráng nướng, kem bơ — và đèn lồng sáng từ 18:30 mỗi đêm.
+              {t('hero.sub')}
             </p>
-            <div className="flex flex-wrap gap-3 mb-10 sm:mb-12">
+            <div className="flex flex-wrap gap-3 mb-10 sm:mb-12" data-reveal>
               <a
                 href="#flavors"
                 className="px-5 sm:px-6 py-3 sm:py-3.5 bg-gold text-ink text-[13px] sm:text-sm font-semibold rounded-xl hover:bg-gold-deep hover:text-cream transition-colors no-underline inline-flex items-center gap-2"
               >
-                Khám phá ẩm thực
+                {t('hero.cta1')}
                 <ArrowRight size={16} />
               </a>
               <a
                 href="#visit"
                 className="px-5 sm:px-6 py-3 sm:py-3.5 bg-white/10 backdrop-blur-sm border border-cream/30 text-cream text-[13px] sm:text-sm font-semibold rounded-xl hover:bg-white/20 transition-colors no-underline"
               >
-                Đường đến chợ
+                {t('hero.cta2')}
               </a>
             </div>
 
-            {/* Hero facts strip */}
-            <div className="grid grid-cols-3 gap-3 sm:gap-8 pt-6 sm:pt-8 border-t border-cream/15 max-w-[680px]">
-              {heroFacts.map((f) => (
-                <div key={f.label}>
+            <div className="grid grid-cols-3 gap-3 sm:gap-8 pt-6 sm:pt-8 border-t border-cream/15 max-w-[680px]" data-reveal>
+              {heroFacts.map((n) => (
+                <div key={n}>
                   <div
                     className="text-[24px] sm:text-[36px] font-normal tracking-tight leading-none text-gold mb-1"
                     style={{ fontFamily: 'var(--font-display)' }}
                   >
-                    {f.value}
+                    {t(`hero.fact${n}.value`)}
                   </div>
                   <div className="text-[10px] sm:text-[11.5px] text-cream font-semibold uppercase tracking-[0.05em] leading-tight">
-                    {f.label}
+                    {t(`hero.fact${n}.label`)}
                   </div>
-                  <div className="text-[9.5px] sm:text-[10.5px] text-cream/55 mt-0.5 leading-tight">{f.sub}</div>
+                  <div className="text-[9.5px] sm:text-[10.5px] text-cream/55 mt-0.5 leading-tight">
+                    {t(`hero.fact${n}.sub`)}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Carousel controls — dots + prev/next */}
+        {/* Carousel controls */}
         <div className="absolute bottom-5 sm:bottom-7 left-1/2 -translate-x-1/2 lg:left-auto lg:translate-x-0 lg:right-8 z-20 flex items-center gap-3 sm:gap-4">
           <button
             type="button"
             onClick={prevHero}
-            aria-label="Ảnh trước"
+            aria-label={t('hero.prevSlide')}
             className="hidden sm:inline-flex w-9 h-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm border border-cream/30 text-cream hover:bg-white/20 transition-colors"
           >
             <ChevronLeft size={16} />
           </button>
-          <div className="flex items-center gap-2" role="tablist" aria-label="Chuyển ảnh hero">
+          <div className="flex items-center gap-2" role="tablist" aria-label={t('hero.slideTabs')}>
             {HERO_SLIDES.map((_, i) => (
               <button
                 key={i}
                 type="button"
                 role="tab"
                 aria-selected={i === heroSlide}
-                aria-label={`Ảnh ${i + 1} trong ${HERO_SLIDES.length}`}
+                aria-label={`${i + 1} / ${HERO_SLIDES.length}`}
                 onClick={() => setHeroSlide(i)}
                 className={`transition-all duration-300 rounded-full ${
-                  i === heroSlide
-                    ? 'w-8 h-1.5 bg-gold'
-                    : 'w-1.5 h-1.5 bg-cream/40 hover:bg-cream/70'
+                  i === heroSlide ? 'w-8 h-1.5 bg-gold' : 'w-1.5 h-1.5 bg-cream/40 hover:bg-cream/70'
                 }`}
               />
             ))}
@@ -738,50 +618,49 @@ export function Landing() {
           <button
             type="button"
             onClick={nextHero}
-            aria-label="Ảnh tiếp"
+            aria-label={t('hero.nextSlide')}
             className="hidden sm:inline-flex w-9 h-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm border border-cream/30 text-cream hover:bg-white/20 transition-colors"
           >
             <ChevronRight size={16} />
           </button>
         </div>
 
-        {/* Editorial corner stamp */}
         <div
           className="absolute top-24 sm:top-28 right-5 sm:right-8 hidden md:block text-right text-cream/55"
           style={{ fontFamily: 'var(--font-mono)' }}
         >
-          <div className="text-[10px] uppercase tracking-[0.22em] mb-0.5">Số 05 · 2026</div>
-          <div className="text-[10.5px] text-cream/35">Wonders Night Market · Đà Nẵng</div>
+          <div className="text-[10px] uppercase tracking-[0.22em] mb-0.5">{t('hero.issue')}</div>
+          <div className="text-[10.5px] text-cream/35">{t('hero.issueSub')}</div>
         </div>
       </header>
 
-      {/* ── Stats · editorial "by the numbers" band ─────────────────── */}
+      {/* ── Stats band ──────────────────────────────────────────────── */}
       <section className="bg-white border-y border-border">
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-9 sm:py-12">
           <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-7 md:gap-12 items-start">
-            <div className="md:pt-2">
+            <div className="md:pt-2" data-reveal>
               <div
                 className="text-[10.5px] uppercase tracking-[0.2em] font-bold text-gold-deep mb-2"
                 style={{ fontFamily: 'var(--font-mono)' }}
               >
-                Bằng số liệu
+                {t('stats.label')}
               </div>
               <p className="text-[12px] sm:text-[12.5px] text-ink-mute leading-snug max-w-[200px]">
-                Khảo sát của ban quản lý chợ và Tripadvisor — cập nhật tháng 5/2026.
+                {t('stats.note')}
               </p>
             </div>
             <dl className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 m-0 p-0">
-              {stats.map((s) => (
-                <div key={s.label} className="flex flex-col border-l border-border pl-4 sm:pl-5">
+              {statsMeta.map((s) => (
+                <div key={s.label} className="flex flex-col border-l border-border pl-4 sm:pl-5" data-reveal>
                   <dd
                     className="text-[34px] sm:text-[44px] font-normal tracking-tight leading-none text-ink m-0"
                     style={{ fontFamily: 'var(--font-display)' }}
                   >
-                    {s.num}
-                    <small className="text-[14px] sm:text-[18px] text-gold ml-0.5 font-normal">{s.unit}</small>
+                    <CountUp end={s.numRaw} />
+                    <small className="text-[14px] sm:text-[18px] text-gold ml-0.5 font-normal">{t(s.unit)}</small>
                   </dd>
                   <dt className="text-[10px] sm:text-[10.5px] text-ink-mute mt-3 uppercase tracking-[0.08em] font-semibold leading-snug">
-                    {s.label}
+                    {t(s.label)}
                   </dt>
                 </div>
               ))}
@@ -793,13 +672,13 @@ export function Landing() {
       {/* ── STORY ────────────────────────────────────────────────────── */}
       <section id="story" className="py-16 sm:py-20 lg:py-28">
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionLabel no="I · CHƯƠNG MỞ" title="Câu chuyện chợ đêm" />
+          <SectionLabel no={t('story.section')} title={t('story.title')} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 items-center">
-            <div className="relative">
+            <div className="relative" data-reveal>
               <img
                 src={STORY_IMG}
-                alt="Toàn cảnh Chợ Đêm Sơn Trà"
+                alt={t('story.title')}
                 width={1200}
                 height={1500}
                 className="w-full aspect-[4/5] object-cover rounded-3xl border border-border"
@@ -811,18 +690,21 @@ export function Landing() {
                   className="text-[10px] uppercase tracking-[0.18em] font-bold text-gold-deep mb-1.5"
                   style={{ fontFamily: 'var(--font-mono)' }}
                 >
-                  Khai trương
+                  {t('story.openBadge')}
                 </div>
-                <div className="text-[24px] sm:text-[28px] font-normal text-ink leading-none" style={{ fontFamily: 'var(--font-display)' }}>
-                  2018<span className="text-base text-ink-mute ml-1">→ nay</span>
+                <div
+                  className="text-[24px] sm:text-[28px] font-normal text-ink leading-none"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  2018<span className="text-base text-ink-mute ml-1">{t('story.openSince')}</span>
                 </div>
                 <div className="text-[10.5px] sm:text-[11px] text-ink-mute mt-1.5 leading-snug">
-                  Mở rộng 08/2025 lên 1.500 m² · 150+ gian hàng
+                  {t('story.openMeta')}
                 </div>
               </div>
             </div>
 
-            <div>
+            <div data-reveal>
               <h2
                 className="font-normal text-ink leading-[1.05] tracking-[-0.02em] mb-5 sm:mb-6"
                 style={{
@@ -830,31 +712,28 @@ export function Landing() {
                   fontSize: 'clamp(28px, 4.5vw, 52px)',
                 }}
               >
-                Tám năm dưới chân Cầu Rồng — một biểu tượng đêm Đà Nẵng.
+                {t('story.h2')}
               </h2>
+              <p
+                className="text-[15px] sm:text-[16px] text-ink-soft leading-relaxed mb-4 sm:mb-5"
+                dangerouslySetInnerHTML={{ __html: t('story.p1') }}
+              />
               <p className="text-[15px] sm:text-[16px] text-ink-soft leading-relaxed mb-4 sm:mb-5">
-                Khai trương năm 2018 ngay dưới chân Cầu Rồng, Chợ Đêm Sơn Trà từ một dãy quầy hàng nhỏ đã phát triển
-                thành <strong className="text-ink">khu chợ đêm lớn nhất Đà Nẵng</strong> với hơn 150 gian hàng. Tháng
-                8/2025, chợ được di dời sang vị trí mới rộng hơn (~1.500 m²) ngay đối diện đường cũ.
-              </p>
-              <p className="text-[15px] sm:text-[16px] text-ink-soft leading-relaxed mb-4 sm:mb-5">
-                Bốn khu vực — Ẩm thực, Quà lưu niệm, Túi xách & Phụ kiện, Thời trang — được bố trí gọn gàng. Mỗi tối,
-                hàng nghìn thực khách Việt và quốc tế dừng chân trước khi đi xem Cầu Rồng phun lửa.
+                {t('story.p2')}
               </p>
               <p className="text-[15px] sm:text-[16px] text-ink-soft leading-relaxed mb-6 sm:mb-7">
-                Hôm nay, chợ vẫn giữ nhịp đêm ấy — đèn lồng, hương khói nướng, tiếng cụng ly — đồng thời mở thêm
-                kênh Messenger để khách phương xa tiện hỏi đường, đặt bàn nhóm hay tư vấn lịch trình một đêm Đà Nẵng.
+                {t('story.p3')}
               </p>
 
               <div className="flex flex-wrap gap-2 sm:gap-2.5">
                 <Pill tone="green">
-                  <MapPin size={11} /> An Hải Tây, Sơn Trà
+                  <MapPin size={11} /> {t('story.pill1')}
                 </Pill>
                 <Pill tone="green">
-                  <Clock size={11} /> 17:30 – 23:45 hàng ngày
+                  <Clock size={11} /> {t('story.pill2')}
                 </Pill>
                 <Pill tone="green">
-                  <Users size={11} /> 150+ gian hàng
+                  <Users size={11} /> {t('story.pill3')}
                 </Pill>
               </div>
             </div>
@@ -862,7 +741,7 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ── EDITORIAL · CẦU RỒNG MOMENT ─────────────────────────────── */}
+      {/* ── DRAGON MOMENT ───────────────────────────────────────────── */}
       <section className="relative overflow-hidden border-y border-border" style={{ background: 'var(--color-ink)' }}>
         <div className="absolute inset-0">
           <img
@@ -885,66 +764,62 @@ export function Landing() {
         </div>
 
         <div className="relative max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10 lg:gap-16 items-end">
-          <div className="max-w-[760px]">
+          <div className="max-w-[760px]" data-reveal>
             <div
               className="text-[10.5px] uppercase tracking-[0.22em] font-bold text-gold mb-5 sm:mb-6 flex items-center gap-3"
               style={{ fontFamily: 'var(--font-mono)' }}
             >
               <span className="w-8 h-px bg-gold" />
-              Khoảnh khắc · 21:00 cuối tuần
+              {t('dragon.label')}
             </div>
             <h2
               className="font-normal text-cream leading-[1.02] tracking-[-0.025em] mb-7 sm:mb-9"
               style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(34px, 5.5vw, 64px)' }}
             >
-              Khi Cầu Rồng phun lửa, toàn bộ chợ đêm{' '}
+              {t('dragon.titlePre')}{' '}
               <em className="italic not-italic" style={{ color: 'var(--color-gold)', fontWeight: 300 }}>
-                ngừng ăn để nhìn lên.
+                {t('dragon.titleEm')}
               </em>
             </h2>
             <p
               className="text-[15px] sm:text-[17px] text-cream/85 leading-relaxed mb-4 max-w-[640px]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
-              Mỗi tối thứ Bảy và Chủ nhật, đúng 21:00, đầu rồng bắc qua sông Hàn phun ba loạt lửa rồi ba loạt nước.
-              Từ Khu A của chợ, chỉ cần ngẩng đầu là thấy — không cần ra bờ sông chen lấn.
+              {t('dragon.p1')}
             </p>
             <p
               className="text-[14px] sm:text-[16px] text-cream/65 leading-relaxed max-w-[640px]"
               style={{ fontFamily: 'var(--font-body)' }}
             >
-              Tiểu thương quen tới mức không buồn quay xem. Khách du lịch thì vẫn rút điện thoại quay — đó là tín hiệu
-              để bạn biết mình đang đúng nơi, đúng đêm.
+              {t('dragon.p2')}
             </p>
           </div>
 
-          <aside className="lg:pl-8 lg:border-l border-cream/15">
+          <aside className="lg:pl-8 lg:border-l border-cream/15" data-reveal>
             <div
               className="text-[10.5px] uppercase tracking-[0.18em] font-bold text-gold mb-4"
               style={{ fontFamily: 'var(--font-mono)' }}
             >
-              Lịch phun lửa & nước
+              {t('dragon.schedTitle')}
             </div>
             <ul
               className="space-y-2.5 list-none m-0 p-0 text-[13.5px] text-cream/85"
               style={{ fontFamily: 'var(--font-mono)' }}
             >
               <li className="flex justify-between border-b border-cream/10 pb-2.5">
-                <span>Thứ Bảy</span>
+                <span>{t('dragon.sat')}</span>
                 <span className="text-gold font-bold">21:00</span>
               </li>
               <li className="flex justify-between border-b border-cream/10 pb-2.5">
-                <span>Chủ nhật</span>
+                <span>{t('dragon.sun')}</span>
                 <span className="text-gold font-bold">21:00</span>
               </li>
               <li className="flex justify-between text-cream/50 text-[12px] pt-1">
-                <span>Thứ 2 – Thứ 6</span>
-                <span>nghỉ</span>
+                <span>{t('dragon.weekdays')}</span>
+                <span>{t('dragon.off')}</span>
               </li>
             </ul>
-            <p className="text-[11px] text-cream/45 mt-5 leading-snug max-w-[220px]">
-              Nguồn: Sở Du lịch Đà Nẵng — lịch chính thức 2026. Nếu trời mưa to, suất diễn có thể tạm hoãn.
-            </p>
+            <p className="text-[11px] text-cream/45 mt-5 leading-snug max-w-[220px]">{t('dragon.source')}</p>
           </aside>
         </div>
       </section>
@@ -952,17 +827,18 @@ export function Landing() {
       {/* ── GALLERY ──────────────────────────────────────────────────── */}
       <section className="py-14 sm:py-20" style={{ background: 'var(--color-cream-dark)' }}>
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionLabel no="II · KHÔNG GIAN" title="Một đêm ở Sơn Trà" />
+          <SectionLabel no={t('gallery.section')} title={t('gallery.title')} />
 
           <div className="grid grid-cols-2 md:grid-cols-4 auto-rows-[180px] sm:auto-rows-[240px] md:auto-rows-[260px] gap-3 sm:gap-4">
             {gallery.map((g, i) => (
               <figure
                 key={i}
                 className={`relative overflow-hidden rounded-2xl group cursor-pointer ${g.span}`}
+                data-reveal
               >
                 <img
                   src={g.src}
-                  alt={g.alt}
+                  alt={t(g.key)}
                   width={g.w}
                   height={g.h}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
@@ -975,10 +851,13 @@ export function Landing() {
                     className="text-[10px] sm:text-[10.5px] uppercase tracking-[0.1em] sm:tracking-[0.12em] font-semibold opacity-80"
                     style={{ fontFamily: 'var(--font-mono)' }}
                   >
-                    Frame · {String(i + 1).padStart(2, '0')}
+                    {t('gallery.frame')} · {String(i + 1).padStart(2, '0')}
                   </div>
-                  <div className="text-[12px] sm:text-[13px] md:text-[14px] font-medium mt-1 leading-snug" style={{ fontFamily: 'var(--font-display)' }}>
-                    {g.caption}
+                  <div
+                    className="text-[12px] sm:text-[13px] md:text-[14px] font-medium mt-1 leading-snug"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                  >
+                    {t(g.key)}
                   </div>
                 </figcaption>
               </figure>
@@ -987,58 +866,65 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ── SIGNATURE DISHES ─────────────────────────────────────────── */}
+      {/* ── SIGNATURE DISHES · editorial typography cards ────────────── */}
       <section id="flavors" className="py-16 sm:py-20 lg:py-28">
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 sm:mb-10">
             <div>
-              <SectionLabel no="III · ẨM THỰC" title="8 món phải thử" />
-              <p className="text-ink-soft max-w-[520px] text-[14px] sm:text-[15px] leading-relaxed">
-                Tinh hoa miền Trung trong một đêm — từ bánh tráng nướng 15k đến hải sản nướng late-night. Giá tham
-                khảo cập nhật 2025.
+              <SectionLabel no={t('dishes.section')} title={t('dishes.title')} />
+              <p className="text-ink-soft max-w-[520px] text-[14px] sm:text-[15px] leading-relaxed" data-reveal>
+                {t('dishes.sub')}
               </p>
             </div>
           </div>
 
           <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 list-none m-0 p-0">
-            {dishes.map((d) => (
+            {dishMeta.map((d) => (
               <li
-                key={d.name}
-                className="bg-white border border-border rounded-2xl overflow-hidden flex flex-col group hover:border-gold/60 hover:shadow-[0_18px_36px_-22px_rgba(15,25,20,0.25)] transition-all"
+                key={d.n}
+                className="bg-white border border-border rounded-2xl p-5 sm:p-6 flex flex-col gap-4 group hover:border-gold/60 hover:shadow-[0_18px_36px_-22px_rgba(15,25,20,0.25)] transition-all"
+                data-reveal
               >
-                <div className="relative aspect-[4/3] overflow-hidden bg-cream-dark">
-                  <img
-                    src={d.img}
-                    alt={d.name}
-                    width={800}
-                    height={600}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    loading="lazy"
-                    decoding="async"
-                  />
+                <div className="flex items-start justify-between">
                   <span
-                    className="absolute top-3 right-3 px-2.5 py-1 bg-cream/95 backdrop-blur-sm rounded-full text-[9.5px] uppercase tracking-[0.12em] font-semibold text-ink-soft"
-                    style={{ fontFamily: 'var(--font-mono)' }}
+                    className="text-[36px] sm:text-[44px] font-normal text-gold-deep tabular-nums leading-none"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                    aria-hidden
                   >
-                    {d.tag}
+                    {String(d.n).padStart(2, '0')}
+                  </span>
+                  <span className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-cream-dark text-green-deep group-hover:bg-gold/15 group-hover:text-gold-deep transition-colors">
+                    <d.Icon size={20} strokeWidth={1.5} />
                   </span>
                 </div>
-                <div className="p-4 sm:p-5 flex flex-col flex-1">
-                  <h3
-                    className="text-[16px] sm:text-[18px] font-medium tracking-tight text-ink leading-tight m-0 mb-1.5"
-                    style={{ fontFamily: 'var(--font-display)' }}
-                  >
-                    {d.name}
-                  </h3>
-                  <p className="text-[12px] sm:text-[12.5px] text-ink-soft leading-relaxed m-0 mb-3 flex-1">
-                    {d.desc}
-                  </p>
-                  <div
-                    className="text-[12.5px] sm:text-[13px] text-green-deep font-semibold tabular-nums mt-auto pt-2.5 border-t border-border"
+                <h3
+                  className="text-[18px] sm:text-[20px] font-medium tracking-tight leading-tight m-0"
+                  style={{ fontFamily: 'var(--font-display)' }}
+                >
+                  {t(`dish.${d.n}.name`)}
+                </h3>
+                <p className="text-[13px] text-ink-soft leading-relaxed m-0 flex-1">{t(`dish.${d.n}.desc`)}</p>
+                <div className="pt-3 border-t border-border flex items-baseline justify-between gap-3">
+                  <div>
+                    <div
+                      className="text-[10px] uppercase tracking-[0.14em] text-ink-mute font-semibold"
+                      style={{ fontFamily: 'var(--font-mono)' }}
+                    >
+                      {t('dishes.priceLabel')}
+                    </div>
+                    <div
+                      className="text-[16px] sm:text-[17px] font-semibold text-green-deep tabular-nums"
+                      style={{ fontFamily: 'var(--font-mono)' }}
+                    >
+                      {t(`dish.${d.n}.price`)}đ
+                    </div>
+                  </div>
+                  <span
+                    className="text-[10.5px] uppercase tracking-[0.12em] text-gold-deep font-semibold text-right"
                     style={{ fontFamily: 'var(--font-mono)' }}
                   >
-                    {d.price}đ
-                  </div>
+                    {t(`dish.${d.n}.tag`)}
+                  </span>
                 </div>
               </li>
             ))}
@@ -1047,56 +933,58 @@ export function Landing() {
             className="text-[10.5px] text-ink-mute mt-5 sm:mt-6 italic leading-snug max-w-[640px]"
             style={{ fontFamily: 'var(--font-body)' }}
           >
-            Ảnh minh hoạ ẩm thực thuộc Unsplash — sẽ thay bằng ảnh chụp tại quầy trong đợt photo-shoot Q3/2026.
-            Giá tham khảo dựa trên VinWonders, Sovaba, Sun World, DulichLive (2025) — có thể thay đổi theo mùa.
+            {t('dishes.footnote')}
           </p>
         </div>
       </section>
 
-      {/* ── 4 KHU VỰC (verified zones) ───────────────────────────────── */}
+      {/* ── 4 ZONES ──────────────────────────────────────────────────── */}
       <section id="zones" className="py-16 sm:py-20 lg:py-28" style={{ background: 'var(--color-green-deep)' }}>
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-baseline gap-3.5 mb-5 sm:mb-6">
+          <div className="flex items-baseline gap-3.5 mb-5 sm:mb-6" data-reveal>
             <span
               className="text-xs font-semibold tracking-[0.08em]"
               style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-gold)' }}
             >
-              IV · BẢN ĐỒ KHU
+              {t('zones.section')}
             </span>
             <span
               className="text-[20px] sm:text-[26px] tracking-tight text-cream"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              4 khu vực — 150+ gian hàng
+              {t('zones.title')}
             </span>
           </div>
-          <p className="text-cream/70 max-w-[640px] text-[14px] sm:text-[15px] leading-relaxed mb-8 sm:mb-10">
-            Sau đợt mở rộng tháng 8/2025, chợ được chia thành 4 khu rõ ràng theo loại mặt hàng — dễ tìm, dễ so sánh
-            giá. Bố cục dựa trên tài liệu chính thức của VinWonders & Sun World Đà Nẵng.
+          <p className="text-cream/70 max-w-[640px] text-[14px] sm:text-[15px] leading-relaxed mb-8 sm:mb-10" data-reveal>
+            {t('zones.sub')}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-            {zones.map((z) => (
+            {zonesMeta.map((z) => (
               <article
                 key={z.code}
                 className="rounded-2xl overflow-hidden flex flex-col border border-cream/15 group hover:border-gold/60 transition-colors"
                 style={{ background: 'rgba(245,239,224,0.04)' }}
+                data-reveal
               >
                 <div className="relative aspect-[4/3] overflow-hidden">
                   <img
                     src={z.img}
-                    alt={z.name}
+                    alt={t(`zone.${z.code}.name`)}
                     width={1200}
                     height={900}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     loading="lazy"
                     decoding="async"
                   />
-                  <div className="absolute top-3 left-3 w-10 h-10 rounded-xl bg-gold flex items-center justify-center text-ink font-bold text-base" style={{ fontFamily: 'var(--font-display)' }}>
+                  <div
+                    className="absolute top-3 left-3 w-10 h-10 rounded-xl bg-gold flex items-center justify-center text-ink font-bold text-base"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                  >
                     {z.code}
                   </div>
                   <div className="absolute top-3 right-3 w-9 h-9 rounded-lg bg-cream/95 flex items-center justify-center text-green">
-                    {z.icon}
+                    <z.Icon size={22} />
                   </div>
                 </div>
                 <div className="p-4 sm:p-5 flex flex-col flex-1">
@@ -1104,12 +992,17 @@ export function Landing() {
                     className="text-[18px] sm:text-[19px] font-medium tracking-tight mb-2 text-cream leading-tight"
                     style={{ fontFamily: 'var(--font-display)' }}
                   >
-                    Khu {z.code} · {z.name}
+                    {t('zones.zonePrefix')} {z.code} · {t(`zone.${z.code}.name`)}
                   </h3>
-                  <p className="text-[12.5px] sm:text-[13px] text-cream/70 leading-relaxed flex-1 mb-4">{z.desc}</p>
-                  <div className="flex items-center justify-between pt-3 border-t border-cream/15 text-[11.5px]" style={{ fontFamily: 'var(--font-mono)' }}>
-                    <span className="text-gold font-semibold">{z.countLabel}</span>
-                    <span className="text-cream/55">{z.priceLabel}</span>
+                  <p className="text-[12.5px] sm:text-[13px] text-cream/70 leading-relaxed flex-1 mb-4">
+                    {t(`zone.${z.code}.desc`)}
+                  </p>
+                  <div
+                    className="flex items-center justify-between pt-3 border-t border-cream/15 text-[11.5px]"
+                    style={{ fontFamily: 'var(--font-mono)' }}
+                  >
+                    <span className="text-gold font-semibold">{t(`zone.${z.code}.count`)}</span>
+                    <span className="text-cream/55">{t(`zone.${z.code}.price`)}</span>
                   </div>
                 </div>
               </article>
@@ -1123,7 +1016,7 @@ export function Landing() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 sm:px-6 py-3 bg-gold text-ink text-[13px] sm:text-sm font-semibold rounded-xl hover:bg-cream transition-colors no-underline"
             >
-              <Facebook size={16} /> Xem cập nhật từ fanpage chính thức
+              <Facebook size={16} /> {t('zones.cta')}
             </a>
           </div>
         </div>
@@ -1132,36 +1025,37 @@ export function Landing() {
       {/* ── EVENTS TIMELINE ──────────────────────────────────────────── */}
       <section id="events" className="py-16 sm:py-20 lg:py-28">
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionLabel no="V · LỊCH ĐÊM" title="Lịch một buổi tối" />
-          <p className="text-ink-soft max-w-[640px] text-[14px] sm:text-[15px] leading-relaxed mb-8 sm:mb-10">
-            Sáu khung giờ vàng. Hãy đến sớm, ăn từ từ, và đừng quên xem Cầu Rồng phun lửa lúc 21:00 cuối tuần.
+          <SectionLabel no={t('events.section')} title={t('events.title')} />
+          <p className="text-ink-soft max-w-[640px] text-[14px] sm:text-[15px] leading-relaxed mb-8 sm:mb-10" data-reveal>
+            {t('events.sub')}
           </p>
 
-          <div className="bg-white border border-border rounded-3xl p-5 sm:p-6 lg:p-10">
+          <div className="bg-white border border-border rounded-3xl p-5 sm:p-6 lg:p-10" data-reveal>
             <ol className="relative space-y-6 sm:space-y-7 list-none m-0 p-0">
-              {/* Vertical line */}
               <div className="absolute left-[22px] sm:left-[26px] top-3 bottom-3 w-px bg-border" aria-hidden />
 
-              {events.map((e, i) => (
-                <li key={i} className="relative pl-12 sm:pl-16">
+              {eventsMeta.map((e) => (
+                <li key={e.n} className="relative pl-12 sm:pl-16">
                   <div className="absolute left-0 top-0 w-11 h-11 sm:w-[52px] sm:h-[52px] rounded-full bg-cream border border-border flex items-center justify-center text-green">
-                    {e.icon}
+                    <e.Icon size={18} />
                   </div>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 mb-1.5">
                     <span
                       className="text-[11px] sm:text-[12px] text-gold-deep font-bold tracking-[0.08em] uppercase"
                       style={{ fontFamily: 'var(--font-mono)' }}
                     >
-                      {e.time}
+                      {t(`event.${e.n}.time`)}
                     </span>
                     <h3
                       className="text-[17px] sm:text-[20px] font-medium tracking-tight"
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      {e.title}
+                      {t(`event.${e.n}.title`)}
                     </h3>
                   </div>
-                  <p className="text-[13px] sm:text-[14px] text-ink-soft leading-relaxed max-w-[640px]">{e.desc}</p>
+                  <p className="text-[13px] sm:text-[14px] text-ink-soft leading-relaxed max-w-[640px]">
+                    {t(`event.${e.n}.desc`)}
+                  </p>
                 </li>
               ))}
             </ol>
@@ -1169,20 +1063,22 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS · pull-quote treatment ──────────────────────── */}
+      {/* ── TESTIMONIALS ─────────────────────────────────────────────── */}
       <section className="py-20 sm:py-24 lg:py-32" style={{ background: 'var(--color-cream-dark)' }}>
         <div className="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8">
           <div
             className="text-[10.5px] uppercase tracking-[0.22em] font-bold text-gold-deep mb-7 sm:mb-9 flex items-center gap-3"
             style={{ fontFamily: 'var(--font-mono)' }}
+            data-reveal
           >
             <span className="w-8 h-px bg-gold-deep" />
-            Tiếng nói thực khách · trích từ Tripadvisor & Google Maps
+            {t('testi.label')}
           </div>
 
           <blockquote
             className="font-normal text-ink leading-[1.06] tracking-[-0.025em] mb-6 sm:mb-7 m-0 relative max-w-[920px]"
             style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 4.6vw, 56px)' }}
+            data-reveal
           >
             <span
               className="text-gold-deep absolute -left-1 sm:-left-2 -top-3 sm:-top-5 select-none"
@@ -1191,17 +1087,22 @@ export function Landing() {
             >
               “
             </span>
-            After the Dragon Bridge fire show, walking over for late supper here is the best routine in Đà Nẵng.
+            {testimonials[0].quote}
           </blockquote>
-          <footer className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px] sm:text-[13px] text-ink-soft mb-12 sm:mb-14">
-            <span className="font-semibold text-ink">Erico T.</span>
-            <span className="text-ink-mute">🇸🇬 Singapore</span>
+          <footer
+            className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px] sm:text-[13px] text-ink-soft mb-12 sm:mb-14"
+            data-reveal
+          >
+            <span className="font-semibold text-ink">{testimonials[0].name}</span>
+            <span className="text-ink-mute">
+              {testimonials[0].flag} {testimonials[0].country}
+            </span>
             <span className="w-1 h-1 rounded-full bg-ink-mute" />
             <span
               className="uppercase tracking-[0.14em] text-[10.5px] text-ink-mute inline-flex items-center gap-1.5"
               style={{ fontFamily: 'var(--font-mono)' }}
             >
-              Tripadvisor
+              {testimonials[0].source}
               <span className="inline-flex items-center gap-0.5 text-gold">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <Star key={s} size={10} className="fill-current" />
@@ -1214,12 +1115,13 @@ export function Landing() {
             <div
               className="text-[10.5px] uppercase tracking-[0.18em] font-bold text-ink-mute mb-5 sm:mb-6"
               style={{ fontFamily: 'var(--font-mono)' }}
+              data-reveal
             >
-              Năm trích đoạn khác chúng tôi đọc tuần này
+              {t('testi.more')}
             </div>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 sm:gap-x-14 gap-y-6 sm:gap-y-7 list-none m-0 p-0">
-              {testimonials.slice(1).map((t, i) => (
-                <li key={i} className="grid grid-cols-[28px_1fr] gap-3 sm:gap-5">
+              {testimonials.slice(1).map((tt, i) => (
+                <li key={i} className="grid grid-cols-[28px_1fr] gap-3 sm:gap-5" data-reveal>
                   <span
                     className="text-[11px] text-gold-deep font-bold tracking-wider pt-1.5"
                     style={{ fontFamily: 'var(--font-mono)' }}
@@ -1231,13 +1133,13 @@ export function Landing() {
                       className="text-[14px] sm:text-[15.5px] text-ink leading-relaxed m-0"
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      “{t.quote}”
+                      “{tt.quote}”
                     </p>
                     <p
                       className="text-[11px] sm:text-[11.5px] text-ink-mute mt-2 m-0 tracking-wide"
                       style={{ fontFamily: 'var(--font-mono)' }}
                     >
-                      — {t.name} · {t.flag} {t.country} · {t.source}
+                      — {tt.name} · {tt.flag} {tt.country} · {tt.source}
                     </p>
                   </div>
                 </li>
@@ -1251,42 +1153,42 @@ export function Landing() {
       <section className="py-16 sm:py-20 lg:py-28">
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-10 lg:gap-16 items-start">
-            <div className="lg:sticky lg:top-24">
-              <SectionLabel no="VI · MẸO ĐỊA PHƯƠNG" title="Sáu điều nên biết trước" />
+            <div className="lg:sticky lg:top-24" data-reveal>
+              <SectionLabel no={t('tips.section')} title={t('tips.title')} />
               <p className="text-[13.5px] sm:text-[14px] text-ink-soft leading-relaxed max-w-[260px] mb-5">
-                Lời nhắn của những người Đà Nẵng đã đi chợ này quá nhiều lần — tổng hợp từ Facebook fanpage, comment
-                review Tripadvisor, và một buổi tối ngồi cà phê với hai tiểu thương.
+                {t('tips.sub')}
               </p>
               <div
                 className="text-[10.5px] uppercase tracking-[0.2em] text-ink-mute"
                 style={{ fontFamily: 'var(--font-mono)' }}
               >
-                Soạn lại tháng 5/2026
+                {t('tips.meta')}
               </div>
             </div>
 
             <ol className="list-none m-0 p-0 divide-y divide-border border-t border-border">
-              {tips.map((t, i) => (
+              {tipsMeta.map((n) => (
                 <li
-                  key={i}
+                  key={n}
                   className="grid grid-cols-[44px_1fr] sm:grid-cols-[68px_1fr] gap-4 sm:gap-6 py-6 sm:py-7"
+                  data-reveal
                 >
                   <span
                     className="text-[28px] sm:text-[40px] font-normal text-gold-deep leading-none tabular-nums"
                     style={{ fontFamily: 'var(--font-display)' }}
                     aria-hidden
                   >
-                    {String(i + 1).padStart(2, '0')}
+                    {String(n).padStart(2, '0')}
                   </span>
                   <div>
                     <h4
                       className="text-[19px] sm:text-[24px] font-normal tracking-tight text-ink leading-[1.15] mb-2 sm:mb-2.5"
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      {t.title}
+                      {t(`tip.${n}.title`)}
                     </h4>
                     <p className="text-[13.5px] sm:text-[15px] text-ink-soft leading-relaxed max-w-[620px] m-0">
-                      {t.desc}
+                      {t(`tip.${n}.desc`)}
                     </p>
                   </div>
                 </li>
@@ -1299,13 +1201,15 @@ export function Landing() {
       {/* ── VISIT / MAP ──────────────────────────────────────────────── */}
       <section id="visit" className="py-16 sm:py-20 lg:py-28" style={{ background: 'var(--color-cream-dark)' }}>
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionLabel no="VII · ĐƯỜNG ĐẾN" title="Tham quan & đường đến" />
+          <SectionLabel no={t('visit.section')} title={t('visit.title')} />
 
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-5 sm:gap-6 lg:gap-8">
-            {/* Map embed */}
-            <div className="lg:col-span-3 rounded-3xl overflow-hidden border border-border bg-white aspect-[5/4] lg:aspect-auto lg:min-h-[480px]">
+            <div
+              className="lg:col-span-3 rounded-3xl overflow-hidden border border-border bg-white aspect-[5/4] lg:aspect-auto lg:min-h-[480px]"
+              data-reveal
+            >
               <iframe
-                title="Bản đồ Chợ Đêm Sơn Trà"
+                title={t('visit.mapTitle')}
                 src="https://www.google.com/maps?q=cho+dem+son+tra+da+nang&output=embed"
                 className="w-full h-full border-0"
                 loading="lazy"
@@ -1314,65 +1218,77 @@ export function Landing() {
               />
             </div>
 
-            {/* Info card */}
             <div className="lg:col-span-2 flex flex-col gap-4">
-              <div className="bg-white border border-border rounded-2xl p-5 sm:p-6">
+              <div className="bg-white border border-border rounded-2xl p-5 sm:p-6" data-reveal>
                 <div className="flex items-center gap-2 mb-3">
                   <MapPin size={16} className="text-green" />
                   <span
                     className="text-[11px] uppercase tracking-widest font-semibold text-ink-mute"
                     style={{ fontFamily: 'var(--font-mono)' }}
                   >
-                    Địa chỉ
+                    {t('visit.addressLabel')}
                   </span>
                 </div>
                 <p
                   className="text-[15px] sm:text-[16px] text-ink leading-snug mb-1"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  Đường Lý Nam Đế × Mai Hắc Đế
+                  {t('visit.addressLine1')}
                 </p>
-                <p className="text-[13px] sm:text-[13.5px] text-ink-soft">
-                  Phường An Hải Tây, quận Sơn Trà, thành phố Đà Nẵng — ngay chân Cầu Rồng. Địa điểm mới từ tháng 8/2025.
-                </p>
+                <p className="text-[13px] sm:text-[13.5px] text-ink-soft">{t('visit.addressLine2')}</p>
               </div>
 
-              <div className="bg-white border border-border rounded-2xl p-5 sm:p-6">
+              <div className="bg-white border border-border rounded-2xl p-5 sm:p-6" data-reveal>
                 <div className="flex items-center gap-2 mb-3">
                   <Clock size={16} className="text-green" />
                   <span
                     className="text-[11px] uppercase tracking-widest font-semibold text-ink-mute"
                     style={{ fontFamily: 'var(--font-mono)' }}
                   >
-                    Giờ mở cửa
+                    {t('visit.hoursLabel')}
                   </span>
                 </div>
                 <ul className="space-y-1.5 text-[13.5px] sm:text-[14px] text-ink-soft list-none m-0 p-0">
-                  <li className="flex justify-between"><span>Thứ 2 – Thứ 6</span><span className="text-ink font-semibold">17:30 – 23:45</span></li>
-                  <li className="flex justify-between"><span>Thứ 7 – Chủ nhật</span><span className="text-ink font-semibold">17:00 – 23:59</span></li>
-                  <li className="flex justify-between text-[12px] sm:text-[12.5px] pt-2 mt-2 border-t border-border"><span>Giờ vàng</span><span className="text-green font-bold">19:00 – 21:30</span></li>
+                  <li className="flex justify-between">
+                    <span>{t('visit.hoursWeekday')}</span>
+                    <span className="text-ink font-semibold">17:30 – 23:45</span>
+                  </li>
+                  <li className="flex justify-between">
+                    <span>{t('visit.hoursWeekend')}</span>
+                    <span className="text-ink font-semibold">17:00 – 23:59</span>
+                  </li>
+                  <li className="flex justify-between text-[12px] sm:text-[12.5px] pt-2 mt-2 border-t border-border">
+                    <span>{t('visit.hoursGolden')}</span>
+                    <span className="text-green font-bold">19:00 – 21:30</span>
+                  </li>
                 </ul>
               </div>
 
-              <div className="bg-green text-cream rounded-2xl p-5 sm:p-6">
+              <div className="bg-green text-cream rounded-2xl p-5 sm:p-6" data-reveal>
                 <div
                   className="text-[11px] uppercase tracking-widest font-semibold mb-3"
                   style={{ color: 'var(--color-gold)', fontFamily: 'var(--font-mono)' }}
                 >
-                  Cách đến
+                  {t('visit.howLabel')}
                 </div>
                 <ul className="space-y-3 list-none m-0 p-0 text-[13px] sm:text-[13.5px]">
                   <li className="flex items-start gap-3">
                     <Footprints size={16} className="text-gold mt-0.5 shrink-0" />
-                    <span><strong>Từ Cầu Rồng:</strong> đi bộ 3 phút (~250m)</span>
+                    <span>
+                      <strong>{t('visit.how1.title')}</strong> {t('visit.how1.body')}
+                    </span>
                   </li>
                   <li className="flex items-start gap-3">
                     <Bike size={16} className="text-gold mt-0.5 shrink-0" />
-                    <span><strong>Từ trung tâm Tây sông Hàn:</strong> ~5 phút Grab Bike (~20k)</span>
+                    <span>
+                      <strong>{t('visit.how2.title')}</strong> {t('visit.how2.body')}
+                    </span>
                   </li>
                   <li className="flex items-start gap-3">
                     <Car size={16} className="text-gold mt-0.5 shrink-0" />
-                    <span><strong>Từ sân bay Đà Nẵng:</strong> ~15 phút taxi (~80k–100k)</span>
+                    <span>
+                      <strong>{t('visit.how3.title')}</strong> {t('visit.how3.body')}
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -1384,20 +1300,21 @@ export function Landing() {
       {/* ── FAQ ──────────────────────────────────────────────────────── */}
       <section id="faq" className="py-16 sm:py-20 lg:py-28">
         <div className="max-w-[860px] mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionLabel no="VIII · GIẢI ĐÁP" title="Câu hỏi thường gặp" />
+          <SectionLabel no={t('faq.section')} title={t('faq.title')} />
 
           <div className="space-y-2 mt-6 sm:mt-8">
-            {faqs.map((f, i) => (
+            {faqsMeta.map((n) => (
               <details
-                key={i}
+                key={n}
                 className="group bg-white border border-border rounded-2xl overflow-hidden open:border-green transition-colors"
+                data-reveal
               >
                 <summary className="flex items-center justify-between gap-4 p-4 sm:p-5 cursor-pointer list-none">
                   <span
                     className="text-[15px] sm:text-[16px] font-medium text-ink pr-2 sm:pr-4"
                     style={{ fontFamily: 'var(--font-display)' }}
                   >
-                    {f.q}
+                    {t(`faq.${n}.q`)}
                   </span>
                   <ChevronDown
                     size={20}
@@ -1405,7 +1322,7 @@ export function Landing() {
                   />
                 </summary>
                 <div className="px-4 sm:px-5 pb-4 sm:pb-5 text-[13.5px] sm:text-[14px] text-ink-soft leading-relaxed border-t border-border pt-3 sm:pt-4">
-                  {f.a}
+                  {t(`faq.${n}.a`)}
                 </div>
               </details>
             ))}
@@ -1413,7 +1330,7 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ── CTA · VISIT & CONTACT ────────────────────────────────────── */}
+      {/* ── CTA ──────────────────────────────────────────────────────── */}
       <section className="py-16 sm:py-20 lg:py-24 relative overflow-hidden bg-ink">
         <div
           className="absolute inset-0 opacity-20 pointer-events-none"
@@ -1423,28 +1340,28 @@ export function Landing() {
           }}
         />
         <div className="relative max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-10 items-center">
-          <div>
+          <div data-reveal>
             <div className="flex items-center gap-2 mb-4 sm:mb-5">
               <div className="w-8 h-px bg-gold" />
               <span
                 className="text-[10.5px] sm:text-[11px] font-bold uppercase tracking-[0.18em] sm:tracking-[0.2em]"
                 style={{ color: 'var(--color-gold)', fontFamily: 'var(--font-mono)' }}
               >
-                Hẹn gặp dưới chân Cầu Rồng
+                {t('cta.eyebrow')}
               </span>
             </div>
             <h2
               className="font-normal text-cream leading-[1.05] tracking-[-0.02em] mb-4 sm:mb-5"
               style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 56px)' }}
             >
-              Một đêm Đà Nẵng,{' '}
+              {t('cta.titlePre')}{' '}
               <em className="italic not-italic" style={{ color: 'var(--color-gold)', fontWeight: 300 }}>
-                bắt đầu từ đây
-              </em>.
+                {t('cta.titleEm')}
+              </em>
+              {t('cta.titlePost')}
             </h2>
             <p className="text-cream/85 text-[14px] sm:text-[16px] leading-relaxed max-w-[480px] mb-6 sm:mb-8">
-              17:30 đèn lồng bật sáng, 19:00 cao điểm hương khói nướng, 22:30 ban nhạc đường phố lên sân khấu.
-              Cần tư vấn đặt bàn nhóm đông, sự kiện hay quay phim — nhắn Messenger hoặc gọi hotline ban quản lý.
+              {t('cta.body')}
             </p>
             <div className="flex flex-wrap gap-3">
               <a
@@ -1453,31 +1370,30 @@ export function Landing() {
                 rel="noopener noreferrer"
                 className="px-5 sm:px-6 py-3 sm:py-3.5 bg-gold text-ink text-[13px] sm:text-sm font-semibold rounded-xl hover:bg-cream transition-colors no-underline inline-flex items-center gap-2"
               >
-                <Facebook size={16} /> Nhắn Messenger
+                <Facebook size={16} /> {t('cta.btnMessenger')}
               </a>
               <a
                 href="tel:+84947046556"
                 className="px-5 sm:px-6 py-3 sm:py-3.5 bg-white/10 backdrop-blur-sm border border-cream/30 text-cream text-[13px] sm:text-sm font-semibold rounded-xl hover:bg-white/20 transition-colors no-underline inline-flex items-center gap-2"
               >
-                <Phone size={16} /> Gọi +84 94 704 6556
+                <Phone size={16} /> {t('cta.btnCall')}
               </a>
             </div>
           </div>
 
-          {/* Spec-sheet — visit essentials */}
-          <div className="lg:pl-10 lg:border-l border-cream/15">
+          <div className="lg:pl-10 lg:border-l border-cream/15" data-reveal>
             <div
               className="text-[10.5px] uppercase tracking-[0.22em] font-bold text-gold mb-5 sm:mb-6"
               style={{ fontFamily: 'var(--font-mono)' }}
             >
-              Thông tin đến chợ
+              {t('cta.specLabel')}
             </div>
             <dl className="m-0 p-0 divide-y divide-cream/15 border-y border-cream/15">
               {[
-                { v: '17:30', l: 'Mở cửa hàng đêm', sub: 'thứ 2 – thứ 6 · cuối tuần từ 17:00' },
-                { v: '23:45', l: 'Đóng cửa thường', sub: 'cuối tuần kéo dài đến 23:59' },
-                { v: '0₫', l: 'Phí vào cổng', sub: 'miễn phí cho khách tham quan' },
-                { v: '~150', l: 'Chỗ đỗ xe máy', sub: 'bãi gửi xe công cộng dọc Mai Hắc Đế' },
+                { v: '17:30', l: 'cta.spec1.l', sub: 'cta.spec1.sub' },
+                { v: '23:45', l: 'cta.spec2.l', sub: 'cta.spec2.sub' },
+                { v: t('cta.spec3.v'), l: 'cta.spec3.l', sub: 'cta.spec3.sub' },
+                { v: t('cta.spec4.v'), l: 'cta.spec4.l', sub: 'cta.spec4.sub' },
               ].map((m) => (
                 <div
                   key={m.l}
@@ -1494,9 +1410,9 @@ export function Landing() {
                       className="text-[12.5px] sm:text-[13.5px] text-cream font-semibold uppercase tracking-[0.06em] leading-snug mb-1"
                       style={{ fontFamily: 'var(--font-mono)' }}
                     >
-                      {m.l}
+                      {t(m.l)}
                     </div>
-                    <div className="text-[12px] sm:text-[12.5px] text-cream/55 leading-snug">{m.sub}</div>
+                    <div className="text-[12px] sm:text-[12.5px] text-cream/55 leading-snug">{t(m.sub)}</div>
                   </dd>
                 </div>
               ))}
@@ -1505,30 +1421,26 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ── LEGAL / COMPLIANCE STRIP ─────────────────────────────────── */}
-      <section
-        aria-labelledby="legal-heading"
-        className="bg-cream-dark/40 border-y border-border py-12 sm:py-16"
-      >
+      {/* ── LEGAL STRIP ──────────────────────────────────────────────── */}
+      <section aria-labelledby="legal-heading" className="bg-cream-dark/40 border-y border-border py-12 sm:py-16">
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-8 sm:mb-10">
-            <div>
+            <div data-reveal>
               <div
                 className="text-[10.5px] text-gold-deep uppercase tracking-[0.18em] font-bold mb-2"
                 style={{ fontFamily: 'var(--font-mono)' }}
               >
-                Minh bạch · Tuân thủ
+                {t('legal.eyebrow')}
               </div>
               <h2
                 id="legal-heading"
                 className="text-[26px] sm:text-[34px] font-normal tracking-tight text-ink leading-tight m-0"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
-                Cam kết pháp lý &amp; bảo vệ dữ liệu khách hàng
+                {t('legal.title')}
               </h2>
               <p className="text-[13px] sm:text-[14px] text-ink-soft leading-relaxed mt-2 max-w-[640px]">
-                Chợ Đêm Sơn Trà tuân thủ Luật An toàn thông tin mạng Việt Nam, Nghị định 13/2023/NĐ-CP về bảo
-                vệ dữ liệu cá nhân và yêu cầu của Meta Platform Policy. Tất cả tài liệu pháp lý đều công khai.
+                {t('legal.intro')}
               </p>
             </div>
             <Link
@@ -1536,7 +1448,7 @@ export function Landing() {
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-ink text-cream rounded-full text-[12.5px] font-semibold uppercase tracking-[0.08em] no-underline hover:bg-green-deep transition-colors self-start sm:self-end shrink-0"
               style={{ fontFamily: 'var(--font-mono)' }}
             >
-              <Trash2 size={14} /> Yêu cầu xoá dữ liệu
+              <Trash2 size={14} /> {t('legal.requestDelete')}
             </Link>
           </div>
 
@@ -1545,32 +1457,30 @@ export function Landing() {
               {
                 to: '/privacy',
                 Icon: ShieldCheck,
-                title: 'Chính sách bảo mật',
-                desc:
-                  'Chúng tôi thu thập gì, lưu trữ bao lâu, chia sẻ với ai. Tuân thủ GDPR-like + Nghị định 13/2023/NĐ-CP Việt Nam.',
-                meta: 'Hiệu lực 25/05/2026',
+                titleKey: 'legal.privacy.title',
+                descKey: 'legal.privacy.desc',
+                metaKey: 'legal.privacy.meta',
               },
               {
                 to: '/terms',
                 Icon: FileText,
-                title: 'Điều khoản sử dụng',
-                desc:
-                  'Hợp đồng pháp lý giữa bạn và Chợ Đêm Sơn Trà. Trách nhiệm khách hàng, tiểu thương, thanh toán, đổi trả.',
-                meta: 'Hiệu lực 25/05/2026',
+                titleKey: 'legal.terms.title',
+                descKey: 'legal.terms.desc',
+                metaKey: 'legal.terms.meta',
               },
               {
                 to: '/data-deletion',
                 Icon: Trash2,
-                title: 'Hướng dẫn xoá dữ liệu',
-                desc:
-                  '3 cách xoá: self-service trong tài khoản, gửi email, hoặc gỡ ứng dụng khỏi Facebook. Xác minh trong 3 ngày, xoá trong 30 ngày.',
-                meta: 'Meta Data Deletion Callback',
+                titleKey: 'legal.delete.title',
+                descKey: 'legal.delete.desc',
+                metaKey: 'legal.delete.meta',
               },
-            ].map(({ to, Icon, title, desc, meta }) => (
+            ].map(({ to, Icon, titleKey, descKey, metaKey }) => (
               <Link
                 key={to}
                 to={to}
                 className="group bg-white border border-border rounded-2xl p-5 sm:p-6 no-underline flex flex-col hover:border-gold/70 hover:shadow-[0_18px_36px_-22px_rgba(15,25,20,0.25)] transition-all"
+                data-reveal
               >
                 <div className="flex items-start justify-between mb-3 sm:mb-4">
                   <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-green/10 text-green-deep">
@@ -1580,50 +1490,48 @@ export function Landing() {
                     className="text-[9.5px] text-ink-mute uppercase tracking-[0.14em] font-semibold mt-1.5"
                     style={{ fontFamily: 'var(--font-mono)' }}
                   >
-                    {meta}
+                    {t(metaKey)}
                   </span>
                 </div>
                 <h3 className="text-[16px] sm:text-[17px] font-medium tracking-tight text-ink leading-tight m-0 mb-2">
-                  {title}
+                  {t(titleKey)}
                 </h3>
                 <p className="text-[12.5px] sm:text-[13px] text-ink-soft leading-relaxed m-0 mb-4 flex-1">
-                  {desc}
+                  {t(descKey)}
                 </p>
                 <span className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-green-deep group-hover:gap-2.5 transition-all mt-auto">
-                  Đọc đầy đủ <span aria-hidden>→</span>
+                  {t('legal.readMore')} <span aria-hidden>→</span>
                 </span>
               </Link>
             ))}
           </div>
 
           <div className="mt-8 sm:mt-10 pt-6 sm:pt-7 border-t border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 text-[12px] sm:text-[12.5px] text-ink-soft">
-            <div>
+            <div data-reveal>
               <div
                 className="text-[9.5px] text-ink-mute uppercase tracking-[0.14em] font-semibold mb-1"
                 style={{ fontFamily: 'var(--font-mono)' }}
               >
-                Đơn vị vận hành
+                {t('legal.entity.label')}
               </div>
-              <div className="text-ink font-medium leading-snug">Công ty CP DHTC Đà Nẵng</div>
-              <div className="text-[11.5px] text-ink-mute mt-0.5">GPKD 0401234567 · Sở KH&amp;ĐT Đà Nẵng</div>
+              <div className="text-ink font-medium leading-snug">{t('legal.entity.name')}</div>
+              <div className="text-[11.5px] text-ink-mute mt-0.5">{t('legal.entity.gpkd')}</div>
             </div>
-            <div>
+            <div data-reveal>
               <div
                 className="text-[9.5px] text-ink-mute uppercase tracking-[0.14em] font-semibold mb-1"
                 style={{ fontFamily: 'var(--font-mono)' }}
               >
-                Trụ sở
+                {t('legal.hq.label')}
               </div>
-              <div className="leading-snug">
-                Mai Hắc Đế × Lý Nam Đế, phường An Hải Tây, quận Sơn Trà, thành phố Đà Nẵng, Việt Nam
-              </div>
+              <div className="leading-snug">{t('legal.hq.address')}</div>
             </div>
-            <div>
+            <div data-reveal>
               <div
                 className="text-[9.5px] text-ink-mute uppercase tracking-[0.14em] font-semibold mb-1"
                 style={{ fontFamily: 'var(--font-mono)' }}
               >
-                Email pháp lý
+                {t('legal.email.label')}
               </div>
               <a
                 href="mailto:privacy@dhtcdanang.com"
@@ -1631,17 +1539,17 @@ export function Landing() {
               >
                 privacy@dhtcdanang.com
               </a>
-              <div className="text-[11.5px] text-ink-mute mt-0.5">Hỗ trợ DPO &amp; yêu cầu xoá dữ liệu</div>
+              <div className="text-[11.5px] text-ink-mute mt-0.5">{t('legal.email.sub')}</div>
             </div>
-            <div>
+            <div data-reveal>
               <div
                 className="text-[9.5px] text-ink-mute uppercase tracking-[0.14em] font-semibold mb-1"
                 style={{ fontFamily: 'var(--font-mono)' }}
               >
-                Hotline
+                {t('legal.hotline.label')}
               </div>
               <div className="text-ink font-medium tabular-nums">+84 236 3 888 666</div>
-              <div className="text-[11.5px] text-ink-mute mt-0.5">8:00 – 22:00 GMT+7 hằng ngày</div>
+              <div className="text-[11.5px] text-ink-mute mt-0.5">{t('legal.hotline.sub')}</div>
             </div>
           </div>
         </div>
@@ -1651,7 +1559,6 @@ export function Landing() {
       <footer className="bg-ink text-cream pt-12 sm:pt-16 pb-8">
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 mb-10 sm:mb-12">
-            {/* Brand */}
             <div className="lg:col-span-1">
               <div className="flex items-center gap-3 mb-4">
                 <img
@@ -1670,8 +1577,7 @@ export function Landing() {
                 </strong>
               </div>
               <p className="text-[12.5px] sm:text-[13px] text-cream/60 leading-relaxed mb-4 sm:mb-5">
-                Khu chợ đêm lớn nhất Đà Nẵng — biểu tượng ẩm thực miền Trung từ năm 2018. Hơn 150 gian hàng, mở
-                cửa hàng đêm dưới chân Cầu Rồng.
+                {t('footer.brandDesc')}
               </p>
               <a
                 href="https://www.facebook.com/NightMarketSonTraDaNangVietNam/"
@@ -1683,21 +1589,44 @@ export function Landing() {
               </a>
             </div>
 
-            {/* Sitemap */}
             <div>
               <div
                 className="text-[10.5px] text-gold uppercase tracking-widest font-bold mb-4"
                 style={{ fontFamily: 'var(--font-mono)' }}
               >
-                Khám phá
+                {t('footer.exploreLabel')}
               </div>
               <ul className="space-y-2 sm:space-y-2.5 text-[13px] text-cream/75 list-none m-0 p-0">
-                <li><a href="#story" className="hover:text-cream no-underline">Câu chuyện chợ đêm</a></li>
-                <li><a href="#flavors" className="hover:text-cream no-underline">8 món phải thử</a></li>
-                <li><a href="#zones" className="hover:text-cream no-underline">4 khu vực</a></li>
-                <li><a href="#events" className="hover:text-cream no-underline">Lịch hoạt động đêm</a></li>
-                <li><a href="#visit" className="hover:text-cream no-underline">Cách đến chợ</a></li>
-                <li><a href="#faq" className="hover:text-cream no-underline">Hỏi đáp</a></li>
+                <li>
+                  <a href="#story" className="hover:text-cream no-underline">
+                    {t('footer.exploreStory')}
+                  </a>
+                </li>
+                <li>
+                  <a href="#flavors" className="hover:text-cream no-underline">
+                    {t('footer.exploreFlavors')}
+                  </a>
+                </li>
+                <li>
+                  <a href="#zones" className="hover:text-cream no-underline">
+                    {t('footer.exploreZones')}
+                  </a>
+                </li>
+                <li>
+                  <a href="#events" className="hover:text-cream no-underline">
+                    {t('footer.exploreEvents')}
+                  </a>
+                </li>
+                <li>
+                  <a href="#visit" className="hover:text-cream no-underline">
+                    {t('footer.exploreVisit')}
+                  </a>
+                </li>
+                <li>
+                  <a href="#faq" className="hover:text-cream no-underline">
+                    {t('footer.exploreFaq')}
+                  </a>
+                </li>
               </ul>
             </div>
 
@@ -1706,7 +1635,7 @@ export function Landing() {
                 className="text-[10.5px] text-gold uppercase tracking-widest font-bold mb-4"
                 style={{ fontFamily: 'var(--font-mono)' }}
               >
-                Liên hệ & Pháp lý
+                {t('footer.contactLabel')}
               </div>
               <ul className="space-y-2 sm:space-y-2.5 text-[13px] text-cream/75 list-none m-0 p-0 mb-5">
                 <li className="flex items-start gap-2">
@@ -1725,20 +1654,28 @@ export function Landing() {
                 </li>
               </ul>
               <ul className="space-y-2 text-[12px] sm:text-[12.5px] text-cream/60 list-none m-0 p-0">
-                <li><Link to="/privacy" className="hover:text-gold no-underline">Chính sách bảo mật</Link></li>
-                <li><Link to="/terms" className="hover:text-gold no-underline">Điều khoản sử dụng</Link></li>
-                <li><Link to="/data-deletion" className="hover:text-gold no-underline">Hướng dẫn xoá dữ liệu</Link></li>
+                <li>
+                  <Link to="/privacy" className="hover:text-gold no-underline">
+                    {t('footer.linkPrivacy')}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/terms" className="hover:text-gold no-underline">
+                    {t('footer.linkTerms')}
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/data-deletion" className="hover:text-gold no-underline">
+                    {t('footer.linkDelete')}
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
 
           <div className="pt-5 sm:pt-6 border-t border-cream/10 flex flex-col sm:flex-row sm:justify-between gap-2 sm:gap-3 text-[11px] sm:text-[11.5px] text-cream/45">
-            <span style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>
-              © 2026 Chợ Đêm Sơn Trà · Đà Nẵng · dhtcdanang.com
-            </span>
-            <span style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>
-              GPKD: 0401234567 · Sở KH&ĐT Đà Nẵng cấp
-            </span>
+            <span style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>{t('footer.copyright')}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>{t('footer.gpkd')}</span>
           </div>
         </div>
       </footer>

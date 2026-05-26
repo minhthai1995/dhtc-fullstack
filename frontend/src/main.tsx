@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { App } from './App'
 import { ToastProvider } from './components/ui/Toast'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { LocaleProvider } from './i18n/LocaleProvider'
 import './index.css'
 
 const queryClient = new QueryClient({
@@ -21,7 +22,9 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <ToastProvider>
-          <App />
+          <LocaleProvider>
+            <App />
+          </LocaleProvider>
         </ToastProvider>
       </ErrorBoundary>
       <ReactQueryDevtools initialIsOpen={false} />
