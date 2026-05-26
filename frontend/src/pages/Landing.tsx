@@ -13,7 +13,6 @@ import {
   Flame,
   Soup,
   Coffee,
-  ShoppingBag,
   Car,
   Bike,
   Footprints,
@@ -225,7 +224,7 @@ const dishes = [
     name: 'Hải sản khô làm quà',
     desc: 'Mực một nắng, tôm khô, cá bống sông Trà, ghẹ sữa rim me — đóng gói hút chân không mang về.',
     price: '200 – 500k/kg',
-    tag: 'Mua làm quà',
+    tag: 'Quà mang về',
     img: DISH_IMG.hai_san_kho,
   },
 ]
@@ -297,9 +296,9 @@ const events = [
   },
   {
     time: '21:30 – 23:00',
-    title: 'Mua sắm & dạo bộ',
-    icon: <ShoppingBag size={18} />,
-    desc: 'Sau bữa tối, ghé khu quà lưu niệm & thời trang. Đây là lúc tiểu thương sẵn lòng giảm giá.',
+    title: 'Quà & lưu niệm',
+    icon: <Gift size={18} />,
+    desc: 'Sau bữa tối, ghé khu quà lưu niệm & thời trang dạo bộ — không gian dịu lại, đèn lồng rực rỡ nhất khung giờ này.',
   },
   {
     time: '23:00 – 23:59',
@@ -376,8 +375,8 @@ const tips = [
     desc: 'Bãi xe máy ngay cổng chợ. Ô tô gửi tại đường Trần Hưng Đạo (cách ~200m) hoặc gọi Grab/taxi.',
   },
   {
-    title: 'Thanh toán VietQR',
-    desc: 'Đa số tiểu thương nhận chuyển khoản VietQR (quét mã QR app ngân hàng). Mang thêm tiền mặt VND để chắc chắn.',
+    title: 'Đem theo tiền mặt VND',
+    desc: 'Phần lớn quầy ăn vặt quen tiền mặt mệnh giá nhỏ (10k – 100k). Một số quầy có dán mã QR ngân hàng để tiện hơn.',
   },
 ]
 
@@ -399,8 +398,8 @@ const faqs = [
     a: 'Ăn vặt nhẹ (bánh tráng, kem bơ, chè): 20.000đ – 70.000đ/món. Bữa chính (mì Quảng, bánh xèo, bánh bèo): 50.000đ – 150.000đ/người. Hải sản tươi cao cấp như tôm hùm, cua hoàng đế dao động 300k – 800k tuỳ trọng lượng — hãy hỏi giá theo kg trước khi gọi.',
   },
   {
-    q: 'Có chấp nhận thẻ tín dụng / VietQR không?',
-    a: 'Đa số tiểu thương chấp nhận chuyển khoản VietQR (quét mã QR thanh toán qua app ngân hàng Việt Nam). Tiền mặt VND vẫn được khuyến nghị mang theo. Thẻ tín dụng quốc tế (Visa/Master) chỉ một số ít quán lớn nhận.',
+    q: 'Nên mang tiền mặt hay dùng app ngân hàng?',
+    a: 'Khuyến nghị mang tiền mặt VND mệnh giá nhỏ (10k – 100k) — quầy ăn vặt quen tiền mặt nhất. Một số quầy có dán mã QR ngân hàng nội địa để khách trả tiện hơn. Thẻ tín dụng quốc tế hiếm khi được chấp nhận tại các quầy nhỏ.',
   },
   {
     q: 'Có thể đặt món trước qua Facebook / Messenger không?',
