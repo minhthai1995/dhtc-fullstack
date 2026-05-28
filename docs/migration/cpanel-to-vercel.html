@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DHTC — Migration cPanel → Vercel | Step-by-step wizard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #1B3B2F;
+    --green-soft: #2A5443;
+    --cream: #F5EFE0;
+    --cream-dark: #EAE2CE;
+    --ink: #1A1A1A;
+    --ink-soft: #4A4A4A;
+    --ink-mute: #8A8A8A;
+    --gold: #B89456;
+    --border: #D8D0BC;
+    --warning: #B8804E;
+    --warning-bg: #F8EEDF;
+    --danger: #8B2E2E;
+    --danger-bg: #F5E1E1;
+    --success: #1B3B2F;
+    --success-bg: #E4ECE6;
+    --info: #2F5A7A;
+    --info-bg: #E2EAF1;
+    --display: 'Fraunces', Georgia, serif;
+    --sans: 'IBM Plex Sans', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.55;
+    font-size: 15px;
+    min-height: 100vh;
+  }
+
+  /* ===== Header ===== */
+  header.hero {
+    background: var(--green);
+    color: var(--cream);
+    padding: 40px 32px 32px;
+    border-bottom: 4px solid var(--gold);
+  }
+
+  .hero-inner {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+
+  h1.title {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: clamp(28px, 4vw, 42px);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+
+  .subtitle {
+    font-size: 15px;
+    color: var(--cream-dark);
+    max-width: 640px;
+    margin-bottom: 24px;
+  }
+
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .progress-bar-outer {
+    flex: 1;
+    height: 8px;
+    background: rgba(245, 239, 224, 0.2);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .progress-bar-inner {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 999px;
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+
+  .progress-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cream-dark);
+    min-width: 90px;
+    text-align: right;
+  }
+
+  .header-actions {
+    margin-top: 18px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--cream);
+    border-color: rgba(245, 239, 224, 0.3);
+  }
+  .btn-ghost:hover {
+    background: rgba(245, 239, 224, 0.1);
+  }
+
+  .btn-primary {
+    background: var(--gold);
+    color: var(--green);
+    font-weight: 600;
+  }
+  .btn-primary:hover { background: #C9A572; }
+
+  .btn-copy {
+    background: var(--green);
+    color: var(--cream);
+    border: none;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-family: var(--mono);
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 8px;
+  }
+  .btn-copy:hover { background: var(--green-soft); }
+
+  /* ===== Main ===== */
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  /* ===== Risk legend ===== */
+  .legend {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding: 14px 18px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 12px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-soft);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .dot-safe { background: var(--success); }
+  .dot-warn { background: var(--warning); }
+  .dot-danger { background: var(--danger); }
+
+  /* ===== Architecture diagram ===== */
+  .arch-box {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+  .arch-title {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    color: var(--green);
+  }
+  .arch-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12.5px;
+  }
+  .arch-table td {
+    padding: 8px 10px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .arch-table tr:last-child td { border-bottom: none; }
+  .arch-host { color: var(--green); font-weight: 500; }
+  .arch-arrow { color: var(--ink-mute); text-align: center; }
+  .arch-target { color: var(--ink); }
+  .arch-type {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--cream-dark);
+    border-radius: 4px;
+    font-size: 10px;
+    margin-right: 6px;
+    color: var(--ink-soft);
+  }
+
+  /* ===== Phase card ===== */
+  .phase {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+  }
+  .phase[data-status="done"] {
+    border-color: var(--success);
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 22px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s ease;
+  }
+  .phase-header:hover { background: #FBF8EF; }
+
+  .phase-num {
+    font-family: var(--display);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--gold);
+    min-width: 28px;
+  }
+
+  .phase-title-wrap {
+    flex: 1;
+  }
+  .phase-title {
+    font-family: var(--display);
+    font-size: 19px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .phase-meta {
+    font-size: 12px;
+    color: var(--ink-mute);
+    font-family: var(--mono);
+  }
+
+  .phase-status {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    padding: 4px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .status-todo {
+    background: var(--cream-dark);
+    color: var(--ink-mute);
+  }
+  .status-progress {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+  .status-done {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+
+  .phase-risk {
+    width: 8px;
+    height: 36px;
+    border-radius: 3px;
+  }
+  .risk-safe { background: var(--success); }
+  .risk-warn { background: var(--warning); }
+  .risk-danger { background: var(--danger); }
+
+  .phase-toggle {
+    font-family: var(--mono);
+    color: var(--ink-mute);
+    font-size: 14px;
+    transition: transform 0.2s ease;
+  }
+  .phase[data-open="true"] .phase-toggle {
+    transform: rotate(90deg);
+  }
+
+  .phase-body {
+    display: none;
+    padding: 0 22px 22px;
+    border-top: 1px solid var(--border);
+  }
+  .phase[data-open="true"] .phase-body {
+    display: block;
+  }
+
+  .phase-intro {
+    padding: 16px 0 8px;
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+
+  /* ===== Step ===== */
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .step:last-child { border-bottom: none; }
+
+  .step-check {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    appearance: none;
+    background: white;
+    position: relative;
+    transition: all 0.15s ease;
+  }
+  .step-check:hover { border-color: var(--green); }
+  .step-check:checked {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .step-check:checked::after {
+    content: '✓';
+    color: var(--cream);
+    font-size: 13px;
+    position: absolute;
+    top: -2px;
+    left: 2px;
+    font-weight: 700;
+  }
+
+  .step-content {
+    flex: 1;
+  }
+
+  .step-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-mute);
+    margin-right: 6px;
+  }
+
+  .step-title {
+    font-size: 14.5px;
+    color: var(--ink);
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+
+  .step-check:checked + .step-content .step-title {
+    text-decoration: line-through;
+    color: var(--ink-mute);
+  }
+
+  .step-detail {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+  .step-detail ul, .step-detail ol {
+    margin: 6px 0 6px 20px;
+  }
+  .step-detail li { margin-bottom: 3px; }
+  .step-detail code {
+    font-family: var(--mono);
+    background: var(--cream);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: var(--green);
+  }
+  .step-detail a {
+    color: var(--green);
+    text-decoration: underline;
+    text-decoration-color: var(--gold);
+    text-underline-offset: 2px;
+  }
+
+  /* ===== Code block ===== */
+  .code-block {
+    background: #1F2A24;
+    color: #E8E0CB;
+    padding: 14px 16px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    margin: 10px 0;
+    overflow-x: auto;
+    position: relative;
+    line-height: 1.55;
+  }
+  .code-block .btn-copy {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+  .code-comment { color: #8FA396; }
+  .code-key { color: #D5B675; }
+
+  /* ===== Copyable value ===== */
+  .copy-value {
+    display: inline-flex;
+    align-items: center;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    padding: 4px 6px 4px 10px;
+    border-radius: 5px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--green);
+    gap: 6px;
+  }
+  .copy-value .btn-copy {
+    margin-left: 4px;
+    padding: 3px 7px;
+  }
+
+  /* ===== Callout boxes ===== */
+  .callout {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 12px 0;
+    font-size: 13.5px;
+    border-left: 4px solid;
+  }
+  .callout-info {
+    background: var(--info-bg);
+    border-color: var(--info);
+    color: var(--ink-soft);
+  }
+  .callout-warn {
+    background: var(--warning-bg);
+    border-color: var(--warning);
+    color: var(--ink);
+  }
+  .callout-danger {
+    background: var(--danger-bg);
+    border-color: var(--danger);
+    color: var(--ink);
+  }
+  .callout-success {
+    background: var(--success-bg);
+    border-color: var(--success);
+    color: var(--ink-soft);
+  }
+  .callout-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-family: var(--sans);
+  }
+  .callout code {
+    font-family: var(--mono);
+    background: rgba(255,255,255,0.5);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+
+  /* ===== Rollback fixed panel ===== */
+  .rollback-section {
+    background: var(--danger-bg);
+    border: 1px solid var(--danger);
+    border-radius: 12px;
+    padding: 22px;
+    margin: 32px 0 24px;
+  }
+  .rollback-title {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--danger);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .rollback-list {
+    margin-left: 18px;
+    font-size: 13.5px;
+    color: var(--ink);
+  }
+  .rollback-list li { margin-bottom: 6px; }
+
+  /* ===== Post-migration ===== */
+  .post-section {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 24px;
+  }
+  .post-title {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--green);
+    margin-bottom: 12px;
+  }
+
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--green);
+    color: var(--cream);
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: var(--mono);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+    transition: transform 0.3s ease;
+    z-index: 1000;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 700px) {
+    header.hero { padding: 28px 18px 24px; }
+    main { padding: 22px 14px 60px; }
+    .phase-header { padding: 14px 16px; gap: 10px; }
+    .phase-num { font-size: 18px; min-width: 22px; }
+    .phase-title { font-size: 16px; }
+    .phase-body { padding: 0 16px 16px; }
+    .phase-status { display: none; }
+    .arch-table { font-size: 11px; }
+    .arch-table td { padding: 6px 4px; }
+  }
+
+  /* ===== Footer ===== */
+  footer {
+    text-align: center;
+    padding: 32px 24px;
+    color: var(--ink-mute);
+    font-size: 12px;
+    font-family: var(--mono);
+    border-top: 1px solid var(--border);
+    background: white;
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">Migration Wizard · v1</div>
+    <h1 class="title">Chuyển dhtcdanang.com<br>từ cPanel sang Vercel</h1>
+    <p class="subtitle">
+      7 phase từ backup → cutover DNS → SSL. Email @dhtcdanang.com giữ nguyên hoạt động.
+      WordPress cũ được di về <code style="font-family:var(--mono); background:rgba(245,239,224,0.18); padding:1px 6px; border-radius:3px;">old.dhtcdanang.com</code>.
+    </p>
+    <div class="progress-wrap">
+      <div class="progress-bar-outer">
+        <div class="progress-bar-inner" id="progressBar"></div>
+      </div>
+      <div class="progress-text" id="progressText">0 / 0</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="resetAll()">Reset progress</button>
+      <button class="btn btn-ghost" onclick="expandAll()">Mở tất cả</button>
+      <button class="btn btn-ghost" onclick="collapseAll()">Thu gọn</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Risk legend -->
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot dot-safe"></span> An toàn — additive / chuẩn bị</div>
+    <div class="legend-item"><span class="legend-dot dot-warn"></span> Trung bình — sửa data / nội dung</div>
+    <div class="legend-item"><span class="legend-dot dot-danger"></span> Cao — cutover thật, có downtime</div>
+  </div>
+
+  <!-- Architecture diagram -->
+  <div class="arch-box">
+    <div class="arch-title">Kiến trúc DNS sau khi xong</div>
+    <table class="arch-table">
+      <tr>
+        <td class="arch-host">dhtcdanang.com</td>
+        <td class="arch-arrow">→</td>
+        <td class="arch-target"><span class="arch-type">A</span>76.76.21.21 <span style="color:var(--ink-mute);">(Vercel)</span></td>
+      </tr>
+      <tr>
+        <td class="arch-host">www.dhtcdanang.com</td>
+        <td class="arch-arrow">→</td>
+        <td class="arch-target"><span class="arch-type">CNAME</span>cname.vercel-dns.com <span style="color:var(--ink-mute);">(Vercel)</span></td>
+      </tr>
+      <tr>
+        <td class="arch-host">old.dhtcdanang.com</td>
+        <td class="arch-arrow">→</td>
+        <td class="arch-target"><span class="arch-type">A</span>103.28.36.220 <span style="color:var(--ink-mute);">(cPanel cũ — WordPress)</span></td>
+      </tr>
+      <tr>
+        <td class="arch-host">MX (email)</td>
+        <td class="arch-arrow">→</td>
+        <td class="arch-target"><span class="arch-type">MX</span><strong style="color:var(--danger);">GIỮ NGUYÊN</strong> <span style="color:var(--ink-mute);">— không đụng để @dhtcdanang.com còn nhận</span></td>
+      </tr>
+      <tr>
+        <td class="arch-host">SPF / DKIM / DMARC</td>
+        <td class="arch-arrow">→</td>
+        <td class="arch-target"><span class="arch-type">TXT</span><strong style="color:var(--danger);">GIỮ NGUYÊN</strong> <span style="color:var(--ink-mute);">— auth cho email</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ============ PHASE 1 ============ -->
+  <div class="phase" data-status="todo" data-open="true" id="phase-1">
+    <div class="phase-header" onclick="togglePhase(1)">
+      <div class="phase-risk risk-safe"></div>
+      <div class="phase-num">1</div>
+      <div class="phase-title-wrap">
+        <div class="phase-title">Backup full cPanel</div>
+        <div class="phase-meta">~30-60 phút · BẮT BUỘC làm đầu tiên · Zero risk</div>
+      </div>
+      <span class="phase-status status-todo">Todo</span>
+      <span class="phase-toggle">›</span>
+    </div>
+    <div class="phase-body">
+      <div class="phase-intro">
+        Snapshot toàn bộ data trước khi đụng bất cứ thứ gì. Nếu sau này hosting cũ ngừng hoạt động hoặc cutover hỏng, đây là bản phục hồi duy nhất. Đừng skip.
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s1-1">
+        <div class="step-content">
+          <label for="s1-1" class="step-title"><span class="step-num">1.1</span>Login cPanel</label>
+          <div class="step-detail">
+            Mở <code>https://dhtcdanang.com:2083</code> hoặc <code>https://103.28.36.220:2083</code>. Login với username <code>nhdhtq8m</code>.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s1-2">
+        <div class="step-content">
+          <label for="s1-2" class="step-title"><span class="step-num">1.2</span>Full Backup (file + DB + email + DNS zone trong 1 file)</label>
+          <div class="step-detail">
+            <ol>
+              <li>Tìm icon <strong>"Backup"</strong> hoặc <strong>"Backup Wizard"</strong> trong cPanel</li>
+              <li>Chọn <strong>Full Backup</strong></li>
+              <li>Destination: <strong>Home Directory</strong></li>
+              <li>Email khi xong: điền email cá nhân của bạn</li>
+              <li>Submit → đợi 5-30 phút (cPanel gửi mail "Backup complete")</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s1-3">
+        <div class="step-content">
+          <label for="s1-3" class="step-title"><span class="step-num">1.3</span>Tải file <code>.tar.gz</code> về máy local</label>
+          <div class="step-detail">
+            File Manager → root directory → tìm file <code>backup-MM.DD.YYYY_HH-MM-SS_nhdhtq8m.tar.gz</code> → click <strong>Download</strong>.
+            File này chứa toàn bộ <code>public_html</code>, mọi MySQL DB, email, DNS zone, cron jobs.
+            <div class="callout callout-warn">
+              <div class="callout-title">⚠ Lưu file ở 2 nơi</div>
+              Máy local + 1 ổ đĩa cloud (Google Drive / iCloud / OneDrive). File này không thay thế được nếu mất.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s1-4">
+        <div class="step-content">
+          <label for="s1-4" class="step-title"><span class="step-num">1.4</span>Export database riêng (an toàn 2 lớp)</label>
+          <div class="step-detail">
+            <ol>
+              <li>cPanel → <strong>phpMyAdmin</strong></li>
+              <li>Chọn DB trong sidebar trái (thường tên <code>nhdhtq8m_wp...</code> hoặc <code>nhdhtq8m_db...</code>)</li>
+              <li>Tab <strong>Export</strong> → Method: <strong>Quick</strong> → Format: <strong>SQL</strong></li>
+              <li>Click <strong>Go</strong> → tải file <code>.sql</code> về</li>
+            </ol>
+            Nếu có nhiều DB → export từng cái.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s1-5">
+        <div class="step-content">
+          <label for="s1-5" class="step-title"><span class="step-num">1.5</span>Tải <code>public_html</code> zip riêng</label>
+          <div class="step-detail">
+            File Manager → vào <code>public_html</code> → click <strong>Select All</strong> → click <strong>Compress</strong> → chọn <strong>Zip</strong> → đợi xong → Download file <code>.zip</code> về.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s1-6">
+        <div class="step-content">
+          <label for="s1-6" class="step-title"><span class="step-num">1.6</span>Screenshot Email Accounts + Forwarders</label>
+          <div class="step-detail">
+            <ul>
+              <li>cPanel → <strong>Email Accounts</strong> → screenshot list (tên + quota)</li>
+              <li>cPanel → <strong>Forwarders</strong> → screenshot</li>
+              <li>cPanel → <strong>Email Routing</strong> → screenshot</li>
+            </ul>
+            Sau migration nếu cần tạo lại email ở dịch vụ khác (Google Workspace / Zoho) thì có reference.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s1-7">
+        <div class="step-content">
+          <label for="s1-7" class="step-title"><span class="step-num">1.7</span>Export DNS zone (CỰC QUAN TRỌNG)</label>
+          <div class="step-detail">
+            <ol>
+              <li>cPanel → <strong>Zone Editor</strong></li>
+              <li>Click domain <code>dhtcdanang.com</code> → <strong>Manage</strong></li>
+              <li>Screenshot TOÀN BỘ records (A, AAAA, MX, TXT, CNAME, SRV)</li>
+              <li>Nếu có nút <strong>Export Zone File</strong> → tải file <code>.txt</code> về</li>
+            </ol>
+            <div class="callout callout-danger">
+              <div class="callout-title">⚠ Đặc biệt chú ý ghi lại:</div>
+              <ul style="margin-left: 16px;">
+                <li>Tất cả <strong>MX records</strong> (priority + hostname)</li>
+                <li>Mọi <strong>TXT record</strong> chứa <code>v=spf1</code>, <code>_domainkey</code>, <code>_dmarc</code></li>
+                <li><strong>TXT</strong> <code>google-site-verification</code> hoặc <code>facebook-domain-verification</code> nếu có</li>
+                <li><strong>A record</strong> <code>mail.dhtcdanang.com</code> (nếu có)</li>
+              </ul>
+              Phase 6 sẽ cần check lại để KHÔNG xoá nhầm.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-success" style="margin-top: 16px;">
+        <div class="callout-title">✓ Sau Phase 1 bạn có:</div>
+        File <code>.tar.gz</code> backup full + file <code>.sql</code> DB + zip <code>public_html</code> + screenshot DNS + email list. Đây là snapshot rollback hoàn chỉnh.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PHASE 2 ============ -->
+  <div class="phase" data-status="todo" data-open="false" id="phase-2">
+    <div class="phase-header" onclick="togglePhase(2)">
+      <div class="phase-risk risk-safe"></div>
+      <div class="phase-num">2</div>
+      <div class="phase-title-wrap">
+        <div class="phase-title">Giảm TTL ở Squarespace</div>
+        <div class="phase-meta">~10 phút thao tác + đợi 1h · Zero risk · Prep cho rollback nhanh</div>
+      </div>
+      <span class="phase-status status-todo">Todo</span>
+      <span class="phase-toggle">›</span>
+    </div>
+    <div class="phase-body">
+      <div class="phase-intro">
+        TTL hiện tại (thường 1h-24h) là thời gian DNS cache toàn cầu nhớ giá trị cũ. Giảm TTL TRƯỚC khi cutover để nếu Phase 6 gãy thì rollback chỉ mất 5 phút thay vì 24h.
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s2-1">
+        <div class="step-content">
+          <label for="s2-1" class="step-title"><span class="step-num">2.1</span>Login Squarespace Domains</label>
+          <div class="step-detail">
+            Mở <a href="https://account.squarespace.com/domains" target="_blank">https://account.squarespace.com/domains</a> → login.
+            <div class="callout callout-info">
+              <div class="callout-title">Chọn đúng domain</div>
+              URL bạn có là <code>.../fdvvietnam.com/dns/dns-settings</code> — đó là URL của domain khác trong cùng account.
+              Trong dashboard, chọn <strong>dhtcdanang.com</strong> từ list → DNS Settings.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s2-2">
+        <div class="step-content">
+          <label for="s2-2" class="step-title"><span class="step-num">2.2</span>Tìm A record <code>@</code> apex</label>
+          <div class="step-detail">
+            Trong khu <strong>Custom Records</strong> hoặc <strong>DNS Records</strong>:
+            <ul>
+              <li>Tìm record có <strong>Type = A</strong>, <strong>Host = @</strong> (hoặc trống)</li>
+              <li>Value hiện tại đang là <code>103.28.36.220</code></li>
+              <li>Click <strong>Edit</strong></li>
+              <li>Đổi TTL xuống <strong>5 min</strong> (300 giây)</li>
+              <li><strong>GIỮ value 103.28.36.220</strong> — chỉ đổi TTL</li>
+              <li>Save</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s2-3">
+        <div class="step-content">
+          <label for="s2-3" class="step-title"><span class="step-num">2.3</span>Tìm CNAME <code>www</code></label>
+          <div class="step-detail">
+            <ul>
+              <li>Record có <strong>Type = CNAME</strong>, <strong>Host = www</strong></li>
+              <li>Edit → TTL xuống <strong>5 min</strong></li>
+              <li>GIỮ value cũ — chỉ đổi TTL</li>
+              <li>Save</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s2-4">
+        <div class="step-content">
+          <label for="s2-4" class="step-title"><span class="step-num">2.4</span>Đợi tối thiểu 1 giờ trước khi sang Phase 3</label>
+          <div class="step-detail">
+            DNS cache cũ ở các ISP toàn cầu cần thời gian expire xuống TTL mới. Nếu cutover ngay sẽ không có lợi ích.
+            <div class="callout callout-info">
+              Trong lúc đợi có thể làm Phase 3 (subdomain) — không ảnh hưởng đến apex.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PHASE 3 ============ -->
+  <div class="phase" data-status="todo" data-open="false" id="phase-3">
+    <div class="phase-header" onclick="togglePhase(3)">
+      <div class="phase-risk risk-safe"></div>
+      <div class="phase-num">3</div>
+      <div class="phase-title-wrap">
+        <div class="phase-title">Setup <code style="font-family:var(--mono); color:var(--green);">old.dhtcdanang.com</code></div>
+        <div class="phase-meta">~30 phút · Low risk · Chỉ ADD record mới, không sửa gì</div>
+      </div>
+      <span class="phase-status status-todo">Todo</span>
+      <span class="phase-toggle">›</span>
+    </div>
+    <div class="phase-body">
+      <div class="phase-intro">
+        Tạo "lối thứ 2" vào WordPress qua subdomain trước khi cutover apex. Sau khi apex đã chuyển sang Vercel, WP vẫn còn truy cập được ở <code>old.*</code>.
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s3-1">
+        <div class="step-content">
+          <label for="s3-1" class="step-title"><span class="step-num">3.1</span>cPanel — tạo subdomain</label>
+          <div class="step-detail">
+            <ol>
+              <li>Login cPanel → tìm icon <strong>Subdomains</strong></li>
+              <li>Form:
+                <ul>
+                  <li>Subdomain: <code>old</code></li>
+                  <li>Domain: <code>dhtcdanang.com</code></li>
+                  <li>Document Root: <code>public_html</code> <strong>(cùng folder, KHÔNG tạo folder mới)</strong></li>
+                </ul>
+              </li>
+              <li>Click <strong>Create</strong></li>
+            </ol>
+            <div class="callout callout-warn">
+              <div class="callout-title">Quan trọng: Document Root = <code>public_html</code></div>
+              Để <code>old.*</code> serve cùng WordPress files với <code>dhtcdanang.com</code>. Không tạo folder mới (vd <code>public_html/old</code>).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s3-2">
+        <div class="step-content">
+          <label for="s3-2" class="step-title"><span class="step-num">3.2</span>Squarespace DNS — add A record cho <code>old</code></label>
+          <div class="step-detail">
+            Vẫn ở Squarespace DNS settings của dhtcdanang.com → <strong>Add Record</strong>:
+            <ul>
+              <li>Type: <strong>A</strong></li>
+              <li>Host: <strong>old</strong></li>
+              <li>Value: <span class="copy-value">103.28.36.220 <button class="btn-copy" onclick="copyText('103.28.36.220')">copy</button></span></li>
+              <li>TTL: <strong>1 hour</strong></li>
+            </ul>
+            Save.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s3-3">
+        <div class="step-content">
+          <label for="s3-3" class="step-title"><span class="step-num">3.3</span>Đợi 5-10 phút → verify bằng dig</label>
+          <div class="step-detail">
+            Mở Terminal (Mac/Linux) hoặc <a href="https://www.whatsmydns.net/#A/old.dhtcdanang.com" target="_blank">whatsmydns.net</a> nếu Windows:
+            <div class="code-block">
+              dig old.dhtcdanang.com +short
+              <span class="code-comment"># expect: 103.28.36.220</span>
+              <button class="btn-copy" onclick="copyText('dig old.dhtcdanang.com +short')">copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s3-4">
+        <div class="step-content">
+          <label for="s3-4" class="step-title"><span class="step-num">3.4</span>Mở browser test <code>http://old.dhtcdanang.com</code></label>
+          <div class="step-detail">
+            Nội dung WP phải hiện ra. Có thể ảnh/CSS vỡ vì URL hard-code <code>https://dhtcdanang.com/...</code>. Bình thường — Phase 4 sẽ fix.
+            <div class="callout callout-info">
+              Nếu trắng trang hoặc redirect về dhtcdanang.com: vào cPanel → File Manager → mở <code>public_html/.htaccess</code> coi có rule canonical redirect không. Cũng có thể WP option <code>siteurl</code>/<code>home</code> hard-code domain chính → Phase 4 sẽ sửa.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PHASE 4 ============ -->
+  <div class="phase" data-status="todo" data-open="false" id="phase-4">
+    <div class="phase-header" onclick="togglePhase(4)">
+      <div class="phase-risk risk-warn"></div>
+      <div class="phase-num">4</div>
+      <div class="phase-title-wrap">
+        <div class="phase-title">WordPress URL search-replace</div>
+        <div class="phase-meta">~30-45 phút · Medium risk · Sửa WP DB (backup Phase 1 là safety net)</div>
+      </div>
+      <span class="phase-status status-todo">Todo</span>
+      <span class="phase-toggle">›</span>
+    </div>
+    <div class="phase-body">
+      <div class="phase-intro">
+        WP lưu URL absolute trong DB (posts, options, theme settings, ACF, widgets...). Nếu không replace, sau Phase 6 các URL <code>https://dhtcdanang.com/wp-content/...</code> sẽ trỏ sang Vercel → 404 hết.
+      </div>
+
+      <div class="callout callout-danger">
+        <div class="callout-title">⚠ BẮT BUỘC làm Phase 1 (backup DB) trước</div>
+        Search-replace lỡ tay là hỏng toàn bộ WP. Nếu chưa export <code>.sql</code> từ phpMyAdmin → quay lại Phase 1.4.
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s4-1">
+        <div class="step-content">
+          <label for="s4-1" class="step-title"><span class="step-num">4.1</span>Login WP admin</label>
+          <div class="step-detail">
+            <code>https://dhtcdanang.com/wp-admin</code> (làm trước khi switch DNS — sau Phase 6 thì login qua <code>https://old.dhtcdanang.com/wp-admin</code>).
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s4-2">
+        <div class="step-content">
+          <label for="s4-2" class="step-title"><span class="step-num">4.2</span>Cài plugin "Better Search Replace"</label>
+          <div class="step-detail">
+            Plugins → Add New → search <strong>"Better Search Replace"</strong> (tác giả WP Engine) → Install Now → Activate.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s4-3">
+        <div class="step-content">
+          <label for="s4-3" class="step-title"><span class="step-num">4.3</span>Dry run lần 1: <code>https://dhtcdanang.com</code> → <code>https://old.dhtcdanang.com</code></label>
+          <div class="step-detail">
+            <ol>
+              <li>Tools → Better Search Replace</li>
+              <li><strong>Search for</strong>: <span class="copy-value">https://dhtcdanang.com <button class="btn-copy" onclick="copyText('https://dhtcdanang.com')">copy</button></span></li>
+              <li><strong>Replace with</strong>: <span class="copy-value">https://old.dhtcdanang.com <button class="btn-copy" onclick="copyText('https://old.dhtcdanang.com')">copy</button></span></li>
+              <li><strong>Select tables</strong>: Cmd/Ctrl + click chọn TẤT CẢ tables (kéo từ đầu list đến cuối)</li>
+              <li>✅ <strong>Run as dry run?</strong> (check để xem trước, KHÔNG ghi DB)</li>
+              <li>Click <strong>Run Search/Replace</strong></li>
+              <li>Coi kết quả: bao nhiêu cells phải đổi — số > 0 là đúng (thường 20-200 cells)</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s4-4">
+        <div class="step-content">
+          <label for="s4-4" class="step-title"><span class="step-num">4.4</span>Run thật (bỏ check dry run)</label>
+          <div class="step-detail">
+            Bỏ ✅ <strong>Run as dry run?</strong> → Run Search/Replace → đợi vài giây → báo "X tables were searched, Y cells were changed".
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s4-5">
+        <div class="step-content">
+          <label for="s4-5" class="step-title"><span class="step-num">4.5</span>Lặp với protocol <code>http://</code></label>
+          <div class="step-detail">
+            <ul>
+              <li>Search: <span class="copy-value">http://dhtcdanang.com <button class="btn-copy" onclick="copyText('http://dhtcdanang.com')">copy</button></span></li>
+              <li>Replace: <span class="copy-value">http://old.dhtcdanang.com <button class="btn-copy" onclick="copyText('http://old.dhtcdanang.com')">copy</button></span></li>
+              <li>Dry run → Run thật</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s4-6">
+        <div class="step-content">
+          <label for="s4-6" class="step-title"><span class="step-num">4.6</span>Lặp với protocol-relative <code>//</code></label>
+          <div class="step-detail">
+            <ul>
+              <li>Search: <span class="copy-value">//dhtcdanang.com <button class="btn-copy" onclick="copyText('//dhtcdanang.com')">copy</button></span></li>
+              <li>Replace: <span class="copy-value">//old.dhtcdanang.com <button class="btn-copy" onclick="copyText('//old.dhtcdanang.com')">copy</button></span></li>
+              <li>Dry run → Run thật</li>
+            </ul>
+            Cẩn thận: pattern này có thể match cả URL bên thứ 3 (vd <code>//ajax.googleapis.com</code>). Coi dry run kỹ — nếu thấy host lạ thì skip.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s4-7">
+        <div class="step-content">
+          <label for="s4-7" class="step-title"><span class="step-num">4.7</span>Cập nhật WP Address + Site Address</label>
+          <div class="step-detail">
+            WP admin → <strong>Settings → General</strong>:
+            <ul>
+              <li><strong>WordPress Address (URL)</strong>: <code>http://old.dhtcdanang.com</code></li>
+              <li><strong>Site Address (URL)</strong>: <code>http://old.dhtcdanang.com</code></li>
+              <li>Save Changes</li>
+            </ul>
+            <div class="callout callout-warn">
+              <div class="callout-title">Sau khi save, WP tự logout</div>
+              Đăng nhập lại qua <code>http://old.dhtcdanang.com/wp-admin</code> (không phải dhtcdanang.com nữa).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s4-8">
+        <div class="step-content">
+          <label for="s4-8" class="step-title"><span class="step-num">4.8</span>Verify: mở <code>http://old.dhtcdanang.com</code></label>
+          <div class="step-detail">
+            Click các trang khác nhau (homepage, blog post, contact...) → ảnh/CSS phải render đúng, link nội bộ phải point về <code>old.*</code>. Nếu còn URL <code>dhtcdanang.com</code> trong source view → lặp lại Phase 4.3 cho pattern còn sót (vd có space khác, encoding khác).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PHASE 5 ============ -->
+  <div class="phase" data-status="todo" data-open="false" id="phase-5">
+    <div class="phase-header" onclick="togglePhase(5)">
+      <div class="phase-risk risk-safe"></div>
+      <div class="phase-num">5</div>
+      <div class="phase-title-wrap">
+        <div class="phase-title">Add domain vào Vercel</div>
+        <div class="phase-meta">~10 phút · Zero risk · Vercel "ngồi chờ" cho đến Phase 6</div>
+      </div>
+      <span class="phase-status status-todo">Todo</span>
+      <span class="phase-toggle">›</span>
+    </div>
+    <div class="phase-body">
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s5-1">
+        <div class="step-content">
+          <label for="s5-1" class="step-title"><span class="step-num">5.1</span>Vercel dashboard → project DHTC</label>
+          <div class="step-detail">
+            Mở <a href="https://vercel.com/dashboard" target="_blank">https://vercel.com/dashboard</a> → click vào project DHTC (project đang serve preview build).
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s5-2">
+        <div class="step-content">
+          <label for="s5-2" class="step-title"><span class="step-num">5.2</span>Settings → Domains → Add</label>
+          <div class="step-detail">
+            <ol>
+              <li>Tab <strong>Settings</strong> → menu trái <strong>Domains</strong></li>
+              <li>Input: <code>dhtcdanang.com</code> → click <strong>Add</strong></li>
+              <li>Vercel hỏi cách dùng www → chọn <strong>"Redirect www.dhtcdanang.com to dhtcdanang.com"</strong> (apex là primary)</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s5-3">
+        <div class="step-content">
+          <label for="s5-3" class="step-title"><span class="step-num">5.3</span>Ghi nhận DNS values Vercel báo</label>
+          <div class="step-detail">
+            Vercel hiện banner "Invalid Configuration" với 2 DNS values cần set:
+            <ul>
+              <li><strong>A record</strong> apex: <span class="copy-value">76.76.21.21 <button class="btn-copy" onclick="copyText('76.76.21.21')">copy</button></span></li>
+              <li><strong>CNAME</strong> www: <span class="copy-value">cname.vercel-dns.com <button class="btn-copy" onclick="copyText('cname.vercel-dns.com')">copy</button></span></li>
+            </ul>
+            <div class="callout callout-info">
+              "Invalid Configuration" là bình thường — chưa đụng DNS Squarespace. Vercel sẽ tự verify khi DNS propagate sau Phase 6.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s5-4">
+        <div class="step-content">
+          <label for="s5-4" class="step-title"><span class="step-num">5.4</span>Kiểm tra <code>vercel.json</code> có SPA fallback</label>
+          <div class="step-detail">
+            Vì DHTC là React SPA, mọi route /admin, /privacy, /terms phải fallback về <code>index.html</code>. File <code>vercel.json</code> trong repo nên có rewrite này (đã có sẵn từ deploy lần đầu — kiểm tra cho chắc):
+            <div class="code-block">
+              <span class="code-key">{</span>
+                "rewrites": [
+                  <span class="code-key">{</span> "source": "/(.*)", "destination": "/index.html" <span class="code-key">}</span>
+                ]
+              <span class="code-key">}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PHASE 6 ============ -->
+  <div class="phase" data-status="todo" data-open="false" id="phase-6">
+    <div class="phase-header" onclick="togglePhase(6)">
+      <div class="phase-risk risk-danger"></div>
+      <div class="phase-num">6</div>
+      <div class="phase-title-wrap">
+        <div class="phase-title">DNS Cutover (moment switch thật)</div>
+        <div class="phase-meta">~10 phút thao tác + 10 phút verify · HIGH RISK · Đêm khuya / sáng sớm</div>
+      </div>
+      <span class="phase-status status-todo">Todo</span>
+      <span class="phase-toggle">›</span>
+    </div>
+    <div class="phase-body">
+      <div class="phase-intro">
+        Đây là phase quan trọng nhất. Sau khi save DNS, user truy cập <code>dhtcdanang.com</code> sẽ thấy React app thay vì WordPress. Có downtime ngắn trong khi DNS propagate (5-30 phút tuỳ ISP).
+      </div>
+
+      <div class="callout callout-danger">
+        <div class="callout-title">Pre-check trước khi click</div>
+        <ul style="margin-left:18px;">
+          <li>Phase 1 backup xong (file .tar.gz về máy)</li>
+          <li>Phase 2 TTL = 5 min + đã đợi 1h</li>
+          <li>Phase 3 <code>old.dhtcdanang.com</code> hoạt động</li>
+          <li>Phase 4 WP đã search-replace, mở được tại <code>old.*</code></li>
+          <li>Phase 5 domain đã add trong Vercel</li>
+          <li>Có sẵn 30 phút thời gian liền mạch để verify</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s6-1">
+        <div class="step-content">
+          <label for="s6-1" class="step-title"><span class="step-num">6.1</span>Chọn giờ ít traffic</label>
+          <div class="step-detail">
+            Đêm khuya (sau 23:00) hoặc sáng sớm (trước 7:00) — fanpage check-in ít. Tránh giờ cao điểm 18:00-22:00.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s6-2">
+        <div class="step-content">
+          <label for="s6-2" class="step-title"><span class="step-num">6.2</span>Squarespace DNS — sửa A record <code>@</code></label>
+          <div class="step-detail">
+            <ol>
+              <li>Vào DNS Settings của <code>dhtcdanang.com</code></li>
+              <li>Tìm A record host = <code>@</code> (value đang là <code>103.28.36.220</code>)</li>
+              <li>Edit → Value: <span class="copy-value">76.76.21.21 <button class="btn-copy" onclick="copyText('76.76.21.21')">copy</button></span></li>
+              <li>TTL: vẫn <strong>5 min</strong></li>
+              <li>Save</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s6-3">
+        <div class="step-content">
+          <label for="s6-3" class="step-title"><span class="step-num">6.3</span>Squarespace DNS — sửa CNAME <code>www</code></label>
+          <div class="step-detail">
+            <ol>
+              <li>Tìm CNAME host = <code>www</code></li>
+              <li>Edit → Value: <span class="copy-value">cname.vercel-dns.com <button class="btn-copy" onclick="copyText('cname.vercel-dns.com')">copy</button></span></li>
+              <li>TTL: <strong>5 min</strong></li>
+              <li>Save</li>
+            </ol>
+            <div class="callout callout-warn">
+              Squarespace có thể yêu cầu trailing dot <code>cname.vercel-dns.com.</code> Một số UI tự add. Save thử cả 2 format nếu báo lỗi.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s6-4">
+        <div class="step-content">
+          <label for="s6-4" class="step-title"><span class="step-num">6.4</span>KHÔNG ĐỘNG các record sau (giữ y nguyên)</label>
+          <div class="step-detail">
+            <div class="callout callout-danger" style="margin-top:0;">
+              <ul style="margin-left:18px;">
+                <li>❌ <strong>MX records</strong> — đụng = mất email</li>
+                <li>❌ <strong>TXT</strong> chứa <code>v=spf1</code> — đụng = email vào spam</li>
+                <li>❌ <strong>TXT</strong> <code>_domainkey</code> (DKIM) — đụng = email bị reject</li>
+                <li>❌ <strong>TXT</strong> <code>_dmarc</code> — đụng = email auth fail</li>
+                <li>❌ <strong>TXT</strong> <code>google-site-verification</code> — đụng = mất Google Search Console</li>
+                <li>❌ <strong>A record</strong> <code>mail</code> (nếu có)</li>
+                <li>❌ <strong>A record</strong> <code>old</code> đã add ở Phase 3</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s6-5">
+        <div class="step-content">
+          <label for="s6-5" class="step-title"><span class="step-num">6.5</span>Đợi 5-10 phút → verify bằng dig</label>
+          <div class="step-detail">
+            <div class="code-block">
+              <span class="code-comment"># Apex phải về Vercel</span>
+              dig dhtcdanang.com +short
+              <span class="code-comment"># expect: 76.76.21.21</span>
+
+              <span class="code-comment"># WWW phải về Vercel CNAME</span>
+              dig www.dhtcdanang.com +short
+              <span class="code-comment"># expect: cname.vercel-dns.com.</span>
+              <span class="code-comment">#         76.76.21.21</span>
+
+              <span class="code-comment"># MX KHÔNG đổi — email server cũ</span>
+              dig MX dhtcdanang.com +short
+              <span class="code-comment"># expect: số priority + hostname như trước Phase 6</span>
+
+              <span class="code-comment"># Old vẫn về cPanel</span>
+              dig old.dhtcdanang.com +short
+              <span class="code-comment"># expect: 103.28.36.220</span>
+              <button class="btn-copy" onclick="copyText('dig dhtcdanang.com +short\ndig www.dhtcdanang.com +short\ndig MX dhtcdanang.com +short\ndig old.dhtcdanang.com +short')">copy all</button>
+            </div>
+            Nếu DNS chưa propagate ở khu vực bạn → check tại <a href="https://www.whatsmydns.net/#A/dhtcdanang.com" target="_blank">whatsmydns.net</a> (xem propagation toàn cầu).
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s6-6">
+        <div class="step-content">
+          <label for="s6-6" class="step-title"><span class="step-num">6.6</span>Browser verify (incognito để tránh cache)</label>
+          <div class="step-detail">
+            <ul>
+              <li><a href="https://dhtcdanang.com" target="_blank">https://dhtcdanang.com</a> → React app mới (Vercel)</li>
+              <li><a href="https://www.dhtcdanang.com" target="_blank">https://www.dhtcdanang.com</a> → redirect về apex</li>
+              <li><a href="https://old.dhtcdanang.com" target="_blank">https://old.dhtcdanang.com</a> → WordPress cũ</li>
+            </ul>
+            Nếu apex vẫn ra WP cũ → DNS chưa propagate ở máy bạn. Đợi thêm 5-10 phút. Có thể flush DNS:
+            <div class="code-block">
+              <span class="code-comment"># macOS</span>
+              sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
+              <button class="btn-copy" onclick="copyText('sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder')">copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s6-7">
+        <div class="step-content">
+          <label for="s6-7" class="step-title"><span class="step-num">6.7</span>Email test</label>
+          <div class="step-detail">
+            Gửi 1 email test từ Gmail/Outlook cá nhân tới <code>info@dhtcdanang.com</code> hoặc bất kỳ mailbox đang active. Login webmail tại <code>https://dhtcdanang.com:2096</code> (hoặc <code>103.28.36.220:2096</code>) → check inbox.
+            <div class="callout callout-warn">
+              Nếu email không nhận được sau 5 phút → kiểm tra MX records trong Squarespace có giữ nguyên không. So với screenshot Phase 1.7.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PHASE 7 ============ -->
+  <div class="phase" data-status="todo" data-open="false" id="phase-7">
+    <div class="phase-header" onclick="togglePhase(7)">
+      <div class="phase-risk risk-warn"></div>
+      <div class="phase-num">7</div>
+      <div class="phase-title-wrap">
+        <div class="phase-title">SSL + finalize</div>
+        <div class="phase-meta">~30 phút · Low risk · Cert auto-issue</div>
+      </div>
+      <span class="phase-status status-todo">Todo</span>
+      <span class="phase-toggle">›</span>
+    </div>
+    <div class="phase-body">
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s7-1">
+        <div class="step-content">
+          <label for="s7-1" class="step-title"><span class="step-num">7.1</span>Vercel auto-issue cert apex + www</label>
+          <div class="step-detail">
+            Vercel tự xin Let's Encrypt sau khi DNS propagate. Mở Settings → Domains → trạng thái phải chuyển từ "Invalid Configuration" → "Valid Configuration" + ✅ HTTPS active.
+            <br>Đợi 5-30 phút.
+            Sau đó browse <code>https://dhtcdanang.com</code> không có warning cert.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s7-2">
+        <div class="step-content">
+          <label for="s7-2" class="step-title"><span class="step-num">7.2</span>cPanel AutoSSL cho <code>old.dhtcdanang.com</code></label>
+          <div class="step-detail">
+            <ol>
+              <li>cPanel → <strong>SSL/TLS Status</strong></li>
+              <li>Tìm row <code>old.dhtcdanang.com</code> (có thể có ❌ status)</li>
+              <li>Click <strong>Run AutoSSL</strong> trên row đó (hoặc <strong>Run AutoSSL for All Domains</strong> ở trên)</li>
+              <li>Đợi 5-15 phút → status đổi ✅</li>
+            </ol>
+            <div class="callout callout-info">
+              AutoSSL cần Let's Encrypt verify được <code>http://old.dhtcdanang.com/.well-known/acme-challenge/...</code> — phải DNS đã propagate xong (Phase 3).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s7-3">
+        <div class="step-content">
+          <label for="s7-3" class="step-title"><span class="step-num">7.3</span>Test HTTPS trên cả 3 domains</label>
+          <div class="step-detail">
+            <ul>
+              <li>✅ <code>https://dhtcdanang.com</code> — React app, cert hợp lệ</li>
+              <li>✅ <code>https://www.dhtcdanang.com</code> — redirect apex, cert hợp lệ</li>
+              <li>✅ <code>https://old.dhtcdanang.com</code> — WP, cert hợp lệ</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s7-4">
+        <div class="step-content">
+          <label for="s7-4" class="step-title"><span class="step-num">7.4</span>Đợi 24h ổn định → nâng TTL về 1h (optional)</label>
+          <div class="step-detail">
+            Squarespace DNS → A <code>@</code> + CNAME <code>www</code>: TTL <strong>5 min → 1 hour</strong>. Lý do: TTL 5 min làm tăng load lên DNS server, không cần thiết khi đã ổn định.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ROLLBACK ============ -->
+  <div class="rollback-section">
+    <div class="rollback-title">⟲ Rollback — nếu Phase 6 gãy</div>
+    <p style="font-size: 13.5px; color: var(--ink); margin-bottom: 10px;">
+      Vì Phase 2 đã hạ TTL xuống 5 phút từ trước, rollback chỉ mất < 5 phút.
+    </p>
+    <ol class="rollback-list">
+      <li>Vào Squarespace DNS Settings của <code>dhtcdanang.com</code></li>
+      <li>A record <code>@</code> → Value: <code>76.76.21.21</code> → đổi LẠI thành <code>103.28.36.220</code> → Save</li>
+      <li>CNAME <code>www</code> → Value: <code>cname.vercel-dns.com</code> → đổi LẠI về value cũ (xem screenshot Phase 1.7) → Save</li>
+      <li>Đợi 5 phút → <code>dig dhtcdanang.com +short</code> ra <code>103.28.36.220</code> = về như cũ</li>
+      <li>WordPress mở qua <code>https://dhtcdanang.com</code> hoạt động bình thường</li>
+    </ol>
+    <p style="font-size: 12.5px; color: var(--ink-soft); margin-top: 10px; font-style: italic;">
+      Lưu ý: nếu đã làm Phase 4 (WP search-replace), URL trong WP đang là <code>old.*</code>. Sau rollback có thể cần search-replace ngược lại <code>old.dhtcdanang.com</code> → <code>dhtcdanang.com</code>, hoặc restore DB từ file <code>.sql</code> backup Phase 1.4.
+    </p>
+  </div>
+
+  <!-- ============ POST-MIGRATION CHECKLIST ============ -->
+  <div class="post-section">
+    <div class="post-title">Post-migration checklist (1-2 ngày sau)</div>
+
+    <div class="step">
+      <input type="checkbox" class="step-check" id="p-1">
+      <div class="step-content">
+        <label for="p-1" class="step-title">Google Search Console</label>
+        <div class="step-detail">
+          Add property mới cho <code>https://dhtcdanang.com</code> (Vercel) — verify qua HTML tag hoặc TXT record. Submit sitemap <code>https://dhtcdanang.com/sitemap.xml</code> (nếu React app generate).
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <input type="checkbox" class="step-check" id="p-2">
+      <div class="step-content">
+        <label for="p-2" class="step-title">WordPress cũ: chặn index / redirect SEO</label>
+        <div class="step-detail">
+          Chọn 1 trong 2:
+          <ul>
+            <li><strong>Noindex</strong>: WP admin → Settings → Reading → ✅ <em>"Discourage search engines from indexing this site"</em>. Bài cũ rớt index sau 1-2 tuần.</li>
+            <li><strong>301 redirect</strong>: edit <code>public_html/.htaccess</code> add rule redirect URL cũ → URL React app tương đương. Giữ SEO juice.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <input type="checkbox" class="step-check" id="p-3">
+      <div class="step-content">
+        <label for="p-3" class="step-title">Update link <code>dhtcdanang.com</code> ở các nơi external</label>
+        <div class="step-detail">
+          <ul>
+            <li>Facebook Fanpage — About section</li>
+            <li>Google Business Profile</li>
+            <li>Name card / brochure đã in</li>
+            <li>Email signature</li>
+            <li>QR code (nếu có in trên menu, biển hiệu)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <input type="checkbox" class="step-check" id="p-4">
+      <div class="step-content">
+        <label for="p-4" class="step-title">Theo dõi cPanel hosting — quyết định gia hạn</label>
+        <div class="step-detail">
+          cPanel host hiện vẫn cần để:
+          <ul>
+            <li>Serve <code>old.dhtcdanang.com</code> (WP cũ)</li>
+            <li>Nhận email <code>@dhtcdanang.com</code></li>
+          </ul>
+          Trừ khi migrate email sang Google Workspace / Zoho + xoá WP cũ → vẫn cần duy trì cPanel. Coi ngày hết hạn hosting, plan trước.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <input type="checkbox" class="step-check" id="p-5">
+      <div class="step-content">
+        <label for="p-5" class="step-title">Add TXT facebook-domain-verification (khi làm Meta App Review)</label>
+        <div class="step-detail">
+          Khi đến phase Business Verification trong <a href="../app-review/runbook.html" target="_blank">app-review/runbook.html</a>, Meta sẽ cấp 1 TXT record để verify domain ownership. Add vào Squarespace DNS:
+          <ul>
+            <li>Type: <strong>TXT</strong></li>
+            <li>Host: <code>@</code></li>
+            <li>Value: <code>facebook-domain-verification=&lt;random-string&gt;</code></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  DHTC · Migration Wizard · Tiến độ lưu localStorage <code>dhtc_migration_progress_v1</code>
+</footer>
+
+<div class="toast" id="toast">Copied to clipboard</div>
+
+<script>
+  const STORAGE_KEY = 'dhtc_migration_progress_v1';
+  const TOTAL_PHASES = 7;
+
+  // Load saved state
+  function loadProgress() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    } catch { return {}; }
+  }
+
+  function saveProgress(state) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  // Restore checked state on load
+  function initSteps() {
+    const state = loadProgress();
+    document.querySelectorAll('.step-check').forEach(cb => {
+      if (state[cb.id]) cb.checked = true;
+      cb.addEventListener('change', () => {
+        const cur = loadProgress();
+        if (cb.checked) cur[cb.id] = true; else delete cur[cb.id];
+        saveProgress(cur);
+        recomputeProgress();
+      });
+    });
+    recomputeProgress();
+  }
+
+  function recomputeProgress() {
+    const all = document.querySelectorAll('.step-check');
+    const done = document.querySelectorAll('.step-check:checked');
+    const pct = all.length ? Math.round(done.length / all.length * 100) : 0;
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressText').textContent = done.length + ' / ' + all.length + '  (' + pct + '%)';
+
+    // Update phase status badges
+    for (let i = 1; i <= TOTAL_PHASES; i++) {
+      const phase = document.getElementById('phase-' + i);
+      if (!phase) continue;
+      const steps = phase.querySelectorAll('.step-check');
+      const checked = phase.querySelectorAll('.step-check:checked');
+      const badge = phase.querySelector('.phase-status');
+      let status = 'todo';
+      if (checked.length === 0) status = 'todo';
+      else if (checked.length === steps.length) status = 'done';
+      else status = 'progress';
+      phase.dataset.status = status;
+      badge.className = 'phase-status status-' + status;
+      badge.textContent = status === 'todo' ? 'Todo' : status === 'progress' ? 'In Progress' : 'Done';
+    }
+  }
+
+  function togglePhase(num) {
+    const phase = document.getElementById('phase-' + num);
+    const isOpen = phase.dataset.open === 'true';
+    phase.dataset.open = isOpen ? 'false' : 'true';
+  }
+
+  function expandAll() {
+    for (let i = 1; i <= TOTAL_PHASES; i++) {
+      document.getElementById('phase-' + i).dataset.open = 'true';
+    }
+  }
+
+  function collapseAll() {
+    for (let i = 1; i <= TOTAL_PHASES; i++) {
+      document.getElementById('phase-' + i).dataset.open = 'false';
+    }
+  }
+
+  function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Copied: ' + (text.length > 40 ? text.slice(0, 40) + '...' : text));
+    }).catch(() => {
+      showToast('Copy failed — copy thủ công');
+    });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function resetAll() {
+    if (!confirm('Reset tất cả tiến độ?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    document.querySelectorAll('.step-check').forEach(cb => cb.checked = false);
+    recomputeProgress();
+    showToast('Đã reset progress');
+  }
+
+  // Init on load
+  document.addEventListener('DOMContentLoaded', initSteps);
+</script>
+
+</body>
+</html>
