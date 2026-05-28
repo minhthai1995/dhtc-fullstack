@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App Review Runbook · DHTC × Meta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #1B3B2F;
+    --green-soft: #2C5F4A;
+    --green-deep: #0F2A20;
+    --cream: #F5EFE0;
+    --cream-dark: #ECE3CC;
+    --cream-darker: #DDD2B5;
+    --gold: #C9A961;
+    --ink: #1A1A1A;
+    --ink-soft: #4A4A4A;
+    --ink-mute: #767676;
+    --line: #D9CFB8;
+    --line-soft: #E8E1CE;
+    --success: #2D6A4F;
+    --warning: #C58A26;
+    --danger: #B5402A;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.55;
+    font-size: 14.5px;
+  }
+  h1, h2, h3, h4 { font-family: 'Fraunces', Georgia, serif; font-weight: 500; line-height: 1.2; letter-spacing: -0.015em; color: var(--ink); margin: 0; }
+  h1 { font-size: 2.1rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.15rem; }
+  h4 { font-size: 1rem; font-weight: 600; }
+  code, .mono { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
+  a { color: var(--green); text-decoration: underline; text-underline-offset: 3px; }
+  a:hover { color: var(--green-deep); }
+
+  /* Layout */
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  /* Header */
+  .hero {
+    background: linear-gradient(135deg, var(--green) 0%, var(--green-soft) 100%);
+    color: var(--cream);
+    padding: 36px 32px 28px;
+    border-radius: 18px;
+    margin-bottom: 28px;
+  }
+  .hero h1 { color: var(--cream); margin-bottom: 6px; }
+  .hero .lede { font-size: 14px; opacity: .88; max-width: 720px; }
+  .hero .meta { margin-top: 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px; opacity: .72; letter-spacing: .05em; text-transform: uppercase; }
+
+  /* Progress */
+  .progress-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .progress-card .num { font-family: 'Fraunces', serif; font-size: 2.2rem; color: var(--green); font-weight: 500; min-width: 80px; }
+  .progress-card .bar-wrap { flex: 1; }
+  .progress-card .bar-bg { height: 6px; background: var(--cream-dark); border-radius: 999px; overflow: hidden; }
+  .progress-card .bar-fill { height: 100%; background: linear-gradient(90deg, var(--green) 0%, var(--green-soft) 100%); border-radius: 999px; transition: width .4s ease; }
+  .progress-card .label { font-size: 12.5px; color: var(--ink-mute); margin-top: 6px; }
+  .progress-card .reset-btn {
+    background: transparent; border: 1px solid var(--line); color: var(--ink-soft);
+    padding: 6px 12px; border-radius: 8px; font-size: 11.5px; cursor: pointer;
+  }
+  .progress-card .reset-btn:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* Phase card */
+  .phase {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    transition: box-shadow .2s;
+  }
+  .phase:hover { box-shadow: 0 2px 8px rgba(27,59,47,.06); }
+  .phase-head {
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .phase-head:hover { background: var(--cream); }
+  .phase-num {
+    width: 36px; height: 36px; border-radius: 999px;
+    background: var(--cream-dark); color: var(--green);
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .phase.done .phase-num { background: var(--success); color: var(--cream); }
+  .phase-title { flex: 1; }
+  .phase-title h3 { display: inline; }
+  .phase-eta { font-size: 11.5px; color: var(--ink-mute); font-family: 'JetBrains Mono', monospace; margin-left: 10px; }
+  .phase-status {
+    font-size: 11px; padding: 4px 10px; border-radius: 999px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  .ps-todo { background: var(--cream-dark); color: var(--ink-mute); }
+  .ps-progress { background: rgba(197,138,38,.18); color: var(--warning); }
+  .ps-done { background: rgba(45,106,79,.18); color: var(--success); }
+  .chev { color: var(--ink-mute); font-size: 14px; transition: transform .2s; }
+  .phase.open .chev { transform: rotate(90deg); }
+
+  .phase-body {
+    display: none;
+    padding: 4px 22px 22px;
+    border-top: 1px solid var(--line-soft);
+  }
+  .phase.open .phase-body { display: block; }
+
+  .phase-intro { font-size: 13.5px; color: var(--ink-soft); margin: 16px 0 18px; }
+
+  /* Step */
+  .step {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px dashed var(--line-soft);
+  }
+  .step:last-child { border-bottom: none; }
+  .step-check {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    border: 1.5px solid var(--line);
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    margin-top: 2px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .step-check:hover { border-color: var(--green); }
+  .step-check.checked { background: var(--success); border-color: var(--success); }
+  .step-check.checked::after { content: '✓'; color: #fff; font-size: 13px; font-weight: bold; }
+  .step-body { flex: 1; }
+  .step-body.muted { opacity: .55; text-decoration: line-through; text-decoration-color: var(--ink-mute); }
+  .step-body p { margin: 0 0 6px; }
+  .step-body .hint { font-size: 12.5px; color: var(--ink-mute); }
+  .step-body .hint strong { color: var(--ink-soft); }
+  .step-body ul { margin: 6px 0; padding-left: 18px; font-size: 13px; color: var(--ink-soft); }
+  .step-body ul li { margin: 3px 0; }
+
+  /* Action row */
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 13px; border-radius: 8px; font-size: 12.5px;
+    border: 1px solid var(--line); background: #fff; color: var(--ink);
+    text-decoration: none; cursor: pointer; font-family: inherit;
+    transition: all .12s;
+  }
+  .btn:hover { border-color: var(--green); color: var(--green); background: var(--cream); }
+  .btn-primary { background: var(--green); color: var(--cream); border-color: var(--green); }
+  .btn-primary:hover { background: var(--green-deep); color: var(--cream); border-color: var(--green-deep); }
+  .btn .icon { font-size: 13px; opacity: .7; }
+
+  /* Code block */
+  .code-block {
+    background: var(--green-deep); color: #E8E1CE;
+    padding: 12px 14px; border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    line-height: 1.6; overflow-x: auto;
+    margin: 10px 0; white-space: pre;
+    position: relative;
+  }
+  .code-block .copy-mini {
+    position: absolute; top: 8px; right: 8px;
+    background: rgba(245,239,224,.12); color: #E8E1CE; border: none;
+    padding: 4px 10px; border-radius: 6px; font-size: 10.5px; cursor: pointer;
+  }
+  .code-block .copy-mini:hover { background: rgba(245,239,224,.22); }
+
+  /* Inline value */
+  .inline-val {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--cream-dark); padding: 2px 8px; border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--green-deep);
+  }
+  .inline-val .copy-tiny {
+    background: transparent; border: none; cursor: pointer; padding: 0 2px;
+    color: var(--ink-mute); font-size: 11px;
+  }
+  .inline-val .copy-tiny:hover { color: var(--green); }
+
+  /* Alerts */
+  .alert {
+    border-left: 3px solid var(--gold);
+    background: rgba(201,169,97,.08);
+    padding: 12px 16px; margin: 12px 0;
+    border-radius: 0 8px 8px 0;
+    font-size: 13px;
+  }
+  .alert.warn { border-left-color: var(--warning); background: rgba(197,138,38,.08); }
+  .alert.danger { border-left-color: var(--danger); background: rgba(181,64,42,.08); }
+  .alert.info { border-left-color: var(--green); background: rgba(27,59,47,.06); }
+  .alert strong { color: var(--ink); }
+
+  /* Table */
+  table.tbl { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+  table.tbl th, table.tbl td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  table.tbl th { font-weight: 600; color: var(--ink-soft); background: var(--cream); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  table.tbl tr:hover td { background: rgba(245,239,224,.5); }
+  table.tbl code { background: var(--cream-dark); padding: 1px 6px; border-radius: 4px; }
+
+  /* Permission card */
+  .perm-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 12px 0; }
+  .perm-card {
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
+    background: var(--cream);
+  }
+  .perm-card h4 { margin-bottom: 4px; }
+  .perm-card .perm-name { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--green); display: block; margin-bottom: 4px; }
+  .perm-card .perm-why { font-size: 12.5px; color: var(--ink-soft); }
+
+  /* Footer */
+  .footer-note {
+    margin-top: 36px; padding: 20px 24px;
+    background: #fff; border: 1px solid var(--line); border-radius: 14px;
+    font-size: 13px; color: var(--ink-soft);
+  }
+  .footer-note h4 { margin-bottom: 8px; color: var(--green); }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--green-deep); color: var(--cream);
+    padding: 10px 20px; border-radius: 999px;
+    font-size: 13px; opacity: 0; transition: opacity .25s, transform .25s;
+    pointer-events: none; z-index: 100;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+
+  /* Responsive */
+  @media (max-width: 720px) {
+    .wrap { padding: 16px 12px 60px; }
+    .hero { padding: 24px 18px 20px; border-radius: 14px; }
+    .hero h1 { font-size: 1.6rem; }
+    .phase-head { padding: 14px 16px; gap: 12px; }
+    .phase-body { padding: 4px 16px 18px; }
+    .progress-card { flex-direction: column; align-items: flex-start; padding: 14px 16px; }
+    .progress-card .num { font-size: 1.8rem; }
+    table.tbl { font-size: 12px; }
+    table.tbl th, table.tbl td { padding: 7px 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <div class="meta">DHTC × META APP REVIEW · RUNBOOK v1.0</div>
+    <h1>App Review từng bước</h1>
+    <p class="lede">Lộ trình 8 phase từ Business Verification → 5 permissions → Live Mode để giải bài toán <em>"trả lời comment khi khách check-in vào fanpage"</em>. Mỗi step có copy button + deep-link tới Meta Dashboard. Tiến độ tự lưu trong localStorage.</p>
+  </header>
+
+  <!-- PROGRESS -->
+  <div class="progress-card">
+    <div class="num" id="pctNum">0%</div>
+    <div class="bar-wrap">
+      <div class="bar-bg"><div class="bar-fill" id="barFill" style="width:0%"></div></div>
+      <div class="label"><span id="doneCount">0</span> / <span id="totalCount">0</span> step hoàn tất · ước tính tổng <strong>3-5 tuần</strong> (gồm 1-3 tuần Business Verification + 5-14 ngày App Review)</div>
+    </div>
+    <button class="reset-btn" onclick="resetAll()">Reset</button>
+  </div>
+
+  <!-- ════════════════════════════════════════════ PHASE 1 ════════════════════════════════════════════ -->
+  <section class="phase" data-phase="1">
+    <header class="phase-head" onclick="togglePhase(this)">
+      <div class="phase-num">1</div>
+      <div class="phase-title">
+        <h3>Chuẩn bị URLs production</h3>
+        <span class="phase-eta">~1 ngày</span>
+      </div>
+      <span class="phase-status ps-todo">TODO</span>
+      <span class="chev">▶</span>
+    </header>
+    <div class="phase-body">
+      <p class="phase-intro">Meta reviewer sẽ click vào các URL này. Nếu bất kỳ URL nào trả 404 hoặc lỗi SSL → <strong>auto-reject vòng đầu</strong>. Phải xác minh sống TRƯỚC khi submit.</p>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Landing page live</strong> tại <span class="inline-val">https://dhtcdanang.com<button class="copy-tiny" onclick="copyText(event, 'https://dhtcdanang.com')">⎘</button></span></p>
+          <p class="hint">Hiện đã deploy qua Vercel. Test mở trên mobile + desktop, click các link nội bộ (Liên hệ, Privacy, Terms).</p>
+          <div class="actions">
+            <a class="btn" href="https://dhtcdanang.com" target="_blank">Mở landing <span class="icon">↗</span></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Privacy Policy</strong> tại <span class="inline-val">https://dhtcdanang.com/privacy<button class="copy-tiny" onclick="copyText(event, 'https://dhtcdanang.com/privacy')">⎘</button></span></p>
+          <p class="hint">Phải đề cập rõ: thu thập dữ liệu gì từ FB, retention 90 ngày, không bán/share, có endpoint xoá dữ liệu.</p>
+          <div class="actions">
+            <a class="btn" href="https://dhtcdanang.com/privacy" target="_blank">Kiểm tra <span class="icon">↗</span></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Terms of Service</strong> tại <span class="inline-val">https://dhtcdanang.com/terms<button class="copy-tiny" onclick="copyText(event, 'https://dhtcdanang.com/terms')">⎘</button></span></p>
+          <div class="actions">
+            <a class="btn" href="https://dhtcdanang.com/terms" target="_blank">Kiểm tra <span class="icon">↗</span></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Admin login page</strong> tại <span class="inline-val">https://dhtcdanang.com/admin/login<button class="copy-tiny" onclick="copyText(event, 'https://dhtcdanang.com/admin/login')">⎘</button></span></p>
+          <p class="hint">Để reviewer login bằng test admin account. Nếu chưa có → phải deploy FE admin (đang được spec ở <code>06-crm-profile-enrich</code>).</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Backend API deploy</strong> tại <span class="inline-val">https://api.dhtcdanang.com<button class="copy-tiny" onclick="copyText(event, 'https://api.dhtcdanang.com')">⎘</button></span></p>
+          <p class="hint">Cần ít nhất 3 endpoint sống cho Meta:</p>
+          <ul>
+            <li><code>GET/POST /api/v1/meta/webhook</code> — verify token + receive events</li>
+            <li><code>POST /api/v1/meta/data-deletion</code> — return 200 + confirmation code</li>
+            <li><code>GET /api/v1/auth/fb/callback</code> — OAuth redirect URI</li>
+          </ul>
+          <div class="alert warn">
+            <strong>Blocker hiện tại:</strong> Backend chưa deploy lên AWS (xem <code>docs/specs/08-aws-production</code>). Cần làm trước phase 7.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Test smoke từng URL bằng curl</strong></p>
+          <div class="code-block"><button class="copy-mini" onclick="copyText(event, 'curl -I https://dhtcdanang.com\ncurl -I https://dhtcdanang.com/privacy\ncurl -I https://dhtcdanang.com/terms\ncurl -I https://dhtcdanang.com/admin/login\ncurl -X GET \"https://api.dhtcdanang.com/api/v1/meta/webhook?hub.mode=subscribe&hub.verify_token=TEST&hub.challenge=ping\"\ncurl -X POST https://api.dhtcdanang.com/api/v1/meta/data-deletion -H \"Content-Type: application/json\" -d \\047{\"signed_request\":\"test\"}\\047')">copy</button>curl -I https://dhtcdanang.com
+curl -I https://dhtcdanang.com/privacy
+curl -I https://dhtcdanang.com/terms
+curl -I https://dhtcdanang.com/admin/login
+curl -X GET "https://api.dhtcdanang.com/api/v1/meta/webhook?hub.mode=subscribe&hub.verify_token=TEST&hub.challenge=ping"
+curl -X POST https://api.dhtcdanang.com/api/v1/meta/data-deletion \
+  -H "Content-Type: application/json" -d '{"signed_request":"test"}'</div>
+          <p class="hint">Tất cả phải trả <strong>2xx</strong> hoặc <strong>200 với JSON</strong>. Không được 404/500/SSL error.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════ PHASE 2 ════════════════════════════════════════════ -->
+  <section class="phase" data-phase="2">
+    <header class="phase-head" onclick="togglePhase(this)">
+      <div class="phase-num">2</div>
+      <div class="phase-title">
+        <h3>Tạo Business Manager + App</h3>
+        <span class="phase-eta">~1 giờ</span>
+      </div>
+      <span class="phase-status ps-todo">TODO</span>
+      <span class="chev">▶</span>
+    </header>
+    <div class="phase-body">
+      <p class="phase-intro">Mỗi App phải nằm trong một Business Manager. Nếu chưa có BM cho DHTC → tạo trước. Sau đó tạo App "DHTC CRM" trong developer.facebook.com.</p>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Tạo Business Manager</strong> cho công ty DHTC Đà Nẵng</p>
+          <ul>
+            <li>Business Name: khớp <strong>chính xác</strong> với tên trên GPKD (vd: "Công ty TNHH DHTC Đà Nẵng")</li>
+            <li>Your Name: tên người đại diện trên GPKD</li>
+            <li>Business Email: <code>contact@dhtcdanang.com</code> (KHÔNG dùng gmail)</li>
+          </ul>
+          <div class="actions">
+            <a class="btn btn-primary" href="https://business.facebook.com/overview" target="_blank">Mở Business Manager <span class="icon">↗</span></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Điền đầy đủ Business Info</strong></p>
+          <ul>
+            <li>Legal name + Address + Phone + Tax ID (MST 13 số)</li>
+            <li>Bất kỳ field nào sai → reject Business Verification</li>
+          </ul>
+          <div class="actions">
+            <a class="btn" href="https://business.facebook.com/settings/info" target="_blank">Business Info <span class="icon">↗</span></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Add Page</strong> "Chợ Đêm Sơn Trà — Wonders Night Market" vào Business Manager</p>
+          <p class="hint">Business Settings → Accounts → Pages → Add → Claim Page. Cần là admin của Page.</p>
+          <div class="actions">
+            <a class="btn" href="https://business.facebook.com/settings/pages" target="_blank">Pages settings <span class="icon">↗</span></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Tạo App mới</strong> tại Meta for Developers</p>
+          <ul>
+            <li>Use case: <strong>"Other"</strong> (để chọn được tất cả permissions sau)</li>
+            <li>App Type: <strong>Business</strong></li>
+            <li>App Name: <code>DHTC CRM</code></li>
+            <li>Business Account: chọn BM vừa tạo</li>
+          </ul>
+          <div class="actions">
+            <a class="btn btn-primary" href="https://developers.facebook.com/apps/" target="_blank">Tạo App mới <span class="icon">↗</span></a>
+          </div>
+          <div class="alert info">
+            Sau khi tạo, copy <strong>App ID</strong> và <strong>App Secret</strong> (Settings → Basic) — lưu vào <code>backend/.env</code> với key <code>META_APP_ID</code> và <code>META_APP_SECRET</code>. <strong>KHÔNG commit lên git.</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════ PHASE 3 ════════════════════════════════════════════ -->
+  <section class="phase" data-phase="3">
+    <header class="phase-head" onclick="togglePhase(this)">
+      <div class="phase-num">3</div>
+      <div class="phase-title">
+        <h3>Business Verification</h3>
+        <span class="phase-eta">1-3 tuần · BLOCKER</span>
+      </div>
+      <span class="phase-status ps-todo">TODO</span>
+      <span class="chev">▶</span>
+    </header>
+    <div class="phase-body">
+      <p class="phase-intro">Yêu cầu tiên quyết cho 4/5 permissions (Advanced level). Làm 1 lần, dùng vĩnh viễn cho mọi App của business sau này.</p>
+
+      <div class="alert">
+        <strong>Chi phí:</strong> $0 · <strong>Thời gian Meta review:</strong> 5-14 ngày · <strong>Tỷ lệ pass vòng đầu:</strong> ~50% nếu giấy tờ chuẩn
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Chuẩn bị giấy phép kinh doanh</strong> (GPKD)</p>
+          <ul>
+            <li>Scan PDF/JPG <strong>màu, rõ nét</strong>, đọc được MST 13 số</li>
+            <li>Tên trên GPKD phải khớp <strong>100%</strong> với "Legal business name" trong BM</li>
+            <li>Địa chỉ trên GPKD phải khớp với address BM</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Chuẩn bị bằng chứng địa chỉ</strong> (chọn 1, dưới 90 ngày)</p>
+          <ul>
+            <li>Hoá đơn điện EVN (download PDF có MSXT từ evncpc.vn)</li>
+            <li>Hoá đơn nước Dawaco</li>
+            <li>Hoá đơn internet Viettel/VNPT/FPT (invoice business, không hộ gia đình)</li>
+            <li>Sao kê ngân hàng business account</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Verify Domain</strong> <span class="inline-val">dhtcdanang.com<button class="copy-tiny" onclick="copyText(event, 'dhtcdanang.com')">⎘</button></span></p>
+          <p class="hint">Business Settings → Brand Safety → Domains → Add → chọn method <strong>DNS TXT</strong>. Meta cung cấp string dạng:</p>
+          <div class="code-block">facebook-domain-verification=abc123xyz...</div>
+          <p class="hint">Add vào DNS provider (Vercel/Cloudflare): <code>TXT @ facebook-domain-verification=...</code>. Đợi 5-15 phút propagate rồi click "Verify".</p>
+          <div class="actions">
+            <a class="btn" href="https://business.facebook.com/settings/owned-domains" target="_blank">Domain settings <span class="icon">↗</span></a>
+            <button class="btn" onclick="copyText(event, 'dig TXT dhtcdanang.com +short')">Copy lệnh verify DNS</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Submit Business Verification</strong></p>
+          <ul>
+            <li>Vào Security Center → "Verify your business"</li>
+            <li>Upload GPKD + bằng chứng địa chỉ</li>
+            <li>Chọn phone verification → có người trực điện thoại nhận SMS code 10 phút</li>
+            <li>Submit → status "In Review" → đợi 5-14 ngày</li>
+          </ul>
+          <div class="actions">
+            <a class="btn btn-primary" href="https://business.facebook.com/settings/security" target="_blank">Security Center <span class="icon">↗</span></a>
+          </div>
+          <div class="alert warn">
+            <strong>Nếu reject:</strong> đọc lý do → fix → resubmit. Mỗi vòng +5-7 ngày. Xem <code>business-verification-checklist.md</code> cho các reject phổ biến.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════ PHASE 4 ════════════════════════════════════════════ -->
+  <section class="phase" data-phase="4">
+    <header class="phase-head" onclick="togglePhase(this)">
+      <div class="phase-num">4</div>
+      <div class="phase-title">
+        <h3>Cấu hình App Settings</h3>
+        <span class="phase-eta">~2 giờ</span>
+      </div>
+      <span class="phase-status ps-todo">TODO</span>
+      <span class="chev">▶</span>
+    </header>
+    <div class="phase-body">
+      <p class="phase-intro">Điền đầy đủ field trong App Dashboard. Bất kỳ field nào trống → Meta reject. Đặc biệt: App Icon 1024×1024 và 4 URLs callbacks.</p>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Settings → Basic → điền tất cả field</strong></p>
+          <table class="tbl">
+            <thead><tr><th>Field</th><th>Giá trị</th></tr></thead>
+            <tbody>
+              <tr><td>Display Name</td><td><code>DHTC CRM</code></td></tr>
+              <tr><td>Namespace</td><td><code>dhtc-crm</code></td></tr>
+              <tr><td>Contact Email</td><td><code>tech@dhtcdanang.com</code></td></tr>
+              <tr><td>App Domains</td><td><code>dhtcdanang.com, api.dhtcdanang.com</code></td></tr>
+              <tr><td>Privacy Policy URL</td><td><code>https://dhtcdanang.com/privacy</code></td></tr>
+              <tr><td>Terms of Service URL</td><td><code>https://dhtcdanang.com/terms</code></td></tr>
+              <tr><td>User Data Deletion</td><td><strong>Callback URL:</strong> <code>https://api.dhtcdanang.com/api/v1/meta/data-deletion</code></td></tr>
+              <tr><td>Category</td><td><code>Business and Pages</code></td></tr>
+              <tr><td>Business Use</td><td><code>Support my own business</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Upload App Icon 1024×1024 PNG</strong></p>
+          <p class="hint">File hiện tại <code>frontend/public/icon-512.png</code> là <strong>512×512</strong>, không phải square 1024. Cần tạo version 1024×1024 với background đầy (không trong suốt).</p>
+          <div class="code-block"><button class="copy-mini" onclick="copyText(event, 'cd /Users/thainguyen/Working/AI_Business/FDV/DHTC-fullstack/frontend/public\nsips -z 1024 1024 favicon.png --out app-icon-1024.png --padColor FFFFFF')">copy</button>cd /Users/thainguyen/Working/AI_Business/FDV/DHTC-fullstack/frontend/public
+sips -z 1024 1024 favicon.png --out app-icon-1024.png --padColor FFFFFF</div>
+          <p class="hint">Hoặc dùng Figma/Photoshop crop square với background cream <code>#F5EFE0</code>.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Add Product → Facebook Login → Settings</strong></p>
+          <ul>
+            <li><strong>Valid OAuth Redirect URIs:</strong> <code>https://dhtcdanang.com/auth/fb/callback</code></li>
+            <li>Client OAuth Login: <strong>Yes</strong></li>
+            <li>Web OAuth Login: <strong>Yes</strong></li>
+            <li>Enforce HTTPS: <strong>Yes</strong></li>
+            <li>Embedded Browser OAuth Login: <strong>No</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Add Product → Webhooks</strong></p>
+          <p class="hint">Đây là cách app nhận event check-in/comment real-time.</p>
+          <ul>
+            <li>Topic: <strong>Page</strong></li>
+            <li>Callback URL: <span class="inline-val">https://api.dhtcdanang.com/api/v1/meta/webhook<button class="copy-tiny" onclick="copyText(event, 'https://api.dhtcdanang.com/api/v1/meta/webhook')">⎘</button></span></li>
+            <li>Verify Token: random string lưu trong <code>backend/.env</code> với key <code>META_WEBHOOK_VERIFY_TOKEN</code></li>
+            <li>Subscribe fields (3 cái cho check-in reply flow):
+              <ul>
+                <li><code>feed</code> — bắt mọi post/comment tag Page (gồm check-in)</li>
+                <li><code>messages</code> — bắt DM từ khách</li>
+                <li><code>messaging_postbacks</code> — bắt click button trong Messenger</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Add Product → Messenger → Settings</strong></p>
+          <ul>
+            <li>Generate Page Access Token cho Page DHTC (long-lived token)</li>
+            <li>Save token vào <code>backend/.env</code> key <code>META_PAGE_ACCESS_TOKEN</code></li>
+            <li>Subscribe Page vào webhook fields: <code>messages, messaging_postbacks</code></li>
+          </ul>
+          <div class="alert danger">
+            <strong>Bảo mật:</strong> Page Access Token cấp quyền gửi DM dưới danh nghĩa Page. <strong>KHÔNG commit lên git, KHÔNG log ra stdout</strong>. Chỉ lưu trong <code>.env</code>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════ PHASE 5 ════════════════════════════════════════════ -->
+  <section class="phase" data-phase="5">
+    <header class="phase-head" onclick="togglePhase(this)">
+      <div class="phase-num">5</div>
+      <div class="phase-title">
+        <h3>Test User + Test Page + seed data</h3>
+        <span class="phase-eta">~2 giờ</span>
+      </div>
+      <span class="phase-status ps-todo">TODO</span>
+      <span class="chev">▶</span>
+    </header>
+    <div class="phase-body">
+      <p class="phase-intro">Meta reviewer KHÔNG được dùng Page production thật để test. Phải tạo Test User + Test Page riêng + seed 4 post mẫu để demo cả 4 intent classifier.</p>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Tạo Test User</strong> trong App Dashboard</p>
+          <ul>
+            <li>Roles → Test Users → Add</li>
+            <li>Authorized: <strong>All permissions in App</strong></li>
+            <li>Lưu email <code>xxx@tfbnw.net</code> và password Meta tự sinh</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Login bằng Test User → tạo Test Page</strong></p>
+          <ul>
+            <li>Tên: <code>DHTC Test — Review Only</code></li>
+            <li>Category: Local Business → Restaurant / Cafe</li>
+            <li>Mô tả: "Test Page for Meta App Review. Do not interact."</li>
+            <li>Assign Test User là <strong>Admin</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Seed 4 post mẫu</strong> trên Test Page (Test User tự đăng)</p>
+          <table class="tbl">
+            <thead><tr><th>Loại</th><th>Nội dung mẫu</th><th>Intent kỳ vọng</th></tr></thead>
+            <tbody>
+              <tr><td>Check-in</td><td>"Vừa đến DHTC tối nay, không khí cực vui! 🎉" + tag location</td><td><code>checkin</code></td></tr>
+              <tr><td>Khen</td><td>"Đồ ăn ngon, nhân viên thân thiện 👍"</td><td><code>praise</code></td></tr>
+              <tr><td>Hỏi</td><td>"Cho hỏi giờ mở cửa cuối tuần với ạ?"</td><td><code>question</code></td></tr>
+              <tr><td>Phàn nàn</td><td>"Hôm qua xếp hàng lâu quá 😞"</td><td><code>complaint</code></td></tr>
+            </tbody>
+          </table>
+          <p class="hint">→ Reviewer sẽ thấy 4 intent khác nhau trong screencast Scene 4.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Subscribe Test Page vào webhook</strong></p>
+          <div class="code-block"><button class="copy-mini" onclick="copyText(event, 'curl -X POST \"https://graph.facebook.com/v22.0/{TEST_PAGE_ID}/subscribed_apps\" \\\n  -H \"Authorization: Bearer {PAGE_ACCESS_TOKEN}\" \\\n  -d \"subscribed_fields=feed,messages,messaging_postbacks\"')">copy</button>curl -X POST "https://graph.facebook.com/v22.0/{TEST_PAGE_ID}/subscribed_apps" \
+  -H "Authorization: Bearer {PAGE_ACCESS_TOKEN}" \
+  -d "subscribed_fields=feed,messages,messaging_postbacks"</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Tạo admin account cho reviewer</strong> trong DHTC backend</p>
+          <div class="code-block"><button class="copy-mini" onclick="copyText(event, 'docker exec -it dhtc-api python -m app.scripts.create_admin \\\n  --email reviewer@dhtcdanang.com \\\n  --password \\047<random-strong-pw>\\047 \\\n  --role admin \\\n  --expires-days 30')">copy</button>docker exec -it dhtc-api python -m app.scripts.create_admin \
+  --email reviewer@dhtcdanang.com \
+  --password '<random-strong-pw>' \
+  --role admin \
+  --expires-days 30</div>
+          <p class="hint">Sau khi review xong → xoá account.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════ PHASE 6 ════════════════════════════════════════════ -->
+  <section class="phase" data-phase="6">
+    <header class="phase-head" onclick="togglePhase(this)">
+      <div class="phase-num">6</div>
+      <div class="phase-title">
+        <h3>Quay screencast</h3>
+        <span class="phase-eta">~3-5 giờ</span>
+      </div>
+      <span class="phase-status ps-todo">TODO</span>
+      <span class="chev">▶</span>
+    </header>
+    <div class="phase-body">
+      <p class="phase-intro">1 video duy nhất 5-7 phút, narration tiếng <strong>Anh</strong> (reviewer ở US/Ireland), demo end-to-end cả 5 permissions. Xem chi tiết 8 scene trong <code>screencast-script.md</code>.</p>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Cài OBS Studio</strong> (free)</p>
+          <ul>
+            <li>Setting: 1920×1080, 30fps, H.264 MP4</li>
+            <li>Bật mouse highlight + keystroke overlay</li>
+            <li>Tắt browser notifications (Slack, Email)</li>
+          </ul>
+          <div class="actions">
+            <a class="btn" href="https://obsproject.com/" target="_blank">Download OBS <span class="icon">↗</span></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Chuẩn bị 2 browser profile</strong></p>
+          <ul>
+            <li>Profile A: Test User Facebook (để check-in + click m.me)</li>
+            <li>Profile B: Admin DHTC + Meta Dashboard (để show CRM action)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Quay theo script 8 scene</strong> (xem <code>screencast-script.md</code>)</p>
+          <table class="tbl">
+            <thead><tr><th>#</th><th>Scene</th><th>Time</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Intro — landing + business context</td><td>0:00–0:30</td></tr>
+              <tr><td>2</td><td><code>pages_show_list</code> — OAuth + Page dropdown</td><td>0:30–1:15</td></tr>
+              <tr><td>3</td><td><code>pages_read_engagement</code> — dashboard metrics</td><td>1:15–2:00</td></tr>
+              <tr><td>4</td><td><code>pages_read_user_content</code> — check-in inbox + intent</td><td>2:00–3:00</td></tr>
+              <tr><td>5</td><td><code>pages_manage_engagement</code> — reply comment với m.me lure</td><td>3:00–4:15</td></tr>
+              <tr><td>6</td><td><code>pages_messaging</code> — DM trong 24h window</td><td>4:15–5:30</td></tr>
+              <tr><td>7</td><td>Compliance — kill switch + data deletion</td><td>5:30–6:15</td></tr>
+              <tr><td>8</td><td>Outro</td><td>6:15–6:45</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Burn subtitle EN</strong> + export MP4 &lt;100MB</p>
+          <p class="hint">Dùng CapCut/DaVinci Resolve thêm subtitle. Test mở trên trình duyệt với audio off — sub phải đọc được.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Upload YouTube Unlisted</strong> (hoặc Google Drive shared link)</p>
+          <p class="hint">Lưu URL để paste vào submission form ở Phase 7.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════ PHASE 7 ════════════════════════════════════════════ -->
+  <section class="phase" data-phase="7">
+    <header class="phase-head" onclick="togglePhase(this)">
+      <div class="phase-num">7</div>
+      <div class="phase-title">
+        <h3>Submit App Review — 5 permissions</h3>
+        <span class="phase-eta">5-14 ngày/vòng</span>
+      </div>
+      <span class="phase-status ps-todo">TODO</span>
+      <span class="chev">▶</span>
+    </header>
+    <div class="phase-body">
+      <p class="phase-intro">App Dashboard → <strong>App Review</strong> → <strong>Permissions and Features</strong> → request từng permission. Mỗi permission có ô justification + screencast URL + test instructions.</p>
+
+      <div class="perm-grid">
+        <div class="perm-card">
+          <h4><span class="perm-name">pages_show_list</span>List Pages admin manages</h4>
+          <p class="perm-why">Onboarding: sau OAuth → list Pages → admin chọn đúng Page DHTC. 1 lần duy nhất.</p>
+        </div>
+        <div class="perm-card">
+          <h4><span class="perm-name">pages_read_engagement</span>Đọc metrics insights</h4>
+          <p class="perm-why">Dashboard: số check-in/comment/like/DM mỗi ngày. Pull aggregate mỗi 15 phút.</p>
+        </div>
+        <div class="perm-card">
+          <h4><span class="perm-name">pages_read_user_content</span>Đọc post + comment user tag Page</h4>
+          <p class="perm-why">Tín hiệu duy nhất biết "ai vừa check-in". Webhook <code>feed</code> field. Phân loại intent.</p>
+        </div>
+        <div class="perm-card">
+          <h4><span class="perm-name">pages_manage_engagement</span>Reply comment với template</h4>
+          <p class="perm-why">Trả lời check-in với m.me lure (KHÔNG cold DM). Rate limit 50/page/day + kill switch.</p>
+        </div>
+        <div class="perm-card">
+          <h4><span class="perm-name">pages_messaging</span>DM trong 24h window</h4>
+          <p class="perm-why">Sau khi user click m.me và gửi tin nhắn trước → 24h window mở → app gửi voucher.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Mở App Review dashboard</strong></p>
+          <div class="actions">
+            <a class="btn btn-primary" href="https://developers.facebook.com/apps/" target="_blank">App Dashboard <span class="icon">↗</span></a>
+          </div>
+          <p class="hint">App → App Review → Permissions and Features → Request Advanced Access cho 5 permissions trên.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Copy justification từ <code>submission.md</code></strong> vào ô "How will your app use this permission?"</p>
+          <p class="hint">Mỗi permission có section riêng trong submission.md — copy đoạn "Why we need it" + "Where in the app" + "Without this permission". Tổng ~200-300 chữ mỗi permission.</p>
+          <div class="actions">
+            <a class="btn" href="./submission.md" target="_blank">Mở submission.md <span class="icon">↗</span></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Paste screencast URL</strong> cho mỗi permission</p>
+          <p class="hint">Cùng 1 video URL cho cả 5 permissions, nhưng kèm note timestamp: <em>"See Scene 4 at 2:00-3:00 for this permission"</em>.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Paste test reviewer credentials</strong></p>
+          <div class="code-block"><button class="copy-mini" onclick="copyText(event, 'Login URL: https://dhtcdanang.com/admin/login\nAdmin email: reviewer@dhtcdanang.com\nAdmin password: <see Meta dashboard Test User Credentials>\nTest FB Page: DHTC Test \\u2014 Review Only\nTest User account: xxx@tfbnw.net (see Roles \\u2192 Test Users)')">copy</button>Login URL: https://dhtcdanang.com/admin/login
+Admin email: reviewer@dhtcdanang.com
+Admin password: &lt;see Meta dashboard Test User Credentials&gt;
+Test FB Page: DHTC Test — Review Only
+Test User account: xxx@tfbnw.net (see Roles → Test Users)</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Submit for Review</strong> → đợi 5-14 ngày</p>
+          <div class="alert info">
+            Status sẽ chuyển: <strong>Pending → In Review → Approved</strong> (hoặc <strong>Changes Requested</strong>). Nếu reject, đọc kỹ feedback, fix theo, resubmit.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Nếu reject: fix + resubmit</strong></p>
+          <table class="tbl">
+            <thead><tr><th>Reject reason</th><th>Fix</th></tr></thead>
+            <tbody>
+              <tr><td>"Cannot reproduce"</td><td>Quay lại screencast: zoom cao hơn, chậm hơn, callout rõ hơn</td></tr>
+              <tr><td>"Use case not clear"</td><td>Mở rộng justification, thêm screenshot annotated</td></tr>
+              <tr><td>"Privacy policy missing X"</td><td>Update <code>/privacy</code> bổ sung retention + sharing + deletion</td></tr>
+              <tr><td>"Compliance with 24h policy"</td><td>Quay close-up: timestamp check + disabled state khi quá 24h</td></tr>
+              <tr><td>"Test user insufficient perms"</td><td>Re-create Test User với "All permissions" flag</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════ PHASE 8 ════════════════════════════════════════════ -->
+  <section class="phase" data-phase="8">
+    <header class="phase-head" onclick="togglePhase(this)">
+      <div class="phase-num">8</div>
+      <div class="phase-title">
+        <h3>Switch Live Mode + Activate</h3>
+        <span class="phase-eta">~30 phút</span>
+      </div>
+      <span class="phase-status ps-todo">TODO</span>
+      <span class="chev">▶</span>
+    </header>
+    <div class="phase-body">
+      <p class="phase-intro">Sau khi pass App Review, switch app sang <strong>Live</strong>, subscribe Page production thật vào webhook, bật <code>PROACTIVE_REPLY_ENABLED=true</code> trong env.</p>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Switch App từ Development → Live</strong></p>
+          <p class="hint">App Dashboard → top header → toggle "App Mode" sang <strong>Live</strong>. Yêu cầu: Privacy Policy + Terms + App Icon + Business Verified.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Subscribe Page production thật vào webhook</strong></p>
+          <div class="code-block"><button class="copy-mini" onclick="copyText(event, 'curl -X POST \"https://graph.facebook.com/v22.0/{PROD_PAGE_ID}/subscribed_apps\" \\\n  -H \"Authorization: Bearer {PROD_PAGE_ACCESS_TOKEN}\" \\\n  -d \"subscribed_fields=feed,messages,messaging_postbacks\"')">copy</button>curl -X POST "https://graph.facebook.com/v22.0/{PROD_PAGE_ID}/subscribed_apps" \
+  -H "Authorization: Bearer {PROD_PAGE_ACCESS_TOKEN}" \
+  -d "subscribed_fields=feed,messages,messaging_postbacks"</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Bật proactive reply</strong> trong <code>backend/.env</code></p>
+          <div class="code-block"><button class="copy-mini" onclick="copyText(event, 'PROACTIVE_REPLY_ENABLED=true\nPROACTIVE_REPLY_RATE_LIMIT=50\nMETA_24H_WINDOW_HOURS=24')">copy</button>PROACTIVE_REPLY_ENABLED=true
+PROACTIVE_REPLY_RATE_LIMIT=50
+PROACTIVE_REPLY_MESSAGE_WINDOW_HOURS=24</div>
+          <p class="hint">Restart backend → kiểm tra log nhận webhook event lần đầu.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>End-to-end smoke test</strong> với tài khoản thật</p>
+          <ul>
+            <li>Tự check-in vào Page (account khác, không phải admin)</li>
+            <li>Đợi 30 giây → check <code>/admin/proactive/queue</code> có post mới</li>
+            <li>Click "Approve" template check-in</li>
+            <li>Mở Facebook post gốc → comment reply đã hiện</li>
+            <li>Click m.me link trong comment → mở Messenger → gửi "shop ơi"</li>
+            <li>Vào CRM → conversation có tag "🟢 Trong 24h" → click Send voucher</li>
+            <li>Messenger nhận tin voucher</li>
+          </ul>
+          <div class="alert info">
+            <strong>Toàn bộ flow hoạt động</strong> = App Review thành công, có thể scale tới production traffic 200-500 check-in/đêm.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-check" onclick="toggleStep(this)"></div>
+        <div class="step-body">
+          <p><strong>Cleanup test artifacts</strong></p>
+          <ul>
+            <li>Xoá admin account <code>reviewer@dhtcdanang.com</code></li>
+            <li>Xoá Test Page "DHTC Test — Review Only"</li>
+            <li>Xoá Test User trong Meta Dashboard</li>
+            <li>Lưu screencast URL + reviewer credentials vào password manager (cho lần renewal)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <div class="footer-note">
+    <h4>Tài liệu liên quan</h4>
+    <ul>
+      <li><a href="./README.md">README.md</a> — overview + roadmap</li>
+      <li><a href="./submission.md">submission.md</a> — justification 5 permissions (paste vào dashboard)</li>
+      <li><a href="./screencast-script.md">screencast-script.md</a> — script video 8 scene chi tiết</li>
+      <li><a href="./test-user-setup.md">test-user-setup.md</a> — hướng dẫn Test User + Test Page</li>
+      <li><a href="./business-verification-checklist.md">business-verification-checklist.md</a> — giấy tờ Business Verification</li>
+      <li><a href="../specs/07-proactive-reply/">07-proactive-reply spec</a> — backend implementation (webhook + intent + rate limit + 24h check)</li>
+    </ul>
+    <p style="margin-top:14px"><strong>Compliance tóm tắt:</strong> single-tenant · 1 Page · admin-approved templates · rate limit 50/day · kill switch env · 24h messaging policy strict · AES-256 token storage · 90-day raw retention.</p>
+  </div>
+
+</div>
+
+<div class="toast" id="toast">Đã copy</div>
+
+<script>
+const STORAGE_KEY = 'dhtc_app_review_progress_v1';
+
+function loadProgress() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+  catch { return {}; }
+}
+function saveProgress(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+let stepIdCounter = 0;
+function initSteps() {
+  const state = loadProgress();
+  document.querySelectorAll('.step').forEach((step, i) => {
+    step.dataset.sid = 's' + i;
+    const check = step.querySelector('.step-check');
+    const body = step.querySelector('.step-body');
+    if (state[step.dataset.sid]) {
+      check.classList.add('checked');
+      body.classList.add('muted');
+    }
+  });
+  recomputeProgress();
+}
+
+function toggleStep(el) {
+  const step = el.closest('.step');
+  const body = step.querySelector('.step-body');
+  const checked = el.classList.toggle('checked');
+  body.classList.toggle('muted', checked);
+  const state = loadProgress();
+  state[step.dataset.sid] = checked;
+  saveProgress(state);
+  recomputeProgress();
+}
+
+function recomputeProgress() {
+  const allSteps = document.querySelectorAll('.step-check');
+  const doneSteps = document.querySelectorAll('.step-check.checked');
+  const total = allSteps.length;
+  const done = doneSteps.length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  document.getElementById('pctNum').textContent = pct + '%';
+  document.getElementById('doneCount').textContent = done;
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('barFill').style.width = pct + '%';
+
+  // Per-phase status
+  document.querySelectorAll('.phase').forEach(phase => {
+    const steps = phase.querySelectorAll('.step-check');
+    const checked = phase.querySelectorAll('.step-check.checked');
+    const status = phase.querySelector('.phase-status');
+    status.classList.remove('ps-todo', 'ps-progress', 'ps-done');
+    phase.classList.remove('done');
+    if (checked.length === 0) {
+      status.classList.add('ps-todo');
+      status.textContent = 'TODO';
+    } else if (checked.length < steps.length) {
+      status.classList.add('ps-progress');
+      status.textContent = `${checked.length}/${steps.length}`;
+    } else {
+      status.classList.add('ps-done');
+      status.textContent = 'DONE';
+      phase.classList.add('done');
+    }
+  });
+}
+
+function togglePhase(headEl) {
+  headEl.closest('.phase').classList.toggle('open');
+}
+
+function copyText(evt, text) {
+  if (evt) { evt.stopPropagation(); evt.preventDefault(); }
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Đã copy: ' + (text.length > 50 ? text.slice(0, 47) + '…' : text));
+  }).catch(() => {
+    showToast('Copy thất bại, thử thủ công');
+  });
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function resetAll() {
+  if (!confirm('Reset toàn bộ tiến độ? Các check sẽ bị xoá.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  document.querySelectorAll('.step-check').forEach(c => c.classList.remove('checked'));
+  document.querySelectorAll('.step-body').forEach(b => b.classList.remove('muted'));
+  recomputeProgress();
+}
+
+// Init
+initSteps();
+// Open phase 1 by default
+document.querySelector('.phase[data-phase="1"]').classList.add('open');
+</script>
+</body>
+</html>
