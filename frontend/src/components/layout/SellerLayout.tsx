@@ -74,7 +74,7 @@ export function SellerLayout() {
       {/* Brand */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
         <img
-          src="https://dhtcdanang.com/wp-content/uploads/2023/07/cropped-Logo_Food-01-e1693969421521.png"
+          src="/img/market/cropped-Logo_Food-01-e1693969421521.png"
           alt="DHTC"
           className="w-9 h-9 rounded-lg object-contain border border-border p-1"
         />

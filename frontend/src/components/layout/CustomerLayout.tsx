@@ -46,7 +46,7 @@ export function CustomerLayout() {
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 flex-shrink-0 no-underline">
             <img
-              src="https://dhtcdanang.com/wp-content/uploads/2023/07/cropped-Logo_Food-01-e1693969421521.png"
+              src="/img/market/cropped-Logo_Food-01-e1693969421521.png"
               alt="DHTC"
               className="h-9 rounded-lg object-contain"
             />

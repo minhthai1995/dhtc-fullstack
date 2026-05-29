@@ -78,7 +78,7 @@ export function AdminLayout() {
       {/* Brand */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
         <img
-          src="https://dhtcdanang.com/wp-content/uploads/2023/07/cropped-Logo_Food-01-e1693969421521.png"
+          src="/img/market/cropped-Logo_Food-01-e1693969421521.png"
           alt="DHTC"
           className="w-9 h-9 rounded-lg object-contain bg-white/10 p-1"
         />

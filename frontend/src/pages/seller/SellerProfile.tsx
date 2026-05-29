@@ -279,7 +279,7 @@ export function SellerProfile() {
               <div className="text-center">
                 <div className="h-36 rounded-xl border border-border bg-cream mb-3 flex items-center justify-center p-4">
                   <img
-                    src="https://dhtcdanang.com/wp-content/uploads/2023/07/Logo_Food-e1688828159579-1024x470.png"
+                    src="/img/market/Logo_Food-e1688828159579-1024x470.png"
                     alt="Logo"
                     className="max-w-full max-h-full object-contain"
                   />

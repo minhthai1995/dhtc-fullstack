@@ -18,7 +18,7 @@ export function LegalLayout({ title, subtitle, effectiveDate, children }: LegalL
         <header className="flex justify-between items-center pb-6 border-b border-border mb-10">
           <Link to="/" className="flex items-center gap-3 no-underline text-ink">
             <img
-              src="https://dhtcdanang.com/wp-content/uploads/2023/07/cropped-Logo_Food-01-e1693969421521.png"
+              src="/img/market/cropped-Logo_Food-01-e1693969421521.png"
               alt="Chợ Đêm Sơn Trà"
               className="w-12 h-12 rounded-xl object-contain bg-white p-1.5 border border-border"
             />

@@ -64,7 +64,7 @@ export function Register() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <img
-              src="https://dhtcdanang.com/wp-content/uploads/2023/07/cropped-Logo_Food-01-e1693969421521.png"
+              src="/img/market/cropped-Logo_Food-01-e1693969421521.png"
               alt="DHTC"
               className="w-12 h-12 rounded-xl object-contain border border-border bg-white p-1.5"
             />

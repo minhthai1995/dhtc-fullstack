@@ -46,37 +46,18 @@ import { LangSwitcher } from '@/components/LangSwitcher'
  * VI/EN locale-aware (custom i18n) · editorial typography · zero auth surface.
  * ─────────────────────────────────────────────────────────────────────────── */
 
-const LOGO = 'https://dhtcdanang.com/wp-content/uploads/2023/07/cropped-Logo_Food-01-e1693969421521.png'
+const LOGO = '/img/market/cropped-Logo_Food-01-e1693969421521.png'
 
-const HERO_SLIDES = [
-  {
-    src: 'https://images.unsplash.com/photo-1701396173275-835886dd72ce?fm=jpg&q=80&w=2400&auto=format&fit=crop',
-    altKey: 'hero.slide1.alt',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1620976128192-7181e9f91342?fm=jpg&q=80&w=2400&auto=format&fit=crop',
-    altKey: 'hero.slide2.alt',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1741274236412-b6760ff6c01b?fm=jpg&q=80&w=2400&auto=format&fit=crop',
-    altKey: 'hero.slide3.alt',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1639458110591-17c4cede0c4b?fm=jpg&q=80&w=2400&auto=format&fit=crop',
-    altKey: 'hero.slide4.alt',
-  },
-  {
-    src: 'https://images.unsplash.com/photo-1760546100206-de205df95289?fm=jpg&q=80&w=2400&auto=format&fit=crop',
-    altKey: 'hero.slide5.alt',
-  },
-]
+/* Authentic Chợ Đêm Sơn Trà photos, self-hosted from the legacy WordPress site
+ * into /public/img/market. These are low-res interim shots and will be swapped
+ * for the owner's high-res originals — see frontend/PHOTOS-NEEDED.md. */
+const IMG_LIGHTS = '/img/market/anhsang1.jpg' // heart-light installation at night
+const IMG_ENTRANCE = '/img/market/091704-cho-dem-son-tra.jpg' // main entrance arch
+const IMG_OPENING = '/img/market/1-1552259562.jpg' // 2018 opening day
 
-const STORY_IMG = 'https://dhtcdanang.com/wp-content/uploads/2023/05/anhsang1.jpg'
-const DRAGON_IMG = 'https://dhtcdanang.com/wp-content/uploads/2023/05/img-20200628-153608.jpg'
-const GALLERY_A = 'https://dhtcdanang.com/wp-content/uploads/2023/05/091704-cho-dem-son-tra.jpg'
-const GALLERY_B = 'https://dhtcdanang.com/wp-content/uploads/2023/05/anhsang1.jpg'
-const GALLERY_C = 'https://dhtcdanang.com/wp-content/uploads/2023/05/img-20200628-153608.jpg'
-const GALLERY_D = 'https://dhtcdanang.com/wp-content/uploads/2023/05/1-1552259562.jpg'
+const HERO_SLIDES = [{ src: IMG_LIGHTS, altKey: 'hero.slide1.alt' }]
+
+const STORY_IMG = IMG_OPENING
 
 // ─── Static structural data (text comes from i18n) ─────────────────────────
 
@@ -98,10 +79,9 @@ const statsMeta = [
 ] as const
 
 const gallery = [
-  { src: GALLERY_A, key: 'gallery.1', span: 'md:col-span-2 md:row-span-2', w: 1600, h: 1067 },
-  { src: GALLERY_B, key: 'gallery.2', span: '', w: 1200, h: 800 },
-  { src: GALLERY_C, key: 'gallery.3', span: '', w: 1200, h: 800 },
-  { src: GALLERY_D, key: 'gallery.4', span: '', w: 1200, h: 800 },
+  { src: IMG_ENTRANCE, key: 'gallery.1', span: 'col-span-2 md:col-span-2 md:row-span-2', w: 771, h: 516 },
+  { src: IMG_LIGHTS, key: 'gallery.2', span: 'md:col-span-2', w: 700, h: 394 },
+  { src: IMG_OPENING, key: 'gallery.3', span: 'md:col-span-2', w: 1024, h: 492 },
 ]
 
 const dishMeta = [
@@ -116,10 +96,10 @@ const dishMeta = [
 ] as const
 
 const zonesMeta = [
-  { code: 'A', Icon: Utensils, img: GALLERY_A },
-  { code: 'B', Icon: Gift, img: GALLERY_B },
-  { code: 'C', Icon: Briefcase, img: GALLERY_C },
-  { code: 'D', Icon: Shirt, img: GALLERY_D },
+  { code: 'A', Icon: Utensils },
+  { code: 'B', Icon: Gift },
+  { code: 'C', Icon: Briefcase },
+  { code: 'D', Icon: Shirt },
 ] as const
 
 const eventsMeta = [
@@ -301,9 +281,9 @@ export function Landing() {
     }
   }, [mobileOpen])
 
-  // Hero carousel — auto-advance every 6s; pause on hover
+  // Hero carousel — auto-advance every 6s; pause on hover. No-op for a single slide.
   useEffect(() => {
-    if (heroPaused) return
+    if (heroPaused || HERO_SLIDES.length <= 1) return
     const id = window.setInterval(() => {
       setHeroSlide((s) => (s + 1) % HERO_SLIDES.length)
     }, 6000)
@@ -590,40 +570,42 @@ export function Landing() {
           </div>
         </div>
 
-        {/* Carousel controls */}
-        <div className="absolute bottom-5 sm:bottom-7 left-1/2 -translate-x-1/2 lg:left-auto lg:translate-x-0 lg:right-8 z-20 flex items-center gap-3 sm:gap-4">
-          <button
-            type="button"
-            onClick={prevHero}
-            aria-label={t('hero.prevSlide')}
-            className="hidden sm:inline-flex w-9 h-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm border border-cream/30 text-cream hover:bg-white/20 transition-colors"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <div className="flex items-center gap-2" role="tablist" aria-label={t('hero.slideTabs')}>
-            {HERO_SLIDES.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                role="tab"
-                aria-selected={i === heroSlide}
-                aria-label={`${i + 1} / ${HERO_SLIDES.length}`}
-                onClick={() => setHeroSlide(i)}
-                className={`transition-all duration-300 rounded-full ${
-                  i === heroSlide ? 'w-8 h-1.5 bg-gold' : 'w-1.5 h-1.5 bg-cream/40 hover:bg-cream/70'
-                }`}
-              />
-            ))}
+        {/* Carousel controls — only when more than one slide */}
+        {HERO_SLIDES.length > 1 && (
+          <div className="absolute bottom-5 sm:bottom-7 left-1/2 -translate-x-1/2 lg:left-auto lg:translate-x-0 lg:right-8 z-20 flex items-center gap-3 sm:gap-4">
+            <button
+              type="button"
+              onClick={prevHero}
+              aria-label={t('hero.prevSlide')}
+              className="hidden sm:inline-flex w-9 h-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm border border-cream/30 text-cream hover:bg-white/20 transition-colors"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <div className="flex items-center gap-2" role="tablist" aria-label={t('hero.slideTabs')}>
+              {HERO_SLIDES.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === heroSlide}
+                  aria-label={`${i + 1} / ${HERO_SLIDES.length}`}
+                  onClick={() => setHeroSlide(i)}
+                  className={`transition-all duration-300 rounded-full ${
+                    i === heroSlide ? 'w-8 h-1.5 bg-gold' : 'w-1.5 h-1.5 bg-cream/40 hover:bg-cream/70'
+                  }`}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={nextHero}
+              aria-label={t('hero.nextSlide')}
+              className="hidden sm:inline-flex w-9 h-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm border border-cream/30 text-cream hover:bg-white/20 transition-colors"
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={nextHero}
-            aria-label={t('hero.nextSlide')}
-            className="hidden sm:inline-flex w-9 h-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm border border-cream/30 text-cream hover:bg-white/20 transition-colors"
-          >
-            <ChevronRight size={16} />
-          </button>
-        </div>
+        )}
 
         <div
           className="absolute top-24 sm:top-28 right-5 sm:right-8 hidden md:block text-right text-cream/55"
@@ -743,22 +725,16 @@ export function Landing() {
 
       {/* ── DRAGON MOMENT ───────────────────────────────────────────── */}
       <section className="relative overflow-hidden border-y border-border" style={{ background: 'var(--color-ink)' }}>
-        <div className="absolute inset-0">
-          <img
-            src={DRAGON_IMG}
-            alt=""
-            aria-hidden="true"
-            width={1600}
-            height={1067}
-            className="w-full h-full object-cover opacity-40"
-            loading="lazy"
-            decoding="async"
+        <div className="absolute inset-0" aria-hidden="true">
+          <div
+            className="absolute inset-0"
+            style={{ background: 'linear-gradient(135deg, var(--color-green-deep) 0%, var(--color-ink) 60%)' }}
           />
           <div
             className="absolute inset-0"
             style={{
-              background:
-                'linear-gradient(180deg, rgba(15,25,20,0.6) 0%, rgba(15,25,20,0.4) 40%, rgba(15,25,20,0.92) 100%)',
+              backgroundImage:
+                'radial-gradient(circle at 78% 22%, rgba(201,169,97,0.22), transparent 45%), radial-gradient(circle at 12% 88%, rgba(139,38,53,0.18), transparent 50%)',
             }}
           />
         </div>
@@ -967,16 +943,17 @@ export function Landing() {
                 style={{ background: 'rgba(245,239,224,0.04)' }}
                 data-reveal
               >
-                <div className="relative aspect-[4/3] overflow-hidden">
-                  <img
-                    src={z.img}
-                    alt={t(`zone.${z.code}.name`)}
-                    width={1200}
-                    height={900}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    loading="lazy"
-                    decoding="async"
-                  />
+                <div
+                  className="relative aspect-[4/3] overflow-hidden"
+                  style={{ background: 'linear-gradient(135deg, var(--color-green) 0%, var(--color-green-deep) 100%)' }}
+                >
+                  <span
+                    className="absolute -right-3 -bottom-6 text-cream/10 font-normal leading-none select-none pointer-events-none transition-transform duration-500 group-hover:scale-105"
+                    style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(120px, 16vw, 180px)' }}
+                    aria-hidden="true"
+                  >
+                    {z.code}
+                  </span>
                   <div
                     className="absolute top-3 left-3 w-10 h-10 rounded-xl bg-gold flex items-center justify-center text-ink font-bold text-base"
                     style={{ fontFamily: 'var(--font-display)' }}
