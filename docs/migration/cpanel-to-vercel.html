@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>DHTC — Migration cPanel → Vercel | Step-by-step wizard</title>
+<title>DHTC — Migration cPanel → Vercel + DNS về Cloudflare | Step-by-step wizard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -203,7 +203,7 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 24px;
-    margin-bottom: 32px;
+    margin-bottom: 24px;
   }
   .arch-title {
     font-family: var(--display);
@@ -234,6 +234,32 @@
     font-size: 10px;
     margin-right: 6px;
     color: var(--ink-soft);
+  }
+
+  /* ===== Strategy box ===== */
+  .strategy-box {
+    background: var(--info-bg);
+    border: 1px solid var(--info);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 32px;
+  }
+  .strategy-title {
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--info);
+    margin-bottom: 10px;
+  }
+  .strategy-box ol { margin: 8px 0 0 18px; font-size: 13.5px; color: var(--ink-soft); }
+  .strategy-box li { margin-bottom: 6px; }
+  .strategy-box code {
+    font-family: var(--mono);
+    background: rgba(255,255,255,0.6);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    color: var(--green);
   }
 
   /* ===== Phase card ===== */
@@ -437,6 +463,7 @@
     overflow-x: auto;
     position: relative;
     line-height: 1.55;
+    white-space: pre-wrap;
   }
   .code-block .btn-copy {
     position: absolute;
@@ -445,6 +472,33 @@
   }
   .code-comment { color: #8FA396; }
   .code-key { color: #D5B675; }
+
+  /* ===== DNS record table ===== */
+  .dns-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 12px;
+    margin: 10px 0;
+  }
+  .dns-table th {
+    text-align: left;
+    padding: 7px 9px;
+    background: var(--green);
+    color: var(--cream);
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+  .dns-table td {
+    padding: 7px 9px;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink-soft);
+    vertical-align: top;
+  }
+  .dns-table tr:nth-child(even) td { background: #FBF8EF; }
+  .dns-table .keep { color: var(--danger); font-weight: 500; }
+  .dns-table .change { color: var(--info); font-weight: 500; }
 
   /* ===== Copyable value ===== */
   .copy-value {
@@ -523,12 +577,26 @@
     align-items: center;
     gap: 8px;
   }
+  .rollback-sub {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink);
+    margin: 14px 0 6px;
+  }
   .rollback-list {
     margin-left: 18px;
     font-size: 13.5px;
     color: var(--ink);
   }
   .rollback-list li { margin-bottom: 6px; }
+  .rollback-section code {
+    font-family: var(--mono);
+    background: rgba(255,255,255,0.55);
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
 
   /* ===== Post-migration ===== */
   .post-section {
@@ -575,8 +643,8 @@
     .phase-title { font-size: 16px; }
     .phase-body { padding: 0 16px 16px; }
     .phase-status { display: none; }
-    .arch-table { font-size: 11px; }
-    .arch-table td { padding: 6px 4px; }
+    .arch-table, .dns-table { font-size: 11px; }
+    .arch-table td, .dns-table td, .dns-table th { padding: 6px 5px; }
   }
 
   /* ===== Footer ===== */
@@ -595,11 +663,12 @@
 
 <header class="hero">
   <div class="hero-inner">
-    <div class="eyebrow">Migration Wizard · v1</div>
-    <h1 class="title">Chuyển dhtcdanang.com<br>từ cPanel sang Vercel</h1>
+    <div class="eyebrow">Migration Wizard · v2 · Cloudflare DNS</div>
+    <h1 class="title">Chuyển dhtcdanang.com sang Vercel<br>+ đưa DNS về Cloudflare</h1>
     <p class="subtitle">
-      7 phase từ backup → cutover DNS → SSL. Email @dhtcdanang.com giữ nguyên hoạt động.
-      WordPress cũ được di về <code style="font-family:var(--mono); background:rgba(245,239,224,0.18); padding:1px 6px; border-radius:3px;">old.dhtcdanang.com</code>.
+      9 phase: backup → import DNS sang Cloudflare → đổi nameserver (vô hình) → cutover Vercel → SSL.
+      Email <code style="font-family:var(--mono); background:rgba(245,239,224,0.18); padding:1px 6px; border-radius:3px;">@dhtcdanang.com</code> giữ nguyên (MX dùng máy chủ ngoài umailsmtp — không bị ảnh hưởng).
+      WordPress cũ di về <code style="font-family:var(--mono); background:rgba(245,239,224,0.18); padding:1px 6px; border-radius:3px;">old.dhtcdanang.com</code>.
     </p>
     <div class="progress-wrap">
       <div class="progress-bar-outer">
@@ -620,18 +689,28 @@
   <!-- Risk legend -->
   <div class="legend">
     <div class="legend-item"><span class="legend-dot dot-safe"></span> An toàn — additive / chuẩn bị</div>
-    <div class="legend-item"><span class="legend-dot dot-warn"></span> Trung bình — sửa data / nội dung</div>
-    <div class="legend-item"><span class="legend-dot dot-danger"></span> Cao — cutover thật, có downtime</div>
+    <div class="legend-item"><span class="legend-dot dot-warn"></span> Trung bình — sửa data / chuyển nền tảng</div>
+    <div class="legend-item"><span class="legend-dot dot-danger"></span> Cao — cutover thật, có downtime ngắn</div>
   </div>
 
   <!-- Architecture diagram -->
   <div class="arch-box">
-    <div class="arch-title">Kiến trúc DNS sau khi xong</div>
+    <div class="arch-title">Kiến trúc sau khi xong</div>
     <table class="arch-table">
+      <tr>
+        <td class="arch-host">Registrar (đăng ký)</td>
+        <td class="arch-arrow">→</td>
+        <td class="arch-target"><span class="arch-type">REG</span>Nhân Hòa <span style="color:var(--ink-mute);">— GIỮ NGUYÊN, chỉ đổi nameserver</span></td>
+      </tr>
+      <tr>
+        <td class="arch-host">Nameservers</td>
+        <td class="arch-arrow">→</td>
+        <td class="arch-target"><span class="arch-type">NS</span>Cloudflare <span style="color:var(--ink-mute);">(2 NS Cloudflare cấp) — thay ns1-4.zonedns.vn</span></td>
+      </tr>
       <tr>
         <td class="arch-host">dhtcdanang.com</td>
         <td class="arch-arrow">→</td>
-        <td class="arch-target"><span class="arch-type">A</span>76.76.21.21 <span style="color:var(--ink-mute);">(Vercel)</span></td>
+        <td class="arch-target"><span class="arch-type">A</span>76.76.21.21 <span style="color:var(--ink-mute);">(Vercel · DNS only)</span></td>
       </tr>
       <tr>
         <td class="arch-host">www.dhtcdanang.com</td>
@@ -646,14 +725,27 @@
       <tr>
         <td class="arch-host">MX (email)</td>
         <td class="arch-arrow">→</td>
-        <td class="arch-target"><span class="arch-type">MX</span><strong style="color:var(--danger);">GIỮ NGUYÊN</strong> <span style="color:var(--ink-mute);">— không đụng để @dhtcdanang.com còn nhận</span></td>
+        <td class="arch-target"><span class="arch-type">MX</span>10 smtp.umailsmtp.com <strong style="color:var(--danger);">GIỮ NGUYÊN</strong></td>
       </tr>
       <tr>
-        <td class="arch-host">SPF / DKIM / DMARC</td>
+        <td class="arch-host">SPF / DMARC</td>
         <td class="arch-arrow">→</td>
-        <td class="arch-target"><span class="arch-type">TXT</span><strong style="color:var(--danger);">GIỮ NGUYÊN</strong> <span style="color:var(--ink-mute);">— auth cho email</span></td>
+        <td class="arch-target"><span class="arch-type">TXT</span><strong style="color:var(--danger);">GIỮ NGUYÊN</strong> <span style="color:var(--ink-mute);">— auth email</span></td>
       </tr>
     </table>
+  </div>
+
+  <!-- Strategy -->
+  <div class="strategy-box">
+    <div class="strategy-title">Chiến lược 2 bước — vì sao an toàn</div>
+    Thay vì đổi mọi thứ cùng lúc, mình tách làm 2 lần chuyển độc lập:
+    <ol>
+      <li><strong>Bước A — chuyển DNS sang Cloudflare (vô hình):</strong> nhập y nguyên các record hiện tại vào Cloudflare (apex vẫn trỏ <code>103.28.36.220</code> = cPanel cũ), rồi đổi nameserver ở Nhân Hòa sang Cloudflare. Vì record giống hệt → người dùng <strong>không thấy gì thay đổi</strong>, web cũ + email vẫn chạy. Đây là phần "đổi nền tảng" — zero downtime nếu nhập record đúng.</li>
+      <li><strong>Bước B — cutover Vercel (nhanh, đảo ngược được):</strong> khi Cloudflare đã là nhà quản DNS, chỉ cần sửa 1 record apex <code>103.28.36.220 → 76.76.21.21</code> ngay trong Cloudflare. TTL Cloudflare thấp (~5 phút) nên đổi nhanh, hỏng thì sửa ngược lại cũng ~5 phút.</li>
+    </ol>
+    <div style="font-size:12.5px; color:var(--ink-soft); margin-top:10px; font-style:italic;">
+      Lợi ích: phần rủi ro nhất (đưa web sang Vercel) trở thành 1 thao tác sửa record nhanh &amp; reversible, thay vì khoá cứng sau lần đổi nameserver chậm.
+    </div>
   </div>
 
   <!-- ============ PHASE 1 ============ -->
@@ -750,7 +842,9 @@
               <li>cPanel → <strong>Forwarders</strong> → screenshot</li>
               <li>cPanel → <strong>Email Routing</strong> → screenshot</li>
             </ul>
-            Sau migration nếu cần tạo lại email ở dịch vụ khác (Google Workspace / Zoho) thì có reference.
+            <div class="callout callout-info">
+              Email <code>@dhtcdanang.com</code> hiện đi qua máy chủ ngoài <code>smtp.umailsmtp.com</code> (không nằm trên cPanel này). Việc đổi DNS apex KHÔNG làm mất email — chỉ cần MX/SPF/DMARC được copy đúng sang Cloudflare (Phase 4).
+            </div>
           </div>
         </div>
       </div>
@@ -758,23 +852,12 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s1-7">
         <div class="step-content">
-          <label for="s1-7" class="step-title"><span class="step-num">1.7</span>Export DNS zone (CỰC QUAN TRỌNG)</label>
+          <label for="s1-7" class="step-title"><span class="step-num">1.7</span>Screenshot Zone Editor (tham khảo)</label>
           <div class="step-detail">
-            <ol>
-              <li>cPanel → <strong>Zone Editor</strong></li>
-              <li>Click domain <code>dhtcdanang.com</code> → <strong>Manage</strong></li>
-              <li>Screenshot TOÀN BỘ records (A, AAAA, MX, TXT, CNAME, SRV)</li>
-              <li>Nếu có nút <strong>Export Zone File</strong> → tải file <code>.txt</code> về</li>
-            </ol>
-            <div class="callout callout-danger">
-              <div class="callout-title">⚠ Đặc biệt chú ý ghi lại:</div>
-              <ul style="margin-left: 16px;">
-                <li>Tất cả <strong>MX records</strong> (priority + hostname)</li>
-                <li>Mọi <strong>TXT record</strong> chứa <code>v=spf1</code>, <code>_domainkey</code>, <code>_dmarc</code></li>
-                <li><strong>TXT</strong> <code>google-site-verification</code> hoặc <code>facebook-domain-verification</code> nếu có</li>
-                <li><strong>A record</strong> <code>mail.dhtcdanang.com</code> (nếu có)</li>
-              </ul>
-              Phase 6 sẽ cần check lại để KHÔNG xoá nhầm.
+            cPanel → <strong>Zone Editor</strong> → <code>dhtcdanang.com</code> → screenshot.
+            <div class="callout callout-warn">
+              <div class="callout-title">Lưu ý: zone trong cPanel KHÔNG phải DNS thật</div>
+              DNS thật của domain đang nằm ở <strong>ZoneDNS.vn</strong> (ns1-4.zonedns.vn), không phải cPanel. Zone trong cPanel có thể trống/cũ. Nguồn chính xác để copy record là <strong>Phase 2</strong> (chạy <code>dig</code> trực tiếp).
             </div>
           </div>
         </div>
@@ -782,7 +865,7 @@
 
       <div class="callout callout-success" style="margin-top: 16px;">
         <div class="callout-title">✓ Sau Phase 1 bạn có:</div>
-        File <code>.tar.gz</code> backup full + file <code>.sql</code> DB + zip <code>public_html</code> + screenshot DNS + email list. Đây là snapshot rollback hoàn chỉnh.
+        File <code>.tar.gz</code> backup full + file <code>.sql</code> DB + zip <code>public_html</code> + screenshot email + Zone Editor. Đây là snapshot rollback hoàn chỉnh.
       </div>
     </div>
   </div>
@@ -793,28 +876,35 @@
       <div class="phase-risk risk-safe"></div>
       <div class="phase-num">2</div>
       <div class="phase-title-wrap">
-        <div class="phase-title">Giảm TTL ở Squarespace</div>
-        <div class="phase-meta">~10 phút thao tác + đợi 1h · Zero risk · Prep cho rollback nhanh</div>
+        <div class="phase-title">Ghi lại DNS hiện tại (inventory)</div>
+        <div class="phase-meta">~10 phút · Zero risk · Đây là nguồn để nhập vào Cloudflare</div>
       </div>
       <span class="phase-status status-todo">Todo</span>
       <span class="phase-toggle">›</span>
     </div>
     <div class="phase-body">
       <div class="phase-intro">
-        TTL hiện tại (thường 1h-24h) là thời gian DNS cache toàn cầu nhớ giá trị cũ. Giảm TTL TRƯỚC khi cutover để nếu Phase 6 gãy thì rollback chỉ mất 5 phút thay vì 24h.
+        Vì sẽ chuyển DNS sang Cloudflare bằng cách đổi nameserver, Cloudflare phải có <strong>đủ &amp; đúng</strong> mọi record hiện tại trước khi flip. Phase này chụp lại "ảnh thật" của DNS để Phase 4 đối chiếu.
       </div>
 
       <div class="step">
         <input type="checkbox" class="step-check" id="s2-1">
         <div class="step-content">
-          <label for="s2-1" class="step-title"><span class="step-num">2.1</span>Login Squarespace Domains</label>
+          <label for="s2-1" class="step-title"><span class="step-num">2.1</span>Chạy dig để lấy giá trị live</label>
           <div class="step-detail">
-            Mở <a href="https://account.squarespace.com/domains" target="_blank">https://account.squarespace.com/domains</a> → login.
-            <div class="callout callout-info">
-              <div class="callout-title">Chọn đúng domain</div>
-              URL bạn có là <code>.../fdvvietnam.com/dns/dns-settings</code> — đó là URL của domain khác trong cùng account.
-              Trong dashboard, chọn <strong>dhtcdanang.com</strong> từ list → DNS Settings.
-            </div>
+            Mở Terminal (Mac/Linux). Windows: dùng <a href="https://www.whatsmydns.net" target="_blank">whatsmydns.net</a> hoặc <code>nslookup</code>.
+            <div class="code-block"><span class="code-comment"># Nameserver hiện tại</span>
+dig NS dhtcdanang.com +short
+<span class="code-comment"># A apex</span>
+dig dhtcdanang.com +short
+<span class="code-comment"># www (hiện đang TRỐNG)</span>
+dig www.dhtcdanang.com +short
+<span class="code-comment"># MX — máy chủ email</span>
+dig MX dhtcdanang.com +short
+<span class="code-comment"># TXT — SPF</span>
+dig TXT dhtcdanang.com +short
+<span class="code-comment"># TXT — DMARC</span>
+dig TXT _dmarc.dhtcdanang.com +short<button class="btn-copy" onclick="copyText('dig NS dhtcdanang.com +short\ndig dhtcdanang.com +short\ndig www.dhtcdanang.com +short\ndig MX dhtcdanang.com +short\ndig TXT dhtcdanang.com +short\ndig TXT _dmarc.dhtcdanang.com +short')">copy all</button></div>
           </div>
         </div>
       </div>
@@ -822,17 +912,22 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s2-2">
         <div class="step-content">
-          <label for="s2-2" class="step-title"><span class="step-num">2.2</span>Tìm A record <code>@</code> apex</label>
+          <label for="s2-2" class="step-title"><span class="step-num">2.2</span>Đối chiếu với giá trị canonical đã biết</label>
           <div class="step-detail">
-            Trong khu <strong>Custom Records</strong> hoặc <strong>DNS Records</strong>:
-            <ul>
-              <li>Tìm record có <strong>Type = A</strong>, <strong>Host = @</strong> (hoặc trống)</li>
-              <li>Value hiện tại đang là <code>103.28.36.220</code></li>
-              <li>Click <strong>Edit</strong></li>
-              <li>Đổi TTL xuống <strong>5 min</strong> (300 giây)</li>
-              <li><strong>GIỮ value 103.28.36.220</strong> — chỉ đổi TTL</li>
-              <li>Save</li>
-            </ul>
+            Đây là DNS đã verify (lần kiểm tra gần nhất). Output dig của bạn phải khớp — nếu khác thì lấy theo output dig mới nhất:
+            <table class="dns-table">
+              <tr><th>Loại</th><th>Host</th><th>Giá trị</th><th>Sau migration</th></tr>
+              <tr><td>NS</td><td>@</td><td>ns1-4.zonedns.vn</td><td class="change">→ Cloudflare</td></tr>
+              <tr><td>A</td><td>@</td><td>103.28.36.220</td><td class="change">→ 76.76.21.21</td></tr>
+              <tr><td>—</td><td>www</td><td>(không có)</td><td class="change">→ thêm CNAME Vercel</td></tr>
+              <tr><td>MX</td><td>@</td><td>10 smtp.umailsmtp.com</td><td class="keep">GIỮ</td></tr>
+              <tr><td>TXT</td><td>@</td><td>v=spf1 include:dnsexit.com include:_spf.umailsmtp.com -all</td><td class="keep">GIỮ</td></tr>
+              <tr><td>TXT</td><td>_dmarc</td><td>v=DMARC1; p=quarantine; pct=100; rua=mailto:master@umailsmtp.com</td><td class="keep">GIỮ</td></tr>
+            </table>
+            <div class="callout callout-info">
+              <div class="callout-title">Email = an toàn</div>
+              MX trỏ tới host ngoài <code>smtp.umailsmtp.com</code> (IP 45.117.176.181), độc lập với A record của domain. Đổi A apex sang Vercel KHÔNG ảnh hưởng email — miễn là 3 record <strong>MX + SPF + DMARC</strong> được copy đúng sang Cloudflare.
+            </div>
           </div>
         </div>
       </div>
@@ -840,27 +935,9 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s2-3">
         <div class="step-content">
-          <label for="s2-3" class="step-title"><span class="step-num">2.3</span>Tìm CNAME <code>www</code></label>
+          <label for="s2-3" class="step-title"><span class="step-num">2.3</span>Lưu kết quả vào file text</label>
           <div class="step-detail">
-            <ul>
-              <li>Record có <strong>Type = CNAME</strong>, <strong>Host = www</strong></li>
-              <li>Edit → TTL xuống <strong>5 min</strong></li>
-              <li>GIỮ value cũ — chỉ đổi TTL</li>
-              <li>Save</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <input type="checkbox" class="step-check" id="s2-4">
-        <div class="step-content">
-          <label for="s2-4" class="step-title"><span class="step-num">2.4</span>Đợi tối thiểu 1 giờ trước khi sang Phase 3</label>
-          <div class="step-detail">
-            DNS cache cũ ở các ISP toàn cầu cần thời gian expire xuống TTL mới. Nếu cutover ngay sẽ không có lợi ích.
-            <div class="callout callout-info">
-              Trong lúc đợi có thể làm Phase 3 (subdomain) — không ảnh hưởng đến apex.
-            </div>
+            Copy toàn bộ output dig vào 1 file <code>dns-inventory.txt</code> lưu chung với backup Phase 1. Phase 4 và phần Rollback đều cần đối chiếu file này.
           </div>
         </div>
       </div>
@@ -873,15 +950,15 @@
       <div class="phase-risk risk-safe"></div>
       <div class="phase-num">3</div>
       <div class="phase-title-wrap">
-        <div class="phase-title">Setup <code style="font-family:var(--mono); color:var(--green);">old.dhtcdanang.com</code></div>
-        <div class="phase-meta">~30 phút · Low risk · Chỉ ADD record mới, không sửa gì</div>
+        <div class="phase-title">Tạo subdomain <code style="font-family:var(--mono); color:var(--green);">old.dhtcdanang.com</code> trong cPanel</div>
+        <div class="phase-meta">~15 phút · Zero risk · Chỉ tạo subdomain trên hosting, chưa đụng DNS</div>
       </div>
       <span class="phase-status status-todo">Todo</span>
       <span class="phase-toggle">›</span>
     </div>
     <div class="phase-body">
       <div class="phase-intro">
-        Tạo "lối thứ 2" vào WordPress qua subdomain trước khi cutover apex. Sau khi apex đã chuyển sang Vercel, WP vẫn còn truy cập được ở <code>old.*</code>.
+        Tạo "lối thứ 2" vào WordPress để sau khi apex chuyển sang Vercel, WP cũ vẫn truy cập được ở <code>old.*</code>. Phase này chỉ cấu hình trên cPanel; record DNS cho <code>old</code> sẽ được thêm trong Cloudflare ở Phase 4.
       </div>
 
       <div class="step">
@@ -911,43 +988,11 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s3-2">
         <div class="step-content">
-          <label for="s3-2" class="step-title"><span class="step-num">3.2</span>Squarespace DNS — add A record cho <code>old</code></label>
+          <label for="s3-2" class="step-title"><span class="step-num">3.2</span>Chưa cần đụng DNS ở bước này</label>
           <div class="step-detail">
-            Vẫn ở Squarespace DNS settings của dhtcdanang.com → <strong>Add Record</strong>:
-            <ul>
-              <li>Type: <strong>A</strong></li>
-              <li>Host: <strong>old</strong></li>
-              <li>Value: <span class="copy-value">103.28.36.220 <button class="btn-copy" onclick="copyText('103.28.36.220')">copy</button></span></li>
-              <li>TTL: <strong>1 hour</strong></li>
-            </ul>
-            Save.
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <input type="checkbox" class="step-check" id="s3-3">
-        <div class="step-content">
-          <label for="s3-3" class="step-title"><span class="step-num">3.3</span>Đợi 5-10 phút → verify bằng dig</label>
-          <div class="step-detail">
-            Mở Terminal (Mac/Linux) hoặc <a href="https://www.whatsmydns.net/#A/old.dhtcdanang.com" target="_blank">whatsmydns.net</a> nếu Windows:
-            <div class="code-block">
-              dig old.dhtcdanang.com +short
-              <span class="code-comment"># expect: 103.28.36.220</span>
-              <button class="btn-copy" onclick="copyText('dig old.dhtcdanang.com +short')">copy</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <input type="checkbox" class="step-check" id="s3-4">
-        <div class="step-content">
-          <label for="s3-4" class="step-title"><span class="step-num">3.4</span>Mở browser test <code>http://old.dhtcdanang.com</code></label>
-          <div class="step-detail">
-            Nội dung WP phải hiện ra. Có thể ảnh/CSS vỡ vì URL hard-code <code>https://dhtcdanang.com/...</code>. Bình thường — Phase 4 sẽ fix.
+            Vì DNS thật đang ở ZoneDNS và mình sắp chuyển sang Cloudflare, record <code>old → 103.28.36.220</code> sẽ được thêm 1 lần duy nhất trong Cloudflare (Phase 4.4). Không thêm ở ZoneDNS để tránh phải sửa 2 nơi.
             <div class="callout callout-info">
-              Nếu trắng trang hoặc redirect về dhtcdanang.com: vào cPanel → File Manager → mở <code>public_html/.htaccess</code> coi có rule canonical redirect không. Cũng có thể WP option <code>siteurl</code>/<code>home</code> hard-code domain chính → Phase 4 sẽ sửa.
+              <code>old.dhtcdanang.com</code> sẽ chỉ resolve được <strong>sau khi đổi nameserver sang Cloudflare</strong> (Phase 6). Lúc đó Phase 7 (WordPress search-replace) mới verify được. Thứ tự này là cố ý.
             </div>
           </div>
         </div>
@@ -961,28 +1006,27 @@
       <div class="phase-risk risk-warn"></div>
       <div class="phase-num">4</div>
       <div class="phase-title-wrap">
-        <div class="phase-title">WordPress URL search-replace</div>
-        <div class="phase-meta">~30-45 phút · Medium risk · Sửa WP DB (backup Phase 1 là safety net)</div>
+        <div class="phase-title">Tạo Cloudflare + import toàn bộ DNS (giữ target cũ)</div>
+        <div class="phase-meta">~30-45 phút · Medium risk · Phase quan trọng nhất — verify kỹ MX/SPF/DMARC</div>
       </div>
       <span class="phase-status status-todo">Todo</span>
       <span class="phase-toggle">›</span>
     </div>
     <div class="phase-body">
       <div class="phase-intro">
-        WP lưu URL absolute trong DB (posts, options, theme settings, ACF, widgets...). Nếu không replace, sau Phase 6 các URL <code>https://dhtcdanang.com/wp-content/...</code> sẽ trỏ sang Vercel → 404 hết.
-      </div>
-
-      <div class="callout callout-danger">
-        <div class="callout-title">⚠ BẮT BUỘC làm Phase 1 (backup DB) trước</div>
-        Search-replace lỡ tay là hỏng toàn bộ WP. Nếu chưa export <code>.sql</code> từ phpMyAdmin → quay lại Phase 1.4.
+        Nhập <strong>y nguyên</strong> các record hiện tại vào Cloudflare (apex vẫn trỏ cPanel cũ). Mục tiêu: khi đổi nameserver ở Phase 6, người dùng không thấy bất kỳ thay đổi nào. Nếu Cloudflare thiếu record → flip nameserver = mất dịch vụ tương ứng (nguy hiểm nhất là mất email).
       </div>
 
       <div class="step">
         <input type="checkbox" class="step-check" id="s4-1">
         <div class="step-content">
-          <label for="s4-1" class="step-title"><span class="step-num">4.1</span>Login WP admin</label>
+          <label for="s4-1" class="step-title"><span class="step-num">4.1</span>Tạo tài khoản Cloudflare + Add site</label>
           <div class="step-detail">
-            <code>https://dhtcdanang.com/wp-admin</code> (làm trước khi switch DNS — sau Phase 6 thì login qua <code>https://old.dhtcdanang.com/wp-admin</code>).
+            <ol>
+              <li>Đăng ký <a href="https://dash.cloudflare.com/sign-up" target="_blank">dash.cloudflare.com/sign-up</a> (miễn phí)</li>
+              <li>Click <strong>Add a site</strong> → nhập <code>dhtcdanang.com</code></li>
+              <li>Chọn gói <strong>Free</strong> → Continue</li>
+            </ol>
           </div>
         </div>
       </div>
@@ -990,9 +1034,13 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s4-2">
         <div class="step-content">
-          <label for="s4-2" class="step-title"><span class="step-num">4.2</span>Cài plugin "Better Search Replace"</label>
+          <label for="s4-2" class="step-title"><span class="step-num">4.2</span>Cloudflare tự quét DNS → review</label>
           <div class="step-detail">
-            Plugins → Add New → search <strong>"Better Search Replace"</strong> (tác giả WP Engine) → Install Now → Activate.
+            Cloudflare sẽ tự dò các record phổ biến và list ra.
+            <div class="callout callout-danger">
+              <div class="callout-title">⚠ Cloudflare quét KHÔNG đảm bảo đủ</div>
+              ZoneDNS thường chặn zone transfer, nên Cloudflare chỉ dò được record nó "đoán". Bắt buộc đối chiếu thủ công với inventory Phase 2 và <strong>thêm tay record nào còn thiếu</strong> — đặc biệt MX, SPF, DMARC.
+            </div>
           </div>
         </div>
       </div>
@@ -1000,17 +1048,21 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s4-3">
         <div class="step-content">
-          <label for="s4-3" class="step-title"><span class="step-num">4.3</span>Dry run lần 1: <code>https://dhtcdanang.com</code> → <code>https://old.dhtcdanang.com</code></label>
+          <label for="s4-3" class="step-title"><span class="step-num">4.3</span>Đảm bảo có đủ các record EMAIL (sống còn)</label>
           <div class="step-detail">
-            <ol>
-              <li>Tools → Better Search Replace</li>
-              <li><strong>Search for</strong>: <span class="copy-value">https://dhtcdanang.com <button class="btn-copy" onclick="copyText('https://dhtcdanang.com')">copy</button></span></li>
-              <li><strong>Replace with</strong>: <span class="copy-value">https://old.dhtcdanang.com <button class="btn-copy" onclick="copyText('https://old.dhtcdanang.com')">copy</button></span></li>
-              <li><strong>Select tables</strong>: Cmd/Ctrl + click chọn TẤT CẢ tables (kéo từ đầu list đến cuối)</li>
-              <li>✅ <strong>Run as dry run?</strong> (check để xem trước, KHÔNG ghi DB)</li>
-              <li>Click <strong>Run Search/Replace</strong></li>
-              <li>Coi kết quả: bao nhiêu cells phải đổi — số > 0 là đúng (thường 20-200 cells)</li>
-            </ol>
+            Trong Cloudflare DNS, kiểm tra/thêm cho đủ:
+            <table class="dns-table">
+              <tr><th>Type</th><th>Name</th><th>Content / Value</th><th>Proxy</th></tr>
+              <tr><td>MX</td><td>@</td><td>smtp.umailsmtp.com &nbsp;(Priority <strong>10</strong>)</td><td>DNS only</td></tr>
+              <tr><td>TXT</td><td>@</td><td>v=spf1 include:dnsexit.com include:_spf.umailsmtp.com -all</td><td>DNS only</td></tr>
+              <tr><td>TXT</td><td>_dmarc</td><td>v=DMARC1; p=quarantine; pct=100; rua=mailto:master@umailsmtp.com</td><td>DNS only</td></tr>
+            </table>
+            <span class="copy-value">smtp.umailsmtp.com <button class="btn-copy" onclick="copyText('smtp.umailsmtp.com')">copy</button></span>
+            <span class="copy-value">v=spf1 include:dnsexit.com include:_spf.umailsmtp.com -all <button class="btn-copy" onclick="copyText('v=spf1 include:dnsexit.com include:_spf.umailsmtp.com -all')">copy</button></span>
+            <span class="copy-value">v=DMARC1; p=quarantine; pct=100; rua=mailto:master@umailsmtp.com <button class="btn-copy" onclick="copyText('v=DMARC1; p=quarantine; pct=100; rua=mailto:master@umailsmtp.com')">copy</button></span>
+            <div class="callout callout-warn">
+              Nếu dig Phase 2.1 ra thêm TXT khác (vd <code>google-site-verification</code>, <code>facebook-domain-verification</code>) hoặc record DKIM <code>_domainkey</code> → thêm nốt cho đủ.
+            </div>
           </div>
         </div>
       </div>
@@ -1018,9 +1070,22 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s4-4">
         <div class="step-content">
-          <label for="s4-4" class="step-title"><span class="step-num">4.4</span>Run thật (bỏ check dry run)</label>
+          <label for="s4-4" class="step-title"><span class="step-num">4.4</span>Set record web — GIỮ target cũ (chưa trỏ Vercel)</label>
           <div class="step-detail">
-            Bỏ ✅ <strong>Run as dry run?</strong> → Run Search/Replace → đợi vài giây → báo "X tables were searched, Y cells were changed".
+            Đây là mấu chốt để flip nameserver "vô hình". Apex vẫn trỏ cPanel cũ ở bước này:
+            <table class="dns-table">
+              <tr><th>Type</th><th>Name</th><th>Content</th><th>Proxy</th></tr>
+              <tr><td>A</td><td>@</td><td>103.28.36.220 &nbsp;<span style="color:var(--ink-mute);">(cPanel cũ — chưa đổi)</span></td><td>DNS only</td></tr>
+              <tr><td>A</td><td>old</td><td>103.28.36.220 &nbsp;<span style="color:var(--ink-mute);">(WordPress qua subdomain)</span></td><td>DNS only</td></tr>
+            </table>
+            <span class="copy-value">103.28.36.220 <button class="btn-copy" onclick="copyText('103.28.36.220')">copy</button></span>
+            <div class="callout callout-danger">
+              <div class="callout-title">⚠ Toàn bộ record để "DNS only" (đám mây XÁM)</div>
+              KHÔNG bật proxy (đám mây cam). Vercel + cPanel tự quản SSL của họ; proxy cam của Cloudflare sẽ gây xung đột chứng chỉ. Click icon đám mây cạnh mỗi record để chuyển sang xám.
+            </div>
+            <div class="callout callout-info">
+              Chưa thêm <code>www</code> ở bước này (hiện www không tồn tại). www sẽ thêm cùng lúc cutover Vercel (Phase 8) để giữ trạng thái Phase 4 = bản sao y hệt hiện tại.
+            </div>
           </div>
         </div>
       </div>
@@ -1028,13 +1093,9 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s4-5">
         <div class="step-content">
-          <label for="s4-5" class="step-title"><span class="step-num">4.5</span>Lặp với protocol <code>http://</code></label>
+          <label for="s4-5" class="step-title"><span class="step-num">4.5</span>Đặt SSL/TLS mode = Full</label>
           <div class="step-detail">
-            <ul>
-              <li>Search: <span class="copy-value">http://dhtcdanang.com <button class="btn-copy" onclick="copyText('http://dhtcdanang.com')">copy</button></span></li>
-              <li>Replace: <span class="copy-value">http://old.dhtcdanang.com <button class="btn-copy" onclick="copyText('http://old.dhtcdanang.com')">copy</button></span></li>
-              <li>Dry run → Run thật</li>
-            </ul>
+            Cloudflare → <strong>SSL/TLS</strong> → Overview → chọn <strong>Full</strong> (hoặc Full (strict)). Với record DNS-only thì setting này không ảnh hưởng traffic, nhưng để Full để an toàn nếu sau này có record bật proxy.
           </div>
         </div>
       </div>
@@ -1042,45 +1103,19 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s4-6">
         <div class="step-content">
-          <label for="s4-6" class="step-title"><span class="step-num">4.6</span>Lặp với protocol-relative <code>//</code></label>
+          <label for="s4-6" class="step-title"><span class="step-num">4.6</span>Ghi lại 2 nameserver Cloudflare cấp</label>
           <div class="step-detail">
-            <ul>
-              <li>Search: <span class="copy-value">//dhtcdanang.com <button class="btn-copy" onclick="copyText('//dhtcdanang.com')">copy</button></span></li>
-              <li>Replace: <span class="copy-value">//old.dhtcdanang.com <button class="btn-copy" onclick="copyText('//old.dhtcdanang.com')">copy</button></span></li>
-              <li>Dry run → Run thật</li>
-            </ul>
-            Cẩn thận: pattern này có thể match cả URL bên thứ 3 (vd <code>//ajax.googleapis.com</code>). Coi dry run kỹ — nếu thấy host lạ thì skip.
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <input type="checkbox" class="step-check" id="s4-7">
-        <div class="step-content">
-          <label for="s4-7" class="step-title"><span class="step-num">4.7</span>Cập nhật WP Address + Site Address</label>
-          <div class="step-detail">
-            WP admin → <strong>Settings → General</strong>:
-            <ul>
-              <li><strong>WordPress Address (URL)</strong>: <code>http://old.dhtcdanang.com</code></li>
-              <li><strong>Site Address (URL)</strong>: <code>http://old.dhtcdanang.com</code></li>
-              <li>Save Changes</li>
-            </ul>
-            <div class="callout callout-warn">
-              <div class="callout-title">Sau khi save, WP tự logout</div>
-              Đăng nhập lại qua <code>http://old.dhtcdanang.com/wp-admin</code> (không phải dhtcdanang.com nữa).
+            Cloudflare hiển thị 2 nameserver dạng <code>xxx.ns.cloudflare.com</code> + <code>yyy.ns.cloudflare.com</code> (tên ngẫu nhiên theo account). Copy chính xác 2 cái này — Phase 6 sẽ dán vào Nhân Hòa.
+            <div class="callout callout-info">
+              <strong>KHÔNG</strong> đổi nameserver ngay bây giờ. Phải verify record xong (bước 4.3, 4.4) rồi mới flip ở Phase 6.
             </div>
           </div>
         </div>
       </div>
 
-      <div class="step">
-        <input type="checkbox" class="step-check" id="s4-8">
-        <div class="step-content">
-          <label for="s4-8" class="step-title"><span class="step-num">4.8</span>Verify: mở <code>http://old.dhtcdanang.com</code></label>
-          <div class="step-detail">
-            Click các trang khác nhau (homepage, blog post, contact...) → ảnh/CSS phải render đúng, link nội bộ phải point về <code>old.*</code>. Nếu còn URL <code>dhtcdanang.com</code> trong source view → lặp lại Phase 4.3 cho pattern còn sót (vd có space khác, encoding khác).
-          </div>
-        </div>
+      <div class="callout callout-success" style="margin-top: 16px;">
+        <div class="callout-title">✓ Sau Phase 4:</div>
+        Cloudflare đã có bản sao đầy đủ DNS hiện tại (apex vẫn = cPanel cũ). Đổi nameserver bây giờ sẽ là thao tác vô hình.
       </div>
     </div>
   </div>
@@ -1092,7 +1127,7 @@
       <div class="phase-num">5</div>
       <div class="phase-title-wrap">
         <div class="phase-title">Add domain vào Vercel</div>
-        <div class="phase-meta">~10 phút · Zero risk · Vercel "ngồi chờ" cho đến Phase 6</div>
+        <div class="phase-meta">~10 phút · Zero risk · Vercel "ngồi chờ" cho đến Phase 8</div>
       </div>
       <span class="phase-status status-todo">Todo</span>
       <span class="phase-toggle">›</span>
@@ -1128,13 +1163,13 @@
         <div class="step-content">
           <label for="s5-3" class="step-title"><span class="step-num">5.3</span>Ghi nhận DNS values Vercel báo</label>
           <div class="step-detail">
-            Vercel hiện banner "Invalid Configuration" với 2 DNS values cần set:
+            Vercel hiện banner "Invalid Configuration" với 2 DNS values cần set ở Phase 8:
             <ul>
               <li><strong>A record</strong> apex: <span class="copy-value">76.76.21.21 <button class="btn-copy" onclick="copyText('76.76.21.21')">copy</button></span></li>
               <li><strong>CNAME</strong> www: <span class="copy-value">cname.vercel-dns.com <button class="btn-copy" onclick="copyText('cname.vercel-dns.com')">copy</button></span></li>
             </ul>
             <div class="callout callout-info">
-              "Invalid Configuration" là bình thường — chưa đụng DNS Squarespace. Vercel sẽ tự verify khi DNS propagate sau Phase 6.
+              "Invalid Configuration" là bình thường — chưa trỏ DNS về Vercel. Vercel sẽ tự verify sau khi sửa record trong Cloudflare (Phase 8).
             </div>
           </div>
         </div>
@@ -1146,13 +1181,11 @@
           <label for="s5-4" class="step-title"><span class="step-num">5.4</span>Kiểm tra <code>vercel.json</code> có SPA fallback</label>
           <div class="step-detail">
             Vì DHTC là React SPA, mọi route /admin, /privacy, /terms phải fallback về <code>index.html</code>. File <code>vercel.json</code> trong repo nên có rewrite này (đã có sẵn từ deploy lần đầu — kiểm tra cho chắc):
-            <div class="code-block">
-              <span class="code-key">{</span>
-                "rewrites": [
-                  <span class="code-key">{</span> "source": "/(.*)", "destination": "/index.html" <span class="code-key">}</span>
-                ]
-              <span class="code-key">}</span>
-            </div>
+            <div class="code-block"><span class="code-key">{</span>
+  "rewrites": [
+    <span class="code-key">{</span> "source": "/(.*)", "destination": "/index.html" <span class="code-key">}</span>
+  ]
+<span class="code-key">}</span></div>
           </div>
         </div>
       </div>
@@ -1162,38 +1195,36 @@
   <!-- ============ PHASE 6 ============ -->
   <div class="phase" data-status="todo" data-open="false" id="phase-6">
     <div class="phase-header" onclick="togglePhase(6)">
-      <div class="phase-risk risk-danger"></div>
+      <div class="phase-risk risk-warn"></div>
       <div class="phase-num">6</div>
       <div class="phase-title-wrap">
-        <div class="phase-title">DNS Cutover (moment switch thật)</div>
-        <div class="phase-meta">~10 phút thao tác + 10 phút verify · HIGH RISK · Đêm khuya / sáng sớm</div>
+        <div class="phase-title">Đổi nameserver Nhân Hòa → Cloudflare (chuyển nền tảng)</div>
+        <div class="phase-meta">~10 phút thao tác + chờ propagate · Medium risk · Vô hình nếu Phase 4 đúng</div>
       </div>
       <span class="phase-status status-todo">Todo</span>
       <span class="phase-toggle">›</span>
     </div>
     <div class="phase-body">
       <div class="phase-intro">
-        Đây là phase quan trọng nhất. Sau khi save DNS, user truy cập <code>dhtcdanang.com</code> sẽ thấy React app thay vì WordPress. Có downtime ngắn trong khi DNS propagate (5-30 phút tuỳ ISP).
+        Đây là bước "đưa DNS về Cloudflare". Vì Cloudflare đang serve record y hệt hiện tại, web + email <strong>không đổi gì</strong> với người dùng. Chỉ là quyền quản DNS chuyển từ ZoneDNS sang Cloudflare.
       </div>
 
       <div class="callout callout-danger">
-        <div class="callout-title">Pre-check trước khi click</div>
+        <div class="callout-title">Pre-check trước khi flip</div>
         <ul style="margin-left:18px;">
-          <li>Phase 1 backup xong (file .tar.gz về máy)</li>
-          <li>Phase 2 TTL = 5 min + đã đợi 1h</li>
-          <li>Phase 3 <code>old.dhtcdanang.com</code> hoạt động</li>
-          <li>Phase 4 WP đã search-replace, mở được tại <code>old.*</code></li>
-          <li>Phase 5 domain đã add trong Vercel</li>
-          <li>Có sẵn 30 phút thời gian liền mạch để verify</li>
+          <li>Phase 1 backup xong (.tar.gz + .sql về máy)</li>
+          <li>Phase 2 inventory đã lưu</li>
+          <li>Phase 4: Cloudflare có đủ MX + SPF + DMARC + A@ (103.28.36.220) + A old</li>
+          <li>Tất cả record để "DNS only" (đám mây xám)</li>
         </ul>
       </div>
 
       <div class="step">
         <input type="checkbox" class="step-check" id="s6-1">
         <div class="step-content">
-          <label for="s6-1" class="step-title"><span class="step-num">6.1</span>Chọn giờ ít traffic</label>
+          <label for="s6-1" class="step-title"><span class="step-num">6.1</span>Login Nhân Hòa → quản lý tên miền</label>
           <div class="step-detail">
-            Đêm khuya (sau 23:00) hoặc sáng sớm (trước 7:00) — fanpage check-in ít. Tránh giờ cao điểm 18:00-22:00.
+            Login <a href="https://nhanhoa.com" target="_blank">nhanhoa.com</a> → khu <strong>Quản lý tên miền / Domain</strong> → chọn <code>dhtcdanang.com</code>.
           </div>
         </div>
       </div>
@@ -1201,15 +1232,12 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s6-2">
         <div class="step-content">
-          <label for="s6-2" class="step-title"><span class="step-num">6.2</span>Squarespace DNS — sửa A record <code>@</code></label>
+          <label for="s6-2" class="step-title"><span class="step-num">6.2</span>Tìm mục Nameserver / DNS</label>
           <div class="step-detail">
-            <ol>
-              <li>Vào DNS Settings của <code>dhtcdanang.com</code></li>
-              <li>Tìm A record host = <code>@</code> (value đang là <code>103.28.36.220</code>)</li>
-              <li>Edit → Value: <span class="copy-value">76.76.21.21 <button class="btn-copy" onclick="copyText('76.76.21.21')">copy</button></span></li>
-              <li>TTL: vẫn <strong>5 min</strong></li>
-              <li>Save</li>
-            </ol>
+            Mục thường tên <strong>"Nameserver"</strong>, <strong>"DNS Management"</strong> hoặc <strong>"Cấu hình DNS"</strong>. Chọn <strong>"Sử dụng nameserver khác / Custom nameserver"</strong>.
+            <div class="callout callout-info">
+              Hiện đang là <code>ns1.zonedns.vn</code> … <code>ns4.zonedns.vn</code>. Bạn sẽ thay bằng 2 NS Cloudflare.
+            </div>
           </div>
         </div>
       </div>
@@ -1217,16 +1245,15 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s6-3">
         <div class="step-content">
-          <label for="s6-3" class="step-title"><span class="step-num">6.3</span>Squarespace DNS — sửa CNAME <code>www</code></label>
+          <label for="s6-3" class="step-title"><span class="step-num">6.3</span>Thay bằng 2 nameserver Cloudflare</label>
           <div class="step-detail">
-            <ol>
-              <li>Tìm CNAME host = <code>www</code></li>
-              <li>Edit → Value: <span class="copy-value">cname.vercel-dns.com <button class="btn-copy" onclick="copyText('cname.vercel-dns.com')">copy</button></span></li>
-              <li>TTL: <strong>5 min</strong></li>
-              <li>Save</li>
-            </ol>
+            <ul>
+              <li>Xoá ns1-4.zonedns.vn</li>
+              <li>Nhập 2 NS Cloudflare đã copy ở Phase 4.6 (dạng <code>xxx.ns.cloudflare.com</code>)</li>
+              <li>Lưu</li>
+            </ul>
             <div class="callout callout-warn">
-              Squarespace có thể yêu cầu trailing dot <code>cname.vercel-dns.com.</code> Một số UI tự add. Save thử cả 2 format nếu báo lỗi.
+              Nếu Nhân Hòa bắt nhập tối thiểu 2 NS thì 2 cái Cloudflare là đủ. Nếu form có 4 ô, để trống 2 ô còn lại.
             </div>
           </div>
         </div>
@@ -1235,19 +1262,9 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s6-4">
         <div class="step-content">
-          <label for="s6-4" class="step-title"><span class="step-num">6.4</span>KHÔNG ĐỘNG các record sau (giữ y nguyên)</label>
+          <label for="s6-4" class="step-title"><span class="step-num">6.4</span>Quay lại Cloudflare → Check nameservers</label>
           <div class="step-detail">
-            <div class="callout callout-danger" style="margin-top:0;">
-              <ul style="margin-left:18px;">
-                <li>❌ <strong>MX records</strong> — đụng = mất email</li>
-                <li>❌ <strong>TXT</strong> chứa <code>v=spf1</code> — đụng = email vào spam</li>
-                <li>❌ <strong>TXT</strong> <code>_domainkey</code> (DKIM) — đụng = email bị reject</li>
-                <li>❌ <strong>TXT</strong> <code>_dmarc</code> — đụng = email auth fail</li>
-                <li>❌ <strong>TXT</strong> <code>google-site-verification</code> — đụng = mất Google Search Console</li>
-                <li>❌ <strong>A record</strong> <code>mail</code> (nếu có)</li>
-                <li>❌ <strong>A record</strong> <code>old</code> đã add ở Phase 3</li>
-              </ul>
-            </div>
+            Cloudflare dashboard → trang domain → click <strong>"Check nameservers now"</strong>. Cloudflare gửi email khi domain <strong>Active</strong> (thường vài phút đến vài giờ; tối đa ~24-48h tuỳ độ trễ TLD).
           </div>
         </div>
       </div>
@@ -1255,28 +1272,23 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s6-5">
         <div class="step-content">
-          <label for="s6-5" class="step-title"><span class="step-num">6.5</span>Đợi 5-10 phút → verify bằng dig</label>
+          <label for="s6-5" class="step-title"><span class="step-num">6.5</span>Verify sau khi Active — KHÔNG được đổi gì với user</label>
           <div class="step-detail">
-            <div class="code-block">
-              <span class="code-comment"># Apex phải về Vercel</span>
-              dig dhtcdanang.com +short
-              <span class="code-comment"># expect: 76.76.21.21</span>
+            <div class="code-block"><span class="code-comment"># NS đã sang Cloudflare</span>
+dig NS dhtcdanang.com +short
+<span class="code-comment"># expect: 2 host *.ns.cloudflare.com</span>
 
-              <span class="code-comment"># WWW phải về Vercel CNAME</span>
-              dig www.dhtcdanang.com +short
-              <span class="code-comment"># expect: cname.vercel-dns.com.</span>
-              <span class="code-comment">#         76.76.21.21</span>
+<span class="code-comment"># Apex vẫn cPanel cũ (chưa cutover Vercel)</span>
+dig dhtcdanang.com +short
+<span class="code-comment"># expect: 103.28.36.220</span>
 
-              <span class="code-comment"># MX KHÔNG đổi — email server cũ</span>
-              dig MX dhtcdanang.com +short
-              <span class="code-comment"># expect: số priority + hostname như trước Phase 6</span>
+<span class="code-comment"># MX phải còn nguyên</span>
+dig MX dhtcdanang.com +short
+<span class="code-comment"># expect: 10 smtp.umailsmtp.com</span>
 
-              <span class="code-comment"># Old vẫn về cPanel</span>
-              dig old.dhtcdanang.com +short
-              <span class="code-comment"># expect: 103.28.36.220</span>
-              <button class="btn-copy" onclick="copyText('dig dhtcdanang.com +short\ndig www.dhtcdanang.com +short\ndig MX dhtcdanang.com +short\ndig old.dhtcdanang.com +short')">copy all</button>
-            </div>
-            Nếu DNS chưa propagate ở khu vực bạn → check tại <a href="https://www.whatsmydns.net/#A/dhtcdanang.com" target="_blank">whatsmydns.net</a> (xem propagation toàn cầu).
+<span class="code-comment"># old.* giờ đã resolve</span>
+dig old.dhtcdanang.com +short
+<span class="code-comment"># expect: 103.28.36.220</span><button class="btn-copy" onclick="copyText('dig NS dhtcdanang.com +short\ndig dhtcdanang.com +short\ndig MX dhtcdanang.com +short\ndig old.dhtcdanang.com +short')">copy all</button></div>
           </div>
         </div>
       </div>
@@ -1284,18 +1296,11 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s6-6">
         <div class="step-content">
-          <label for="s6-6" class="step-title"><span class="step-num">6.6</span>Browser verify (incognito để tránh cache)</label>
+          <label for="s6-6" class="step-title"><span class="step-num">6.6</span>Email test (cực quan trọng sau khi Cloudflare là DNS chính)</label>
           <div class="step-detail">
-            <ul>
-              <li><a href="https://dhtcdanang.com" target="_blank">https://dhtcdanang.com</a> → React app mới (Vercel)</li>
-              <li><a href="https://www.dhtcdanang.com" target="_blank">https://www.dhtcdanang.com</a> → redirect về apex</li>
-              <li><a href="https://old.dhtcdanang.com" target="_blank">https://old.dhtcdanang.com</a> → WordPress cũ</li>
-            </ul>
-            Nếu apex vẫn ra WP cũ → DNS chưa propagate ở máy bạn. Đợi thêm 5-10 phút. Có thể flush DNS:
-            <div class="code-block">
-              <span class="code-comment"># macOS</span>
-              sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
-              <button class="btn-copy" onclick="copyText('sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder')">copy</button>
+            Gửi 1 email từ Gmail cá nhân tới mailbox <code>@dhtcdanang.com</code> đang active → login webmail check nhận được. Đồng thời gửi 1 email TỪ <code>@dhtcdanang.com</code> ra Gmail → kiểm tra không vào spam (SPF/DMARC OK).
+            <div class="callout callout-danger">
+              Nếu email không nhận được → MX trong Cloudflare bị thiếu/sai. Quay lại Phase 4.3 sửa ngay; chưa làm Phase 8 cho tới khi email chạy ổn.
             </div>
           </div>
         </div>
@@ -1304,12 +1309,9 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s6-7">
         <div class="step-content">
-          <label for="s6-7" class="step-title"><span class="step-num">6.7</span>Email test</label>
+          <label for="s6-7" class="step-title"><span class="step-num">6.7</span>Mở web kiểm tra vẫn là WordPress cũ</label>
           <div class="step-detail">
-            Gửi 1 email test từ Gmail/Outlook cá nhân tới <code>info@dhtcdanang.com</code> hoặc bất kỳ mailbox đang active. Login webmail tại <code>https://dhtcdanang.com:2096</code> (hoặc <code>103.28.36.220:2096</code>) → check inbox.
-            <div class="callout callout-warn">
-              Nếu email không nhận được sau 5 phút → kiểm tra MX records trong Squarespace có giữ nguyên không. So với screenshot Phase 1.7.
-            </div>
+            <code>https://dhtcdanang.com</code> vẫn ra WordPress như trước (vì apex vẫn 103.28.36.220). Đúng như mong đợi — chưa cutover Vercel.
           </div>
         </div>
       </div>
@@ -1322,6 +1324,257 @@
       <div class="phase-risk risk-warn"></div>
       <div class="phase-num">7</div>
       <div class="phase-title-wrap">
+        <div class="phase-title">WordPress URL search-replace → old.*</div>
+        <div class="phase-meta">~30-45 phút · Medium risk · Làm sau khi old.* đã resolve (Phase 6)</div>
+      </div>
+      <span class="phase-status status-todo">Todo</span>
+      <span class="phase-toggle">›</span>
+    </div>
+    <div class="phase-body">
+      <div class="phase-intro">
+        WP lưu URL absolute trong DB (posts, options, theme, ACF, widgets...). Đổi sang <code>old.dhtcdanang.com</code> để sau cutover Vercel (Phase 8) các link nội bộ WP không trỏ nhầm sang React app.
+      </div>
+
+      <div class="callout callout-danger">
+        <div class="callout-title">⚠ BẮT BUỘC có backup DB (Phase 1.4) trước</div>
+        Search-replace lỡ tay là hỏng toàn bộ WP. Nếu chưa export <code>.sql</code> → quay lại Phase 1.4.
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s7-1">
+        <div class="step-content">
+          <label for="s7-1" class="step-title"><span class="step-num">7.1</span>Login WP admin</label>
+          <div class="step-detail">
+            Lúc này apex vẫn trỏ cPanel nên login tại <code>https://dhtcdanang.com/wp-admin</code> vẫn được. (Sau khi đổi Site Address ở 7.7 thì chuyển sang <code>https://old.dhtcdanang.com/wp-admin</code>.)
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s7-2">
+        <div class="step-content">
+          <label for="s7-2" class="step-title"><span class="step-num">7.2</span>Cài plugin "Better Search Replace"</label>
+          <div class="step-detail">
+            Plugins → Add New → search <strong>"Better Search Replace"</strong> (tác giả WP Engine) → Install Now → Activate.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s7-3">
+        <div class="step-content">
+          <label for="s7-3" class="step-title"><span class="step-num">7.3</span>Dry run: <code>https://dhtcdanang.com</code> → <code>https://old.dhtcdanang.com</code></label>
+          <div class="step-detail">
+            <ol>
+              <li>Tools → Better Search Replace</li>
+              <li><strong>Search for</strong>: <span class="copy-value">https://dhtcdanang.com <button class="btn-copy" onclick="copyText('https://dhtcdanang.com')">copy</button></span></li>
+              <li><strong>Replace with</strong>: <span class="copy-value">https://old.dhtcdanang.com <button class="btn-copy" onclick="copyText('https://old.dhtcdanang.com')">copy</button></span></li>
+              <li><strong>Select tables</strong>: Cmd/Ctrl + click chọn TẤT CẢ tables</li>
+              <li>✅ <strong>Run as dry run?</strong> (xem trước, không ghi DB)</li>
+              <li>Click <strong>Run Search/Replace</strong> → coi số cells phải đổi (thường 20-200)</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s7-4">
+        <div class="step-content">
+          <label for="s7-4" class="step-title"><span class="step-num">7.4</span>Run thật (bỏ check dry run)</label>
+          <div class="step-detail">
+            Bỏ ✅ <strong>Run as dry run?</strong> → Run Search/Replace → báo "X tables searched, Y cells changed".
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s7-5">
+        <div class="step-content">
+          <label for="s7-5" class="step-title"><span class="step-num">7.5</span>Lặp với <code>http://</code></label>
+          <div class="step-detail">
+            <ul>
+              <li>Search: <span class="copy-value">http://dhtcdanang.com <button class="btn-copy" onclick="copyText('http://dhtcdanang.com')">copy</button></span></li>
+              <li>Replace: <span class="copy-value">http://old.dhtcdanang.com <button class="btn-copy" onclick="copyText('http://old.dhtcdanang.com')">copy</button></span></li>
+              <li>Dry run → Run thật</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s7-6">
+        <div class="step-content">
+          <label for="s7-6" class="step-title"><span class="step-num">7.6</span>Lặp với protocol-relative <code>//</code></label>
+          <div class="step-detail">
+            <ul>
+              <li>Search: <span class="copy-value">//dhtcdanang.com <button class="btn-copy" onclick="copyText('//dhtcdanang.com')">copy</button></span></li>
+              <li>Replace: <span class="copy-value">//old.dhtcdanang.com <button class="btn-copy" onclick="copyText('//old.dhtcdanang.com')">copy</button></span></li>
+              <li>Dry run → Run thật</li>
+            </ul>
+            Cẩn thận: pattern này có thể match URL bên thứ 3 (vd <code>//ajax.googleapis.com</code>). Coi dry run kỹ.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s7-7">
+        <div class="step-content">
+          <label for="s7-7" class="step-title"><span class="step-num">7.7</span>Cập nhật WP Address + Site Address</label>
+          <div class="step-detail">
+            WP admin → <strong>Settings → General</strong>:
+            <ul>
+              <li><strong>WordPress Address (URL)</strong>: <code>https://old.dhtcdanang.com</code></li>
+              <li><strong>Site Address (URL)</strong>: <code>https://old.dhtcdanang.com</code></li>
+              <li>Save Changes</li>
+            </ul>
+            <div class="callout callout-warn">
+              Sau khi save WP tự logout → đăng nhập lại qua <code>https://old.dhtcdanang.com/wp-admin</code>.
+              (SSL cho old.* xin ở Phase 9; tạm thời có thể dùng <code>http://</code> nếu chưa có cert.)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s7-8">
+        <div class="step-content">
+          <label for="s7-8" class="step-title"><span class="step-num">7.8</span>Verify mở <code>old.dhtcdanang.com</code></label>
+          <div class="step-detail">
+            Click homepage, blog post, contact... → ảnh/CSS render đúng, link nội bộ point về <code>old.*</code>. Còn sót URL <code>dhtcdanang.com</code> trong source → lặp lại 7.3 cho pattern còn thiếu.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PHASE 8 ============ -->
+  <div class="phase" data-status="todo" data-open="false" id="phase-8">
+    <div class="phase-header" onclick="togglePhase(8)">
+      <div class="phase-risk risk-danger"></div>
+      <div class="phase-num">8</div>
+      <div class="phase-title-wrap">
+        <div class="phase-title">Cutover Vercel trong Cloudflare (moment switch thật)</div>
+        <div class="phase-meta">~5 phút thao tác + ~5-10 phút verify · HIGH RISK · Nhanh &amp; reversible</div>
+      </div>
+      <span class="phase-status status-todo">Todo</span>
+      <span class="phase-toggle">›</span>
+    </div>
+    <div class="phase-body">
+      <div class="phase-intro">
+        Giờ Cloudflare là DNS chính (Phase 6) → chỉ cần sửa apex A trong Cloudflare là web chuyển sang Vercel. Cloudflare TTL thấp nên đổi nhanh, hỏng thì rollback cũng ~5 phút (xem mục Rollback cuối trang).
+      </div>
+
+      <div class="callout callout-danger">
+        <div class="callout-title">Pre-check</div>
+        <ul style="margin-left:18px;">
+          <li>Phase 6: Cloudflare Active, email test PASS</li>
+          <li>Phase 7: WP đã sang old.*, mở được</li>
+          <li>Phase 5: domain đã add trong Vercel</li>
+          <li>Có sẵn ~30 phút verify liền mạch · chọn giờ ít traffic (đêm/sáng sớm)</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s8-1">
+        <div class="step-content">
+          <label for="s8-1" class="step-title"><span class="step-num">8.1</span>Cloudflare DNS — sửa A record <code>@</code></label>
+          <div class="step-detail">
+            <ol>
+              <li>Cloudflare → DNS → Records</li>
+              <li>Tìm A record Name = <code>dhtcdanang.com</code> (hoặc <code>@</code>), content đang là <code>103.28.36.220</code></li>
+              <li>Edit → đổi content: <span class="copy-value">76.76.21.21 <button class="btn-copy" onclick="copyText('76.76.21.21')">copy</button></span></li>
+              <li>Proxy status: <strong>DNS only (đám mây xám)</strong></li>
+              <li>Save</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s8-2">
+        <div class="step-content">
+          <label for="s8-2" class="step-title"><span class="step-num">8.2</span>Cloudflare DNS — thêm CNAME <code>www</code></label>
+          <div class="step-detail">
+            <strong>Add record</strong>:
+            <ul>
+              <li>Type: <strong>CNAME</strong></li>
+              <li>Name: <strong>www</strong></li>
+              <li>Target: <span class="copy-value">cname.vercel-dns.com <button class="btn-copy" onclick="copyText('cname.vercel-dns.com')">copy</button></span></li>
+              <li>Proxy status: <strong>DNS only (đám mây xám)</strong></li>
+              <li>Save</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s8-3">
+        <div class="step-content">
+          <label for="s8-3" class="step-title"><span class="step-num">8.3</span>KHÔNG động các record sau</label>
+          <div class="step-detail">
+            <div class="callout callout-danger" style="margin-top:0;">
+              <ul style="margin-left:18px;">
+                <li>❌ <strong>MX</strong> <code>10 smtp.umailsmtp.com</code> — đụng = mất email</li>
+                <li>❌ <strong>TXT</strong> <code>v=spf1 ...</code> — đụng = email vào spam</li>
+                <li>❌ <strong>TXT</strong> <code>_dmarc</code> — đụng = email auth fail</li>
+                <li>❌ <strong>A</strong> <code>old</code> = 103.28.36.220 — đụng = mất WordPress cũ</li>
+                <li>❌ TXT verification (google/facebook) nếu có</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s8-4">
+        <div class="step-content">
+          <label for="s8-4" class="step-title"><span class="step-num">8.4</span>Đợi ~5 phút → verify bằng dig</label>
+          <div class="step-detail">
+            <div class="code-block"><span class="code-comment"># Apex phải về Vercel</span>
+dig dhtcdanang.com +short
+<span class="code-comment"># expect: 76.76.21.21</span>
+
+<span class="code-comment"># www về Vercel</span>
+dig www.dhtcdanang.com +short
+<span class="code-comment"># expect: cname.vercel-dns.com. + IP Vercel</span>
+
+<span class="code-comment"># MX KHÔNG đổi</span>
+dig MX dhtcdanang.com +short
+<span class="code-comment"># expect: 10 smtp.umailsmtp.com</span>
+
+<span class="code-comment"># old vẫn về cPanel</span>
+dig old.dhtcdanang.com +short
+<span class="code-comment"># expect: 103.28.36.220</span><button class="btn-copy" onclick="copyText('dig dhtcdanang.com +short\ndig www.dhtcdanang.com +short\ndig MX dhtcdanang.com +short\ndig old.dhtcdanang.com +short')">copy all</button></div>
+            Kiểm tra propagation toàn cầu tại <a href="https://www.whatsmydns.net/#A/dhtcdanang.com" target="_blank">whatsmydns.net</a>.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s8-5">
+        <div class="step-content">
+          <label for="s8-5" class="step-title"><span class="step-num">8.5</span>Browser verify (incognito tránh cache)</label>
+          <div class="step-detail">
+            <ul>
+              <li><a href="https://dhtcdanang.com" target="_blank">https://dhtcdanang.com</a> → React app mới (Vercel)</li>
+              <li><a href="https://www.dhtcdanang.com" target="_blank">https://www.dhtcdanang.com</a> → redirect về apex</li>
+              <li><a href="https://old.dhtcdanang.com" target="_blank">https://old.dhtcdanang.com</a> → WordPress cũ</li>
+            </ul>
+            Nếu apex vẫn ra WP cũ → cache DNS máy bạn. Flush:
+            <div class="code-block"><span class="code-comment"># macOS</span>
+sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder<button class="btn-copy" onclick="copyText('sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder')">copy</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PHASE 9 ============ -->
+  <div class="phase" data-status="todo" data-open="false" id="phase-9">
+    <div class="phase-header" onclick="togglePhase(9)">
+      <div class="phase-risk risk-warn"></div>
+      <div class="phase-num">9</div>
+      <div class="phase-title-wrap">
         <div class="phase-title">SSL + finalize</div>
         <div class="phase-meta">~30 phút · Low risk · Cert auto-issue</div>
       </div>
@@ -1331,39 +1584,40 @@
     <div class="phase-body">
 
       <div class="step">
-        <input type="checkbox" class="step-check" id="s7-1">
+        <input type="checkbox" class="step-check" id="s9-1">
         <div class="step-content">
-          <label for="s7-1" class="step-title"><span class="step-num">7.1</span>Vercel auto-issue cert apex + www</label>
+          <label for="s9-1" class="step-title"><span class="step-num">9.1</span>Vercel auto-issue cert apex + www</label>
           <div class="step-detail">
-            Vercel tự xin Let's Encrypt sau khi DNS propagate. Mở Settings → Domains → trạng thái phải chuyển từ "Invalid Configuration" → "Valid Configuration" + ✅ HTTPS active.
-            <br>Đợi 5-30 phút.
-            Sau đó browse <code>https://dhtcdanang.com</code> không có warning cert.
-          </div>
-        </div>
-      </div>
-
-      <div class="step">
-        <input type="checkbox" class="step-check" id="s7-2">
-        <div class="step-content">
-          <label for="s7-2" class="step-title"><span class="step-num">7.2</span>cPanel AutoSSL cho <code>old.dhtcdanang.com</code></label>
-          <div class="step-detail">
-            <ol>
-              <li>cPanel → <strong>SSL/TLS Status</strong></li>
-              <li>Tìm row <code>old.dhtcdanang.com</code> (có thể có ❌ status)</li>
-              <li>Click <strong>Run AutoSSL</strong> trên row đó (hoặc <strong>Run AutoSSL for All Domains</strong> ở trên)</li>
-              <li>Đợi 5-15 phút → status đổi ✅</li>
-            </ol>
+            Vercel tự xin Let's Encrypt sau khi DNS propagate. Settings → Domains → trạng thái chuyển "Invalid Configuration" → "Valid Configuration" + ✅ HTTPS. Đợi 5-30 phút → browse <code>https://dhtcdanang.com</code> không warning cert.
             <div class="callout callout-info">
-              AutoSSL cần Let's Encrypt verify được <code>http://old.dhtcdanang.com/.well-known/acme-challenge/...</code> — phải DNS đã propagate xong (Phase 3).
+              Vì record để DNS-only (xám), Vercel verify trực tiếp được — không cần đụng gì thêm ở Cloudflare.
             </div>
           </div>
         </div>
       </div>
 
       <div class="step">
-        <input type="checkbox" class="step-check" id="s7-3">
+        <input type="checkbox" class="step-check" id="s9-2">
         <div class="step-content">
-          <label for="s7-3" class="step-title"><span class="step-num">7.3</span>Test HTTPS trên cả 3 domains</label>
+          <label for="s9-2" class="step-title"><span class="step-num">9.2</span>cPanel AutoSSL cho <code>old.dhtcdanang.com</code></label>
+          <div class="step-detail">
+            <ol>
+              <li>cPanel → <strong>SSL/TLS Status</strong></li>
+              <li>Tìm row <code>old.dhtcdanang.com</code></li>
+              <li>Click <strong>Run AutoSSL</strong> (hoặc Run AutoSSL for All Domains)</li>
+              <li>Đợi 5-15 phút → status ✅</li>
+            </ol>
+            <div class="callout callout-info">
+              AutoSSL cần verify <code>http://old.dhtcdanang.com/.well-known/acme-challenge/...</code> — phải có A record old (Phase 4.4) + để DNS-only (không proxy) để Let's Encrypt truy cập được cPanel.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s9-3">
+        <div class="step-content">
+          <label for="s9-3" class="step-title"><span class="step-num">9.3</span>Test HTTPS trên cả 3 domain</label>
           <div class="step-detail">
             <ul>
               <li>✅ <code>https://dhtcdanang.com</code> — React app, cert hợp lệ</li>
@@ -1375,11 +1629,15 @@
       </div>
 
       <div class="step">
-        <input type="checkbox" class="step-check" id="s7-4">
+        <input type="checkbox" class="step-check" id="s9-4">
         <div class="step-content">
-          <label for="s7-4" class="step-title"><span class="step-num">7.4</span>Đợi 24h ổn định → nâng TTL về 1h (optional)</label>
+          <label for="s9-4" class="step-title"><span class="step-num">9.4</span>Đợi 24h ổn định → cân nhắc bật proxy Cloudflare (optional)</label>
           <div class="step-detail">
-            Squarespace DNS → A <code>@</code> + CNAME <code>www</code>: TTL <strong>5 min → 1 hour</strong>. Lý do: TTL 5 min làm tăng load lên DNS server, không cần thiết khi đã ổn định.
+            Sau khi mọi thứ chạy ổn, có thể bật proxy (đám mây cam) cho apex + www để hưởng CDN/cache/chống DDoS của Cloudflare.
+            <div class="callout callout-warn">
+              <div class="callout-title">⚠ Chỉ làm khi hiểu rõ</div>
+              Bật proxy cam cần SSL/TLS mode = <strong>Full</strong> và Vercel đã cấp cert xong, nếu không sẽ lỗi redirect/SSL. Với MVP, để DNS-only (xám) cũng hoàn toàn ổn. KHÔNG bao giờ bật proxy cho MX/TXT.
+            </div>
           </div>
         </div>
       </div>
@@ -1388,20 +1646,25 @@
 
   <!-- ============ ROLLBACK ============ -->
   <div class="rollback-section">
-    <div class="rollback-title">⟲ Rollback — nếu Phase 6 gãy</div>
-    <p style="font-size: 13.5px; color: var(--ink); margin-bottom: 10px;">
-      Vì Phase 2 đã hạ TTL xuống 5 phút từ trước, rollback chỉ mất < 5 phút.
+    <div class="rollback-title">⟲ Rollback</div>
+
+    <div class="rollback-sub">A. Nếu Phase 8 (cutover Vercel) gãy — nhanh, ~5 phút</div>
+    <p style="font-size: 13.5px; color: var(--ink); margin-bottom: 8px;">
+      Vì Cloudflare đã là DNS chính với TTL thấp, sửa record trong Cloudflare propagate rất nhanh.
     </p>
     <ol class="rollback-list">
-      <li>Vào Squarespace DNS Settings của <code>dhtcdanang.com</code></li>
-      <li>A record <code>@</code> → Value: <code>76.76.21.21</code> → đổi LẠI thành <code>103.28.36.220</code> → Save</li>
-      <li>CNAME <code>www</code> → Value: <code>cname.vercel-dns.com</code> → đổi LẠI về value cũ (xem screenshot Phase 1.7) → Save</li>
-      <li>Đợi 5 phút → <code>dig dhtcdanang.com +short</code> ra <code>103.28.36.220</code> = về như cũ</li>
-      <li>WordPress mở qua <code>https://dhtcdanang.com</code> hoạt động bình thường</li>
+      <li>Cloudflare → DNS → A record <code>@</code> → đổi <code>76.76.21.21</code> LẠI thành <code>103.28.36.220</code> → Save</li>
+      <li>Xoá (hoặc tạm disable) CNAME <code>www → cname.vercel-dns.com</code></li>
+      <li>Đợi ~5 phút → <code>dig dhtcdanang.com +short</code> ra <code>103.28.36.220</code> = web về WordPress</li>
+      <li>Lưu ý: sau Phase 7, WP đang cấu hình URL <code>old.*</code> → apex sẽ redirect sang <code>old.*</code>. Nếu cần WP chạy lại đúng ở apex thì search-replace ngược <code>old.dhtcdanang.com → dhtcdanang.com</code> hoặc restore DB từ <code>.sql</code> (Phase 1.4).</li>
     </ol>
-    <p style="font-size: 12.5px; color: var(--ink-soft); margin-top: 10px; font-style: italic;">
-      Lưu ý: nếu đã làm Phase 4 (WP search-replace), URL trong WP đang là <code>old.*</code>. Sau rollback có thể cần search-replace ngược lại <code>old.dhtcdanang.com</code> → <code>dhtcdanang.com</code>, hoặc restore DB từ file <code>.sql</code> backup Phase 1.4.
-    </p>
+
+    <div class="rollback-sub">B. Nếu Cloudflare bản thân có vấn đề (Phase 6) — chậm hơn</div>
+    <ol class="rollback-list">
+      <li>Login Nhân Hòa → Nameserver → đổi LẠI về <code>ns1.zonedns.vn</code> … <code>ns4.zonedns.vn</code></li>
+      <li>Vì zone ở ZoneDNS chưa từng bị sửa (mình không đụng), DNS sẽ quay về y như trước</li>
+      <li>Chờ propagate (chậm hơn vì là đổi nameserver — có thể vài giờ). Đây là lý do verify email kỹ ở Phase 6.6 trước khi đi tiếp.</li>
+    </ol>
   </div>
 
   <!-- ============ POST-MIGRATION CHECKLIST ============ -->
@@ -1413,7 +1676,7 @@
       <div class="step-content">
         <label for="p-1" class="step-title">Google Search Console</label>
         <div class="step-detail">
-          Add property mới cho <code>https://dhtcdanang.com</code> (Vercel) — verify qua HTML tag hoặc TXT record. Submit sitemap <code>https://dhtcdanang.com/sitemap.xml</code> (nếu React app generate).
+          Add property mới cho <code>https://dhtcdanang.com</code> (Vercel) — verify qua HTML tag hoặc TXT record (thêm TXT trong Cloudflare). Submit sitemap <code>https://dhtcdanang.com/sitemap.xml</code> nếu có.
         </div>
       </div>
     </div>
@@ -1426,7 +1689,7 @@
           Chọn 1 trong 2:
           <ul>
             <li><strong>Noindex</strong>: WP admin → Settings → Reading → ✅ <em>"Discourage search engines from indexing this site"</em>. Bài cũ rớt index sau 1-2 tuần.</li>
-            <li><strong>301 redirect</strong>: edit <code>public_html/.htaccess</code> add rule redirect URL cũ → URL React app tương đương. Giữ SEO juice.</li>
+            <li><strong>301 redirect</strong>: edit <code>public_html/.htaccess</code> redirect URL cũ → URL React app tương đương. Giữ SEO juice.</li>
           </ul>
         </div>
       </div>
@@ -1442,7 +1705,7 @@
             <li>Google Business Profile</li>
             <li>Name card / brochure đã in</li>
             <li>Email signature</li>
-            <li>QR code (nếu có in trên menu, biển hiệu)</li>
+            <li>QR code (nếu in trên menu, biển hiệu)</li>
           </ul>
         </div>
       </div>
@@ -1453,12 +1716,12 @@
       <div class="step-content">
         <label for="p-4" class="step-title">Theo dõi cPanel hosting — quyết định gia hạn</label>
         <div class="step-detail">
-          cPanel host hiện vẫn cần để:
+          cPanel host vẫn cần để:
           <ul>
             <li>Serve <code>old.dhtcdanang.com</code> (WP cũ)</li>
-            <li>Nhận email <code>@dhtcdanang.com</code></li>
+            <li>(Email <code>@dhtcdanang.com</code> đi qua umailsmtp ngoài — không phụ thuộc cPanel này, nhưng kiểm tra lại dịch vụ email đang trả phí cho ai)</li>
           </ul>
-          Trừ khi migrate email sang Google Workspace / Zoho + xoá WP cũ → vẫn cần duy trì cPanel. Coi ngày hết hạn hosting, plan trước.
+          Khi không cần WP cũ nữa → có thể huỷ cPanel; chỉ cần giữ Cloudflare (DNS) + Nhân Hòa (registrar) + dịch vụ email.
         </div>
       </div>
     </div>
@@ -1468,12 +1731,28 @@
       <div class="step-content">
         <label for="p-5" class="step-title">Add TXT facebook-domain-verification (khi làm Meta App Review)</label>
         <div class="step-detail">
-          Khi đến phase Business Verification trong <a href="../app-review/runbook.html" target="_blank">app-review/runbook.html</a>, Meta sẽ cấp 1 TXT record để verify domain ownership. Add vào Squarespace DNS:
+          Khi tới phase Business Verification trong <a href="../app-review/runbook.html" target="_blank">app-review/runbook.html</a>, Meta cấp 1 TXT record để verify domain. Add vào <strong>Cloudflare DNS</strong>:
           <ul>
             <li>Type: <strong>TXT</strong></li>
-            <li>Host: <code>@</code></li>
-            <li>Value: <code>facebook-domain-verification=&lt;random-string&gt;</code></li>
+            <li>Name: <code>@</code></li>
+            <li>Content: <code>facebook-domain-verification=&lt;random-string&gt;</code></li>
+            <li>Proxy: DNS only</li>
           </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <input type="checkbox" class="step-check" id="p-6">
+      <div class="step-content">
+        <label for="p-6" class="step-title">Cân nhắc dài hạn: chuyển registrar về Namecheap/Cloudflare (optional)</label>
+        <div class="step-detail">
+          DNS giờ đã ở Cloudflare nhưng tên miền vẫn đăng ký ở Nhân Hòa. Nếu muốn gom 1 nơi quốc tế đáng tin:
+          <ul>
+            <li><strong>Cloudflare Registrar</strong>: transfer domain vào Cloudflare ở giá gốc (không markup), DNS đã sẵn ở đây.</li>
+            <li><strong>Namecheap</strong>: registrar phổ biến, cần unlock + mã EPP từ Nhân Hòa.</li>
+          </ul>
+          Không gấp — DNS ở Cloudflare đã đủ "an toàn lâu dài". Transfer registrar là bước riêng, làm khi rảnh.
         </div>
       </div>
     </div>
@@ -1482,14 +1761,14 @@
 </main>
 
 <footer>
-  DHTC · Migration Wizard · Tiến độ lưu localStorage <code>dhtc_migration_progress_v1</code>
+  DHTC · Migration Wizard v2 (Cloudflare) · Tiến độ lưu localStorage <code>dhtc_migration_progress_v1</code>
 </footer>
 
 <div class="toast" id="toast">Copied to clipboard</div>
 
 <script>
   const STORAGE_KEY = 'dhtc_migration_progress_v1';
-  const TOTAL_PHASES = 7;
+  const TOTAL_PHASES = 9;
 
   // Load saved state
   function loadProgress() {
