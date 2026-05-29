@@ -952,12 +952,20 @@
         <div class="step-content">
           <label for="s3-1" class="step-title"><span class="step-num">3.1</span>Tạo subdomain <code>old</code> trong cPanel</label>
           <div class="step-detail">
-            cPanel → <strong>Domains</strong> (hoặc <strong>Subdomains</strong>) → Create:
+            cPanel bản mới đã bỏ icon <strong>Subdomains</strong> riêng — tạo subdomain ở mục <strong>Domains</strong>:
             <ul>
-              <li>Subdomain: <code>old</code></li>
-              <li>Domain: <code>dhtcdanang.com</code></li>
-              <li>Document Root: trỏ vào thư mục WordPress hiện tại — thường là <code>public_html</code> (để <code>old.</code> serve cùng site WP)</li>
+              <li>cPanel → <strong>Domains</strong> → nút <strong>Create A New Domain</strong></li>
+              <li>Domain: gõ đầy đủ <code>old.dhtcdanang.com</code> (cPanel tự nhận đây là subdomain của domain chính)</li>
+              <li>Bỏ tick "Share document root…" → Document Root trỏ vào thư mục WordPress hiện tại (thường <code>public_html</code>) để <code>old.</code> serve cùng site WP</li>
             </ul>
+            <div class="callout callout-info">
+              <div class="callout-title">ZoneDNS KHÔNG tạo được subdomain này</div>
+              ZoneDNS chỉ trỏ tên <code>old.dhtcdanang.com</code> về IP (bước 3.2). Còn việc máy chủ cPanel "nhận" hostname đó và serve đúng WordPress thì phải khai báo trong cPanel (bước này). DNS và web server là 2 lớp khác nhau — thiếu lớp cPanel thì <code>old.</code> chỉ trỏ về IP nhưng không hiện site.
+            </div>
+            <div class="callout callout-warn">
+              <div class="callout-title">⚠ Nếu cPanel không có cả mục Domains / Create A New Domain</div>
+              Gói hosting đang chặn tạo domain. Khi đó chọn 1 trong 2: <strong>(a)</strong> nhờ Nhân Hòa bật quyền tạo subdomain; hoặc <strong>(b)</strong> bỏ luôn việc giữ WP cũ live — backup đầy đủ ở Phase 1 là đã an toàn, rồi cutover thẳng sang Vercel (bỏ qua Phase 3, sang Phase 4).
+            </div>
           </div>
         </div>
       </div>
@@ -1212,15 +1220,6 @@ dig old.dhtcdanang.com +short    <span class="code-comment"># → 103.28.36.220<
       </div>
     </div>
 
-    <div class="step">
-      <input type="checkbox" class="step-check" id="p-6">
-      <div class="step-content">
-        <label for="p-6" class="step-title">Dài hạn (optional): rời Nhân Hòa/ZoneDNS</label>
-        <div class="step-detail">
-          Nếu sau này muốn gom về nền tảng quốc tế: chuyển DNS sang <strong>Cloudflare</strong> (free, nhập lại đủ 7 record incl DKIM) và/hoặc transfer registrar về <strong>Cloudflare Registrar / Namecheap</strong>. Không gấp — ZoneDNS direct-edit đã đáp ứng mục tiêu trỏ Vercel.
-        </div>
-      </div>
-    </div>
   </div>
 
 </main>
