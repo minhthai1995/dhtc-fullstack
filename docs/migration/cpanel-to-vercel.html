@@ -965,7 +965,7 @@
             </div>
             <div class="callout callout-warn">
               <div class="callout-title">⚠ "Share document root" là vĩnh viễn — đúng ý ta</div>
-              cPanel ghi setting này không đổi được sau. Đúng mục tiêu: <code>old.</code> dùng chung file WordPress với apex (chỉ 1 bản WP duy nhất). Hệ quả: khi đổi URL ở bước 3.5, apex cũ cũng redirect sang <code>old.</code> — chấp nhận được vì sắp cutover apex sang Vercel.
+              cPanel ghi setting này không đổi được sau. Đúng mục tiêu: <code>old.</code> dùng chung file WordPress với apex (chỉ 1 bản WP duy nhất). Hệ quả: khi đổi URL ở bước 3.6, apex cũ cũng redirect sang <code>old.</code> — chấp nhận được vì sắp cutover apex sang Vercel.
             </div>
           </div>
         </div>
@@ -1015,7 +1015,25 @@
       <div class="step">
         <input type="checkbox" class="step-check" id="s3-5">
         <div class="step-content">
-          <label for="s3-5" class="step-title"><span class="step-num">3.5</span>Đổi URL WordPress sang old.dhtcdanang.com</label>
+          <label for="s3-5" class="step-title"><span class="step-num">3.5</span>Đăng nhập WordPress admin</label>
+          <div class="step-detail">
+            Bước 3.6 cần vào <code>wp-admin</code>. Nếu chưa biết / quên mật khẩu WP → KHÔNG đoán mò, dùng 1 trong 3 cách (ưu tiên trên xuống):
+            <ol>
+              <li><strong>cPanel → WordPress Management</strong> (có sẵn ở menu trái) → chọn site <code>dhtcdanang.com</code> → nút <strong>Log In</strong> → vào thẳng wp-admin <em>không cần mật khẩu</em>. Tại đây cũng xem/đổi được admin user.</li>
+              <li><strong>Quên mật khẩu qua email:</strong> trang <code>wp-login.php</code> → bấm <em>"Lost your password?"</em> → nhập email admin → nhận link reset (email <code>@dhtcdanang.com</code> đang sống nên nhận được).</li>
+              <li><strong>Reset qua phpMyAdmin:</strong> cPanel → phpMyAdmin → DB WordPress → bảng <code>wp_users</code> → Edit user admin → cột <code>user_pass</code> chọn function <strong>MD5</strong> + nhập mật khẩu mới → Go.</li>
+            </ol>
+            <div class="callout callout-info">
+              Đăng nhập ở <code>https://dhtcdanang.com/wp-admin</code> (apex vẫn trỏ cPanel + đã có SSL). Chưa cần <code>old.</code> để login.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s3-6">
+        <div class="step-content">
+          <label for="s3-6" class="step-title"><span class="step-num">3.6</span>Đổi URL WordPress sang old.dhtcdanang.com</label>
           <div class="step-detail">
             <div class="callout callout-danger">
               <div class="callout-title">⚠ Backup DB trước (đã có ở Phase 1) — bước này sửa database</div>
@@ -1035,9 +1053,9 @@
       </div>
 
       <div class="step">
-        <input type="checkbox" class="step-check" id="s3-6">
+        <input type="checkbox" class="step-check" id="s3-7">
         <div class="step-content">
-          <label for="s3-6" class="step-title"><span class="step-num">3.6</span>Test WordPress chạy độc lập ở old.*</label>
+          <label for="s3-7" class="step-title"><span class="step-num">3.7</span>Test WordPress chạy độc lập ở old.*</label>
           <div class="step-detail">
             Mở <code>https://old.dhtcdanang.com</code> → trang chủ, 1 bài post, ảnh load đúng. Login <code>old.dhtcdanang.com/wp-admin</code> được.
             <div class="callout callout-info">
