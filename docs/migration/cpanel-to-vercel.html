@@ -956,15 +956,16 @@
             <ul>
               <li>cPanel → <strong>Domains</strong> → nút <strong>Create A New Domain</strong></li>
               <li>Domain: gõ đầy đủ <code>old.dhtcdanang.com</code> (cPanel tự nhận đây là subdomain của domain chính)</li>
-              <li>Bỏ tick "Share document root…" → Document Root trỏ vào thư mục WordPress hiện tại (thường <code>public_html</code>) để <code>old.</code> serve cùng site WP</li>
+              <li><strong>TICK</strong> ô <strong>"Share document root (/home/nhdhtq8m/public_html) with dhtcdanang.com"</strong> → để <code>old.</code> serve ĐÚNG bộ WordPress hiện tại. Nếu KHÔNG tick, cPanel tạo thư mục <code>old.dhtcdanang.com</code> <em>trống</em> → mở ra trắng trơn.</li>
+              <li>Bấm <strong>Submit</strong></li>
             </ul>
             <div class="callout callout-info">
               <div class="callout-title">ZoneDNS KHÔNG tạo được subdomain này</div>
               ZoneDNS chỉ trỏ tên <code>old.dhtcdanang.com</code> về IP (bước 3.2). Còn việc máy chủ cPanel "nhận" hostname đó và serve đúng WordPress thì phải khai báo trong cPanel (bước này). DNS và web server là 2 lớp khác nhau — thiếu lớp cPanel thì <code>old.</code> chỉ trỏ về IP nhưng không hiện site.
             </div>
             <div class="callout callout-warn">
-              <div class="callout-title">⚠ Nếu cPanel không có cả mục Domains / Create A New Domain</div>
-              Gói hosting đang chặn tạo domain. Khi đó chọn 1 trong 2: <strong>(a)</strong> nhờ Nhân Hòa bật quyền tạo subdomain; hoặc <strong>(b)</strong> bỏ luôn việc giữ WP cũ live — backup đầy đủ ở Phase 1 là đã an toàn, rồi cutover thẳng sang Vercel (bỏ qua Phase 3, sang Phase 4).
+              <div class="callout-title">⚠ "Share document root" là vĩnh viễn — đúng ý ta</div>
+              cPanel ghi setting này không đổi được sau. Đúng mục tiêu: <code>old.</code> dùng chung file WordPress với apex (chỉ 1 bản WP duy nhất). Hệ quả: khi đổi URL ở bước 3.5, apex cũ cũng redirect sang <code>old.</code> — chấp nhận được vì sắp cutover apex sang Vercel.
             </div>
           </div>
         </div>
@@ -981,6 +982,10 @@
               <tr><td>old</td><td>A</td><td>103.28.36.220</td><td>300</td></tr>
             </table>
             <span class="copy-value">103.28.36.220<button class="btn-copy" onclick="copyText('103.28.36.220')">copy</button></span>
+            <div class="callout callout-danger">
+              <div class="callout-title">⛔ KHÔNG dùng "Zone Editor" trong cPanel</div>
+              cPanel có mục <strong>Zone Editor</strong> trông y hệt chỗ sửa DNS — nhưng domain đang chạy nameserver <code>ns1-4.zonedns.vn</code>, nên DNS thật nằm ở <strong>ZoneDNS</strong>. Sửa trong cPanel Zone Editor sẽ <strong>không có tác dụng</strong> (đó là lý do zone trong cPanel chỉ thấy 1 record, còn ZoneDNS có 5). Luôn thêm/sửa ở <strong>zonedns.vn</strong>. Và record này phải là Type <strong>A</strong> — không phải MX.
+            </div>
           </div>
         </div>
       </div>
