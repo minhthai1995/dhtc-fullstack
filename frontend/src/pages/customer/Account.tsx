@@ -9,15 +9,16 @@ import { useAddToCart } from '@/features/cart/useCart'
 import { Package, MapPin, Heart, Store, Settings, LogOut, User, Lock } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import type { OrderStatus } from '@/types/api'
+import { useT } from '@/i18n/useT'
 
 type AccountSection = 'dashboard' | 'orders' | 'addresses' | 'wishlist' | 'following' | 'settings'
 
-const STATUS_LABEL: Record<OrderStatus, string> = {
-  pending: 'Chờ xác nhận',
-  processing: 'Đang xử lý',
-  shipped: 'Đang giao',
-  delivered: 'Đã giao',
-  cancelled: 'Đã huỷ',
+const STATUS_KEY: Record<OrderStatus, string> = {
+  pending: 'tracking.statusPending',
+  processing: 'tracking.statusProcessing',
+  shipped: 'tracking.statusShipped',
+  delivered: 'tracking.statusDelivered',
+  cancelled: 'tracking.statusCancelled',
 }
 
 const STATUS_VARIANT: Record<OrderStatus, 'pending' | 'active' | 'shipped' | 'delivered' | 'cancelled'> = {
@@ -28,13 +29,13 @@ const STATUS_VARIANT: Record<OrderStatus, 'pending' | 'active' | 'shipped' | 'de
   cancelled: 'cancelled',
 }
 
-const NAV_ITEMS: { key: AccountSection; label: string; icon: React.ReactNode }[] = [
-  { key: 'dashboard', label: 'Tổng quan', icon: <User size={15} /> },
-  { key: 'orders', label: 'Đơn hàng', icon: <Package size={15} /> },
-  { key: 'addresses', label: 'Địa chỉ', icon: <MapPin size={15} /> },
-  { key: 'wishlist', label: 'Yêu thích', icon: <Heart size={15} /> },
-  { key: 'following', label: 'Gian hàng theo dõi', icon: <Store size={15} /> },
-  { key: 'settings', label: 'Cài đặt', icon: <Settings size={15} /> },
+const NAV_ITEMS: { key: AccountSection; labelKey: string; icon: React.ReactNode }[] = [
+  { key: 'dashboard', labelKey: 'account.navDashboard', icon: <User size={15} /> },
+  { key: 'orders', labelKey: 'account.navOrders', icon: <Package size={15} /> },
+  { key: 'addresses', labelKey: 'account.navAddresses', icon: <MapPin size={15} /> },
+  { key: 'wishlist', labelKey: 'account.navWishlist', icon: <Heart size={15} /> },
+  { key: 'following', labelKey: 'account.navFollowing', icon: <Store size={15} /> },
+  { key: 'settings', labelKey: 'account.navSettings', icon: <Settings size={15} /> },
 ]
 
 export function Account() {
@@ -55,12 +56,14 @@ export function Account() {
   const { data: profile } = useProfile()
   const updateProfile = useUpdateProfile()
   const changePassword = useChangePassword()
+  const { t, lang } = useT()
+  const locale = lang === 'vi' ? 'vi-VN' : 'en-US'
 
   const [section, setSection] = useState<AccountSection>('dashboard')
   const [showAddressForm, setShowAddressForm] = useState(false)
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' })
   const [pwError, setPwError] = useState('')
-  const [newAddr, setNewAddr] = useState({ label: 'Nhà', name: '', phone: '', address: '', city: '', country: 'Việt Nam' })
+  const [newAddr, setNewAddr] = useState({ label: t('account.addressDefaultLabel'), name: '', phone: '', address: '', city: '', country: t('account.addressDefaultCountry') })
   const [profileSaved, setProfileSaved] = useState(false)
   const [settingsForm, setSettingsForm] = useState({
     name: '',
@@ -119,7 +122,7 @@ export function Account() {
               className="mt-2 text-[10px] font-bold px-2.5 py-1 rounded"
               style={{ color: 'var(--color-gold-deep)', background: 'rgba(201,169,97,0.12)' }}
             >
-              ★ GOLD MEMBER
+              {t('account.goldMember')}
             </div>
           </div>
 
@@ -136,7 +139,7 @@ export function Account() {
                 }`}
               >
                 {item.icon}
-                {item.label}
+                {t(item.labelKey)}
               </button>
             ))}
             <button
@@ -145,7 +148,7 @@ export function Account() {
               style={{ color: 'var(--color-vermillion)' }}
             >
               <LogOut size={15} />
-              Đăng xuất
+              {t('account.logout')}
             </button>
           </nav>
         </div>
@@ -158,9 +161,9 @@ export function Account() {
           <>
             <div>
               <h1 className="text-3xl font-medium tracking-tight text-ink mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-                Tài khoản của bạn
+                {t('account.title')}
               </h1>
-              <p className="text-ink-mute text-sm">Xin chào, {displayName}!</p>
+              <p className="text-ink-mute text-sm">{t('account.greeting').replace('{name}', displayName)}</p>
             </div>
 
             {/* KPI cards */}
@@ -169,20 +172,20 @@ export function Account() {
                 <div className="text-3xl font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>
                   {orders.length}
                 </div>
-                <div className="text-xs text-ink-mute mt-1 font-medium uppercase tracking-wider">Đơn đã đặt</div>
+                <div className="text-xs text-ink-mute mt-1 font-medium uppercase tracking-wider">{t('account.kpiOrdersPlaced')}</div>
               </div>
               <div className="bg-white border border-border rounded-2xl p-5 text-center">
                 <div className="text-3xl font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>
                   {(totalSpent / 1_000_000).toFixed(2)}M
                 </div>
-                <div className="text-xs text-ink-mute mt-1 font-medium uppercase tracking-wider">₫ Đã chi tiêu</div>
+                <div className="text-xs text-ink-mute mt-1 font-medium uppercase tracking-wider">{t('account.kpiSpent')}</div>
               </div>
               <div className="bg-white border border-border rounded-2xl p-5 text-center">
                 <div className="text-3xl font-semibold" style={{ fontFamily: 'var(--font-display)', color: 'var(--color-gold-deep)' }}>
                   —
                 </div>
-                <div className="text-xs text-ink-mute mt-1 font-medium uppercase tracking-wider">Điểm tích luỹ</div>
-                <div className="text-[10px] text-ink-mute mt-0.5">(Sắp ra mắt)</div>
+                <div className="text-xs text-ink-mute mt-1 font-medium uppercase tracking-wider">{t('account.kpiPoints')}</div>
+                <div className="text-[10px] text-ink-mute mt-0.5">{t('account.kpiPointsHint')}</div>
               </div>
             </div>
 
@@ -190,13 +193,13 @@ export function Account() {
             <div className="bg-white border border-border rounded-2xl p-5">
               <div className="flex items-baseline justify-between mb-4">
                 <h2 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-                  Đơn hàng gần đây
+                  {t('account.recentOrders')}
                 </h2>
                 <button
                   onClick={() => setSection('orders')}
                   className="text-xs text-green font-semibold hover:underline"
                 >
-                  Xem tất cả →
+                  {t('account.viewAll')}
                 </button>
               </div>
               <div className="space-y-3">
@@ -207,10 +210,10 @@ export function Account() {
                         O{order.created_at.slice(0, 10).replace(/-/g, '')}–{String(order.id).padStart(4, '0')}
                       </div>
                       <div className="text-xs text-ink-mute mt-0.5">
-                        {new Date(order.created_at).toLocaleDateString('vi-VN')}
+                        {new Date(order.created_at).toLocaleDateString(locale)}
                       </div>
                     </div>
-                    <Badge variant={STATUS_VARIANT[order.status]}>{STATUS_LABEL[order.status]}</Badge>
+                    <Badge variant={STATUS_VARIANT[order.status]}>{t(STATUS_KEY[order.status])}</Badge>
                     <div className="text-sm font-semibold font-mono text-ink">
                       {order.total_amount.toLocaleString('vi-VN')}₫
                     </div>
@@ -225,7 +228,7 @@ export function Account() {
         {section === 'orders' && (
           <div>
             <h1 className="text-3xl font-medium tracking-tight text-ink mb-5" style={{ fontFamily: 'var(--font-display)' }}>
-              Đơn hàng của tôi
+              {t('account.ordersTitle')}
             </h1>
             <div className="space-y-3">
               {orders.map((order) => (
@@ -236,14 +239,14 @@ export function Account() {
                         O{order.created_at.slice(0, 10).replace(/-/g, '')}–{String(order.id).padStart(4, '0')}
                       </div>
                       <div className="text-xs text-ink-mute mt-0.5">
-                        Đặt lúc {new Date(order.created_at).toLocaleString('vi-VN')}
+                        {t('account.orderPlacedAt').replace('{date}', new Date(order.created_at).toLocaleString(locale))}
                       </div>
                     </div>
-                    <Badge variant={STATUS_VARIANT[order.status]}>{STATUS_LABEL[order.status]}</Badge>
+                    <Badge variant={STATUS_VARIANT[order.status]}>{t(STATUS_KEY[order.status])}</Badge>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <div>
-                      <span className="text-ink-mute">Giao đến: </span>
+                      <span className="text-ink-mute">{t('account.shipTo')}</span>
                       <span className="font-medium">{order.shipping_address.city}, {order.shipping_address.country}</span>
                     </div>
                     <div className="font-semibold text-green font-mono" style={{ fontFamily: 'var(--font-display)' }}>
@@ -266,46 +269,46 @@ export function Account() {
           <div>
             <div className="flex items-baseline justify-between mb-5">
               <h1 className="text-3xl font-medium tracking-tight text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-                Sổ địa chỉ
+                {t('account.addressesTitle')}
               </h1>
               <button
                 onClick={() => setShowAddressForm(s => !s)}
                 className="text-sm font-semibold text-white bg-green px-4 py-2 rounded-xl hover:bg-green-soft transition-colors"
               >
-                {showAddressForm ? 'Đóng' : '+ Thêm địa chỉ'}
+                {showAddressForm ? t('account.addressFormClose') : t('account.addressFormOpen')}
               </button>
             </div>
 
             {showAddressForm && (
               <div className="bg-white border border-border rounded-2xl p-5 mb-4 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                  <input placeholder="Nhãn (Nhà, Văn phòng...)" value={newAddr.label}
+                  <input placeholder={t('account.addressPhLabel')} value={newAddr.label}
                     onChange={e => setNewAddr(a => ({...a, label: e.target.value}))}
                     className="px-3 py-2 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green" />
-                  <input placeholder="Họ tên người nhận" value={newAddr.name}
+                  <input placeholder={t('account.addressPhName')} value={newAddr.name}
                     onChange={e => setNewAddr(a => ({...a, name: e.target.value}))}
                     className="px-3 py-2 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green" />
-                  <input placeholder="Số điện thoại" value={newAddr.phone}
+                  <input placeholder={t('account.addressPhPhone')} value={newAddr.phone}
                     onChange={e => setNewAddr(a => ({...a, phone: e.target.value}))}
                     className="px-3 py-2 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green" />
-                  <input placeholder="Thành phố" value={newAddr.city}
+                  <input placeholder={t('account.addressPhCity')} value={newAddr.city}
                     onChange={e => setNewAddr(a => ({...a, city: e.target.value}))}
                     className="px-3 py-2 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green" />
                 </div>
-                <input placeholder="Địa chỉ chi tiết" value={newAddr.address}
+                <input placeholder={t('account.addressPhDetail')} value={newAddr.address}
                   onChange={e => setNewAddr(a => ({...a, address: e.target.value}))}
                   className="w-full px-3 py-2 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green" />
                 <button
                   onClick={() => {
                     if (!newAddr.name || !newAddr.address || !newAddr.city) return
                     createAddress.mutate({ ...newAddr, is_default: addresses.length === 0 }, {
-                      onSuccess: () => { setShowAddressForm(false); setNewAddr({ label: 'Nhà', name: '', phone: '', address: '', city: '', country: 'Việt Nam' }) }
+                      onSuccess: () => { setShowAddressForm(false); setNewAddr({ label: t('account.addressDefaultLabel'), name: '', phone: '', address: '', city: '', country: t('account.addressDefaultCountry') }) }
                     })
                   }}
                   disabled={createAddress.isPending}
                   className="px-4 py-2 bg-green text-white rounded-xl text-sm font-semibold disabled:opacity-50"
                 >
-                  Lưu địa chỉ
+                  {t('account.addressSave')}
                 </button>
               </div>
             )}
@@ -313,7 +316,7 @@ export function Account() {
             <div className="space-y-3">
               {addresses.length === 0 ? (
                 <div className="bg-white border border-border rounded-2xl p-10 text-center text-ink-mute text-sm">
-                  Chưa có địa chỉ nào. Thêm địa chỉ để thanh toán nhanh hơn.
+                  {t('account.addressEmpty')}
                 </div>
               ) : addresses.map((addr) => (
                 <div key={addr.id} className="bg-white rounded-2xl p-5 border-2"
@@ -325,7 +328,7 @@ export function Account() {
                         {addr.is_default && (
                           <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded"
                             style={{ background: 'rgba(201,169,97,0.2)', color: 'var(--color-gold-deep)' }}>
-                            ★ MẶC ĐỊNH
+                            {t('account.addressDefaultBadge')}
                           </span>
                         )}
                       </div>
@@ -338,13 +341,13 @@ export function Account() {
                       {!addr.is_default && (
                         <button onClick={() => setDefault.mutate(addr.id)} disabled={setDefault.isPending}
                           className="text-xs font-semibold text-green hover:underline disabled:opacity-50">
-                          Mặc định
+                          {t('account.addressMakeDefault')}
                         </button>
                       )}
                       {!addr.is_default && (
                         <button onClick={() => deleteAddress.mutate(addr.id)} disabled={deleteAddress.isPending}
                           className="text-xs font-semibold text-ink-mute hover:text-danger transition-colors disabled:opacity-50">
-                          Xoá
+                          {t('account.addressDelete')}
                         </button>
                       )}
                     </div>
@@ -359,22 +362,23 @@ export function Account() {
         {section === 'wishlist' && (
           <div>
             <h1 className="text-3xl font-medium tracking-tight text-ink mb-5" style={{ fontFamily: 'var(--font-display)' }}>
-              Yêu thích
+              {t('account.wishlistTitle')}
             </h1>
-            <p className="text-ink-mute text-sm mb-5">{wishlist.length} sản phẩm đang theo dõi</p>
+            <p className="text-ink-mute text-sm mb-5">{t('account.wishlistCount').replace('{count}', String(wishlist.length))}</p>
             {wishlist.length === 0 ? (
               <div className="bg-white border border-border rounded-2xl p-16 text-center text-ink-mute">
-                Chưa có sản phẩm yêu thích
+                {t('account.wishlistEmpty')}
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {wishlist.map((item) => {
                   const primaryImage = item.product.images?.find((i) => i.is_primary)?.url ?? item.product.images?.[0]?.url
+                  const pName = lang === 'en' && item.product.name_en ? item.product.name_en : item.product.name_vi
                   return (
                     <div key={item.id} className="bg-white border border-border rounded-2xl overflow-hidden hover:-translate-y-1 hover:border-green hover:shadow-lg transition-all duration-200">
                       <div className="h-36 bg-cream flex items-center justify-center overflow-hidden">
                         {primaryImage ? (
-                          <img src={primaryImage} alt={item.product.name_vi} className="w-full h-full object-cover" />
+                          <img src={primaryImage} alt={pName} className="w-full h-full object-cover" />
                         ) : (
                           <div className="text-3xl">🌿</div>
                         )}
@@ -382,7 +386,7 @@ export function Account() {
                       <div className="p-3">
                         <div className="text-xs text-ink-mute mb-1 truncate">{item.product.origin}</div>
                         <div className="text-sm font-medium text-ink mb-2 line-clamp-2" style={{ fontFamily: 'var(--font-display)' }}>
-                          {item.product.name_vi}
+                          {pName}
                         </div>
                         <div className="text-sm font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>
                           {item.product.price.toLocaleString('vi-VN')}₫
@@ -392,12 +396,12 @@ export function Account() {
                             onClick={() => addToCart.mutate({ productId: item.product_id, quantity: 1 })}
                             className="flex-1 py-1.5 bg-cream border border-green text-green rounded-lg text-xs font-medium hover:bg-green hover:text-cream transition-all"
                           >
-                            Thêm vào giỏ
+                            {t('shop.addToCart')}
                           </button>
                           <button
                             onClick={() => removeFromWishlist.mutate(item.product_id)}
                             className="p-1.5 border border-border rounded-lg text-ink-mute hover:border-danger hover:text-danger transition-colors"
-                            title="Bỏ yêu thích"
+                            title={t('account.wishlistRemove')}
                           >
                             ×
                           </button>
@@ -415,7 +419,7 @@ export function Account() {
         {section === 'following' && (
           <div>
             <h1 className="text-3xl font-medium tracking-tight text-ink mb-5" style={{ fontFamily: 'var(--font-display)' }}>
-              Gian hàng theo dõi
+              {t('account.followingTitle')}
             </h1>
             <div className="space-y-3">
               {[
@@ -443,7 +447,7 @@ export function Account() {
                     {store.tier}
                   </span>
                   <button className="text-xs font-semibold text-ink-mute border border-border px-3 py-1.5 rounded-lg hover:border-danger hover:text-danger transition-colors flex-shrink-0">
-                    Bỏ theo dõi
+                    {t('account.followingUnfollow')}
                   </button>
                 </div>
               ))}
@@ -455,19 +459,19 @@ export function Account() {
         {section === 'settings' && (
           <div>
             <h1 className="text-3xl font-medium tracking-tight text-ink mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-              Cài đặt tài khoản
+              {t('account.settingsTitle')}
             </h1>
-            <p className="text-ink-mute text-sm mb-6">Thông tin cá nhân và tùy chọn hệ thống</p>
+            <p className="text-ink-mute text-sm mb-6">{t('account.settingsSubtitle')}</p>
 
             <div className="space-y-5">
               {/* Personal info */}
               <div className="bg-white border border-border rounded-2xl p-5">
                 <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                  Thông tin cá nhân
+                  {t('account.personalInfo')}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Họ tên</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('account.fullName')}</label>
                     <input
                       type="text"
                       value={settingsForm.name}
@@ -476,7 +480,7 @@ export function Account() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Email</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('account.email')}</label>
                     <input
                       type="email"
                       value={settingsForm.email}
@@ -485,7 +489,7 @@ export function Account() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Điện thoại</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('account.phone')}</label>
                     <input
                       type="tel"
                       value={settingsForm.phone}
@@ -499,11 +503,11 @@ export function Account() {
               {/* Preferences */}
               <div className="bg-white border border-border rounded-2xl p-5">
                 <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                  Tuỳ chọn hệ thống
+                  {t('account.prefs')}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Ngôn ngữ</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('account.prefLanguage')}</label>
                     <select
                       value={settingsForm.language}
                       onChange={(e) => setSettingsForm((f) => ({ ...f, language: e.target.value }))}
@@ -515,7 +519,7 @@ export function Account() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Tiền tệ</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('account.prefCurrency')}</label>
                     <select
                       value={settingsForm.currency}
                       onChange={(e) => setSettingsForm((f) => ({ ...f, currency: e.target.value }))}
@@ -528,7 +532,7 @@ export function Account() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Múi giờ</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('account.prefTimezone')}</label>
                     <select
                       value={settingsForm.timezone}
                       onChange={(e) => setSettingsForm((f) => ({ ...f, timezone: e.target.value }))}
@@ -546,13 +550,13 @@ export function Account() {
               {/* Notifications */}
               <div className="bg-white border border-border rounded-2xl p-5">
                 <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                  Thông báo
+                  {t('account.notifications')}
                 </h3>
                 <div className="space-y-3">
                   {[
-                    { key: 'notifyOrderEmail' as const, label: 'Email xác nhận đơn hàng', sub: 'Nhận email khi đặt hàng thành công' },
-                    { key: 'notifyDeliverySms' as const, label: 'SMS giao hàng', sub: 'Nhận SMS khi đơn hàng đến nơi' },
-                    { key: 'notifyPromos' as const, label: 'Khuyến mãi & tin tức', sub: 'Email về ưu đãi và sản phẩm mới' },
+                    { key: 'notifyOrderEmail' as const, labelKey: 'account.notifyOrderEmail', subKey: 'account.notifyOrderEmailSub' },
+                    { key: 'notifyDeliverySms' as const, labelKey: 'account.notifyDeliverySms', subKey: 'account.notifyDeliverySmsSub' },
+                    { key: 'notifyPromos' as const, labelKey: 'account.notifyPromos', subKey: 'account.notifyPromosSub' },
                   ].map((item) => (
                     <label key={item.key} className="flex items-start gap-3 cursor-pointer">
                       <input
@@ -562,8 +566,8 @@ export function Account() {
                         className="mt-0.5 accent-green"
                       />
                       <div>
-                        <div className="text-sm font-semibold text-ink">{item.label}</div>
-                        <div className="text-xs text-ink-mute">{item.sub}</div>
+                        <div className="text-sm font-semibold text-ink">{t(item.labelKey)}</div>
+                        <div className="text-xs text-ink-mute">{t(item.subKey)}</div>
                       </div>
                     </label>
                   ))}
@@ -572,7 +576,7 @@ export function Account() {
 
               {profileSaved && (
                 <div className="text-sm text-green font-semibold text-center">
-                  Đã lưu thay đổi thành công
+                  {t('account.profileSaved')}
                 </div>
               )}
               <button
@@ -590,7 +594,7 @@ export function Account() {
                 disabled={updateProfile.isPending}
                 className="w-full py-3 bg-green text-white rounded-xl font-semibold hover:bg-green-soft transition-colors disabled:opacity-60"
               >
-                {updateProfile.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+                {updateProfile.isPending ? t('account.saving') : t('account.saveChanges')}
               </button>
 
               {/* Password change */}
@@ -598,12 +602,12 @@ export function Account() {
                 <div className="flex items-center gap-2 mb-4">
                   <Lock size={16} className="text-ink-mute" />
                   <h3 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-                    Đổi mật khẩu
+                    {t('account.changePassword')}
                   </h3>
                 </div>
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Mật khẩu hiện tại</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('account.currentPassword')}</label>
                     <input
                       type="password"
                       value={pwForm.current}
@@ -613,7 +617,7 @@ export function Account() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Mật khẩu mới</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('account.newPassword')}</label>
                     <input
                       type="password"
                       value={pwForm.next}
@@ -623,7 +627,7 @@ export function Account() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Xác nhận mật khẩu mới</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('account.confirmPassword')}</label>
                     <input
                       type="password"
                       value={pwForm.confirm}
@@ -637,7 +641,7 @@ export function Account() {
                     onClick={() => {
                       if (!pwForm.current || !pwForm.next) return
                       if (pwForm.next !== pwForm.confirm) {
-                        setPwError('Mật khẩu xác nhận không khớp')
+                        setPwError(t('account.pwMismatch'))
                         return
                       }
                       changePassword.mutate(
@@ -648,7 +652,7 @@ export function Account() {
                     disabled={changePassword.isPending}
                     className="w-full py-2.5 bg-green text-white rounded-xl font-semibold text-sm hover:bg-green-soft transition-colors disabled:opacity-60"
                   >
-                    {changePassword.isPending ? 'Đang đổi...' : 'Đổi mật khẩu'}
+                    {changePassword.isPending ? t('account.pwChanging') : t('account.pwChange')}
                   </button>
                 </div>
               </div>

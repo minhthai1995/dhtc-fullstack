@@ -618,6 +618,89 @@ const vi: Dict = {
   'merchant.noProducts': 'Gian hàng chưa có sản phẩm',
   'merchant.skuCount': '{count} SKU',
   'merchant.addToCart': 'Thêm vào giỏ',
+
+  // Account — sidebar nav
+  'account.navDashboard': 'Tổng quan',
+  'account.navOrders': 'Đơn hàng',
+  'account.navAddresses': 'Địa chỉ',
+  'account.navWishlist': 'Yêu thích',
+  'account.navFollowing': 'Gian hàng theo dõi',
+  'account.navSettings': 'Cài đặt',
+  'account.logout': 'Đăng xuất',
+  'account.goldMember': '★ GOLD MEMBER',
+
+  // Account — dashboard
+  'account.title': 'Tài khoản của bạn',
+  'account.greeting': 'Xin chào, {name}!',
+  'account.kpiOrdersPlaced': 'Đơn đã đặt',
+  'account.kpiSpent': '₫ Đã chi tiêu',
+  'account.kpiPoints': 'Điểm tích luỹ',
+  'account.kpiPointsHint': '(Sắp ra mắt)',
+  'account.recentOrders': 'Đơn hàng gần đây',
+  'account.viewAll': 'Xem tất cả →',
+
+  // Account — orders
+  'account.ordersTitle': 'Đơn hàng của tôi',
+  'account.orderPlacedAt': 'Đặt lúc {date}',
+  'account.shipTo': 'Giao đến: ',
+
+  // Account — addresses
+  'account.addressesTitle': 'Sổ địa chỉ',
+  'account.addressFormClose': 'Đóng',
+  'account.addressFormOpen': '+ Thêm địa chỉ',
+  'account.addressPhLabel': 'Nhãn (Nhà, Văn phòng...)',
+  'account.addressPhName': 'Họ tên người nhận',
+  'account.addressPhPhone': 'Số điện thoại',
+  'account.addressPhCity': 'Thành phố',
+  'account.addressPhDetail': 'Địa chỉ chi tiết',
+  'account.addressSave': 'Lưu địa chỉ',
+  'account.addressEmpty': 'Chưa có địa chỉ nào. Thêm địa chỉ để thanh toán nhanh hơn.',
+  'account.addressDefaultBadge': '★ MẶC ĐỊNH',
+  'account.addressMakeDefault': 'Mặc định',
+  'account.addressDelete': 'Xoá',
+  'account.addressDefaultLabel': 'Nhà',
+  'account.addressDefaultCountry': 'Việt Nam',
+
+  // Account — wishlist
+  'account.wishlistTitle': 'Yêu thích',
+  'account.wishlistCount': '{count} sản phẩm đang theo dõi',
+  'account.wishlistEmpty': 'Chưa có sản phẩm yêu thích',
+  'account.wishlistRemove': 'Bỏ yêu thích',
+
+  // Account — following
+  'account.followingTitle': 'Gian hàng theo dõi',
+  'account.followingUnfollow': 'Bỏ theo dõi',
+
+  // Account — settings
+  'account.settingsTitle': 'Cài đặt tài khoản',
+  'account.settingsSubtitle': 'Thông tin cá nhân và tùy chọn hệ thống',
+  'account.personalInfo': 'Thông tin cá nhân',
+  'account.fullName': 'Họ tên',
+  'account.email': 'Email',
+  'account.phone': 'Điện thoại',
+  'account.prefs': 'Tuỳ chọn hệ thống',
+  'account.prefLanguage': 'Ngôn ngữ',
+  'account.prefCurrency': 'Tiền tệ',
+  'account.prefTimezone': 'Múi giờ',
+  'account.notifications': 'Thông báo',
+  'account.notifyOrderEmail': 'Email xác nhận đơn hàng',
+  'account.notifyOrderEmailSub': 'Nhận email khi đặt hàng thành công',
+  'account.notifyDeliverySms': 'SMS giao hàng',
+  'account.notifyDeliverySmsSub': 'Nhận SMS khi đơn hàng đến nơi',
+  'account.notifyPromos': 'Khuyến mãi & tin tức',
+  'account.notifyPromosSub': 'Email về ưu đãi và sản phẩm mới',
+  'account.profileSaved': 'Đã lưu thay đổi thành công',
+  'account.saving': 'Đang lưu...',
+  'account.saveChanges': 'Lưu thay đổi',
+
+  // Account — password change
+  'account.changePassword': 'Đổi mật khẩu',
+  'account.currentPassword': 'Mật khẩu hiện tại',
+  'account.newPassword': 'Mật khẩu mới',
+  'account.confirmPassword': 'Xác nhận mật khẩu mới',
+  'account.pwMismatch': 'Mật khẩu xác nhận không khớp',
+  'account.pwChanging': 'Đang đổi...',
+  'account.pwChange': 'Đổi mật khẩu',
 }
 
 const en: Dict = {
@@ -1231,6 +1314,89 @@ const en: Dict = {
   'merchant.noProducts': 'This shop has no products yet',
   'merchant.skuCount': '{count} SKUs',
   'merchant.addToCart': 'Add to cart',
+
+  // Account — sidebar nav
+  'account.navDashboard': 'Overview',
+  'account.navOrders': 'Orders',
+  'account.navAddresses': 'Addresses',
+  'account.navWishlist': 'Wishlist',
+  'account.navFollowing': 'Followed shops',
+  'account.navSettings': 'Settings',
+  'account.logout': 'Sign out',
+  'account.goldMember': '★ GOLD MEMBER',
+
+  // Account — dashboard
+  'account.title': 'Your account',
+  'account.greeting': 'Hello, {name}!',
+  'account.kpiOrdersPlaced': 'Orders placed',
+  'account.kpiSpent': '₫ Spent',
+  'account.kpiPoints': 'Reward points',
+  'account.kpiPointsHint': '(Coming soon)',
+  'account.recentOrders': 'Recent orders',
+  'account.viewAll': 'View all →',
+
+  // Account — orders
+  'account.ordersTitle': 'My orders',
+  'account.orderPlacedAt': 'Placed at {date}',
+  'account.shipTo': 'Ship to: ',
+
+  // Account — addresses
+  'account.addressesTitle': 'Address book',
+  'account.addressFormClose': 'Close',
+  'account.addressFormOpen': '+ Add address',
+  'account.addressPhLabel': 'Label (Home, Office...)',
+  'account.addressPhName': 'Recipient name',
+  'account.addressPhPhone': 'Phone number',
+  'account.addressPhCity': 'City',
+  'account.addressPhDetail': 'Street address',
+  'account.addressSave': 'Save address',
+  'account.addressEmpty': 'No addresses yet. Add one for faster checkout.',
+  'account.addressDefaultBadge': '★ DEFAULT',
+  'account.addressMakeDefault': 'Set default',
+  'account.addressDelete': 'Delete',
+  'account.addressDefaultLabel': 'Home',
+  'account.addressDefaultCountry': 'Vietnam',
+
+  // Account — wishlist
+  'account.wishlistTitle': 'Wishlist',
+  'account.wishlistCount': '{count} products saved',
+  'account.wishlistEmpty': 'No saved products yet',
+  'account.wishlistRemove': 'Remove',
+
+  // Account — following
+  'account.followingTitle': 'Followed shops',
+  'account.followingUnfollow': 'Unfollow',
+
+  // Account — settings
+  'account.settingsTitle': 'Account settings',
+  'account.settingsSubtitle': 'Personal information and system preferences',
+  'account.personalInfo': 'Personal information',
+  'account.fullName': 'Full name',
+  'account.email': 'Email',
+  'account.phone': 'Phone',
+  'account.prefs': 'System preferences',
+  'account.prefLanguage': 'Language',
+  'account.prefCurrency': 'Currency',
+  'account.prefTimezone': 'Timezone',
+  'account.notifications': 'Notifications',
+  'account.notifyOrderEmail': 'Order confirmation email',
+  'account.notifyOrderEmailSub': 'Receive email when an order is placed',
+  'account.notifyDeliverySms': 'Delivery SMS',
+  'account.notifyDeliverySmsSub': 'Receive SMS when an order arrives',
+  'account.notifyPromos': 'Promotions & news',
+  'account.notifyPromosSub': 'Email about deals and new products',
+  'account.profileSaved': 'Changes saved successfully',
+  'account.saving': 'Saving...',
+  'account.saveChanges': 'Save changes',
+
+  // Account — password change
+  'account.changePassword': 'Change password',
+  'account.currentPassword': 'Current password',
+  'account.newPassword': 'New password',
+  'account.confirmPassword': 'Confirm new password',
+  'account.pwMismatch': 'Passwords do not match',
+  'account.pwChanging': 'Changing...',
+  'account.pwChange': 'Change password',
 }
 
 export const messages: Record<Lang, Dict> = { vi, en }
