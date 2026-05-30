@@ -4,8 +4,10 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Spinner } from '@/components/ui/Spinner'
 import { Plus, X, Save } from 'lucide-react'
+import { useT } from '@/i18n/useT'
 
 export function SellerProfile() {
+  const { t } = useT()
   const { data: profile, isLoading } = useSellerProfile()
   const updateProfile = useUpdateSellerProfile()
 
@@ -95,8 +97,8 @@ export function SellerProfile() {
   return (
     <div>
       <PageHeader
-        title="Hồ sơ gian hàng"
-        subtitle="Đắk Lắk Coffee Co-op · Khách quốc tế thấy trang này khi click vào tên gian hàng"
+        title={t('sellerProfile.title')}
+        subtitle={t('sellerProfile.subtitle')}
         actions={
           <button
             form="profile-form"
@@ -105,14 +107,14 @@ export function SellerProfile() {
             className="flex items-center gap-2 px-4 py-2 bg-green text-white rounded-xl text-sm font-semibold hover:bg-green-soft disabled:opacity-60 transition-colors"
           >
             <Save size={14} />
-            {updateProfile.isPending ? 'Đang lưu...' : saved ? 'Đã lưu!' : 'Lưu thay đổi'}
+            {updateProfile.isPending ? t('sellerProfile.saving') : saved ? t('sellerProfile.saved') : t('sellerProfile.saveChanges')}
           </button>
         }
       />
 
       {saved && (
         <div className="mb-4 p-3 bg-green/10 border border-green/30 text-green text-sm rounded-xl font-medium">
-          Cập nhật hồ sơ thành công!
+          {t('sellerProfile.updateSuccess')}
         </div>
       )}
 
@@ -123,12 +125,12 @@ export function SellerProfile() {
             {/* Public info */}
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Thông tin công khai
+                {t('sellerProfile.publicInfo')}
               </h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Tên ngắn (Tiếng Việt)</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.shortNameVi')}</label>
                     <input
                       type="text"
                       value={form.business_name}
@@ -137,7 +139,7 @@ export function SellerProfile() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Tên ngắn (English)</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.shortNameEn')}</label>
                     <input
                       type="text"
                       value={form.business_name_en}
@@ -148,7 +150,7 @@ export function SellerProfile() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">URL slug</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.slug')}</label>
                   <div className="flex items-center gap-0 border border-border rounded-xl overflow-hidden bg-cream">
                     <span className="px-3 py-2.5 text-sm text-ink-mute bg-cream-dark border-r border-border whitespace-nowrap">
                       dhtc.vn/store/
@@ -163,7 +165,7 @@ export function SellerProfile() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Mô tả gian hàng (Tiếng Việt)</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.descVi')}</label>
                   <textarea
                     value={form.description}
                     onChange={(e) => handleChange('description', e.target.value)}
@@ -173,7 +175,7 @@ export function SellerProfile() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Mô tả (English)</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.descEn')}</label>
                   <textarea
                     value={form.description_en}
                     onChange={(e) => handleChange('description_en', e.target.value)}
@@ -187,12 +189,12 @@ export function SellerProfile() {
             {/* Legal info */}
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Pháp lý (riêng tư)
+                {t('sellerProfile.legalInfo')}
               </h3>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Tên đầy đủ</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.fullName')}</label>
                     <input
                       type="text"
                       defaultValue="HTX Sản Xuất & Kinh Doanh Cà Phê Hữu Cơ Đắk Lắk"
@@ -200,18 +202,18 @@ export function SellerProfile() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Loại hình</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.businessType')}</label>
                     <select className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all">
-                      <option>Hợp tác xã</option>
-                      <option>Doanh nghiệp</option>
-                      <option>Hộ kinh doanh</option>
+                      <option>{t('sellerProfile.typeCoop')}</option>
+                      <option>{t('sellerProfile.typeEnterprise')}</option>
+                      <option>{t('sellerProfile.typeHousehold')}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">MST · Tax ID</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.taxId')}</label>
                     <input
                       type="text"
                       value={form.tax_id}
@@ -220,7 +222,7 @@ export function SellerProfile() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Năm thành lập</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.foundedYear')}</label>
                     <input
                       type="number"
                       defaultValue={2018}
@@ -228,7 +230,7 @@ export function SellerProfile() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Số thành viên</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.memberCount')}</label>
                     <input
                       type="number"
                       defaultValue={42}
@@ -238,7 +240,7 @@ export function SellerProfile() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Địa chỉ trụ sở</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.hqAddress')}</label>
                   <input
                     type="text"
                     value={form.address}
@@ -249,7 +251,7 @@ export function SellerProfile() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Đại diện</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.representative')}</label>
                     <input
                       type="text"
                       defaultValue="Y Thol Êban"
@@ -257,7 +259,7 @@ export function SellerProfile() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">CCCD · ID number</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.idNumber')}</label>
                     <input
                       type="text"
                       defaultValue="066089012345"
@@ -274,7 +276,7 @@ export function SellerProfile() {
             {/* Brand assets */}
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Hình ảnh thương hiệu
+                {t('sellerProfile.brandAssets')}
               </h3>
               <div className="text-center">
                 <div className="h-36 rounded-xl border border-border bg-cream mb-3 flex items-center justify-center p-4">
@@ -284,9 +286,9 @@ export function SellerProfile() {
                     className="max-w-full max-h-full object-contain"
                   />
                 </div>
-                <div className="text-[11px] text-ink-mute mb-2">Logo gian hàng · 1024×470px khuyến nghị</div>
+                <div className="text-[11px] text-ink-mute mb-2">{t('sellerProfile.logoHint')}</div>
                 <button type="button" className="w-full py-2 text-xs font-semibold text-ink-mute border border-border rounded-xl hover:border-green hover:text-green transition-colors">
-                  Thay logo
+                  {t('sellerProfile.changeLogo')}
                 </button>
               </div>
             </div>
@@ -294,13 +296,13 @@ export function SellerProfile() {
             {/* Certifications */}
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Chứng nhận
+                {t('sellerProfile.certifications')}
               </h3>
               <div className="space-y-2 mb-3">
                 {form.certifications.map((cert, i) => (
                   <div key={i} className="flex items-center justify-between p-2.5 bg-cream rounded-xl">
                     <div className="flex items-center gap-2">
-                      <Badge variant="active">✓ ACTIVE</Badge>
+                      <Badge variant="active">{t('sellerProfile.certActive')}</Badge>
                       <span className="text-sm font-semibold text-ink">{cert}</span>
                     </div>
                     <button
@@ -319,7 +321,7 @@ export function SellerProfile() {
                   value={form.newCert}
                   onChange={(e) => handleChange('newCert', e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCert())}
-                  placeholder="USDA Organic, Fairtrade..."
+                  placeholder={t('sellerProfile.certPlaceholder')}
                   className="flex-1 px-3 py-2 border border-border rounded-lg text-sm bg-cream focus:outline-none focus:border-green transition-all"
                 />
                 <button
@@ -335,11 +337,11 @@ export function SellerProfile() {
             {/* Contact & Social */}
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Liên hệ & MXH
+                {t('sellerProfile.contactSocial')}
               </h3>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Email</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.email')}</label>
                   <input
                     type="email"
                     value={form.email}
@@ -348,7 +350,7 @@ export function SellerProfile() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Điện thoại</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.phone')}</label>
                   <input
                     type="tel"
                     value={form.phone}
@@ -357,7 +359,7 @@ export function SellerProfile() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Facebook</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.facebook')}</label>
                   <input
                     type="text"
                     value={form.facebook}
@@ -367,7 +369,7 @@ export function SellerProfile() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Instagram</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.instagram')}</label>
                   <input
                     type="text"
                     value={form.instagram}

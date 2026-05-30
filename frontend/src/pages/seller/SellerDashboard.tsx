@@ -6,8 +6,10 @@ import { Spinner } from '@/components/ui/Spinner'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Link, useNavigate } from 'react-router-dom'
 import { Plus, AlertTriangle } from 'lucide-react'
+import { useT } from '@/i18n/useT'
 
 export function SellerDashboard() {
+  const { t, lang } = useT()
   const navigate = useNavigate()
   const { data: dashboard, error, isLoading } = useSellerDashboardFull()
   const topProducts = useTopProducts()
@@ -24,19 +26,20 @@ export function SellerDashboard() {
   const maxVal = chartData.length > 0 ? Math.max(...chartData.map((d) => d.revenue)) : 1
   const pendingOrders = dashboard?.pending_orders ?? []
   const merchantName = dashboard?.merchant_name ?? '—'
+  const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
 
   return (
     <div>
       <PageHeader
-        title={isLoading ? 'Xin chào...' : `Xin chào, ${merchantName} 👋`}
-        subtitle={isLoading ? '...' : `${merchantName} · Seller Dashboard`}
+        title={isLoading ? t('sellerDashboard.greetingLoading') : t('sellerDashboard.greeting').replace('{name}', merchantName)}
+        subtitle={isLoading ? t('sellerDashboard.loadingDots') : t('sellerDashboard.subtitle').replace('{name}', merchantName)}
         actions={
           <Link
             to="/seller/products/new"
             className="flex items-center gap-2 px-4 py-2 bg-green text-white rounded-xl text-sm font-semibold hover:bg-green-soft transition-colors no-underline"
           >
             <Plus size={15} />
-            Thêm sản phẩm
+            {t('sellerDashboard.addProduct')}
           </Link>
         }
       />
@@ -47,7 +50,7 @@ export function SellerDashboard() {
           <div className="flex items-center gap-2 mb-3">
             <AlertTriangle size={16} className="text-warning flex-shrink-0" />
             <h2 className="font-semibold text-warning" style={{ fontFamily: 'var(--font-display)' }}>
-              Sắp hết hàng ({lowStock.data.length})
+              {t('sellerDashboard.lowStockHeader').replace('{count}', String(lowStock.data.length))}
             </h2>
           </div>
           <table className="w-full">
@@ -57,7 +60,7 @@ export function SellerDashboard() {
                   <td className="py-2 text-sm text-ink pr-4">{p.name_vi}</td>
                   <td className="py-2 text-sm text-right font-mono font-semibold">
                     <span className={p.stock <= 5 ? 'text-danger' : 'text-warning'}>
-                      còn {p.stock}
+                      {t('sellerDashboard.remainingLabel').replace('{n}', String(p.stock))}
                     </span>
                   </td>
                 </tr>
@@ -70,31 +73,31 @@ export function SellerDashboard() {
       {/* KPI grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <KpiCard
-          label="Doanh thu tháng này"
+          label={t('sellerDashboard.kpiRevenue')}
           value={
             dashboard
               ? `₫${(dashboard.total_revenue / 1_000_000).toFixed(1)}M`
               : isLoading ? '—' : '₫0M'
           }
-          delta="12.4% so tháng trước"
+          delta={t('sellerDashboard.kpiRevenueDelta')}
           deltaType="up"
         />
         <KpiCard
-          label="Tổng đơn hàng"
+          label={t('sellerDashboard.kpiOrders')}
           value={dashboard?.total_orders ?? (isLoading ? '—' : 0)}
           delta="8.1%"
           deltaType="up"
         />
         <KpiCard
-          label="Chờ xử lý"
+          label={t('sellerDashboard.kpiPending')}
           value={dashboard?.pending_count ?? (isLoading ? '—' : 0)}
-          delta="Cần xác nhận"
+          delta={t('sellerDashboard.kpiPendingDelta')}
           deltaType="warn"
         />
         <KpiCard
-          label="Số dư ví"
+          label={t('sellerDashboard.kpiWallet')}
           value="—"
-          delta="Có thể rút"
+          delta={t('sellerDashboard.kpiWalletDelta')}
           deltaType="up"
         />
       </div>
@@ -104,10 +107,10 @@ export function SellerDashboard() {
         <div className="lg:col-span-2 bg-white border border-border rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-              Doanh thu theo tháng
+              {t('sellerDashboard.revenueChartTitle')}
             </h2>
             <Link to="/seller/orders" className="text-xs text-green font-medium no-underline hover:underline">
-              Xem đơn hàng →
+              {t('sellerDashboard.viewOrders')}
             </Link>
           </div>
           {chartData.length > 0 ? (
@@ -126,7 +129,7 @@ export function SellerDashboard() {
             </div>
           ) : (
             <div className="h-[80px] flex items-center justify-center text-ink-mute text-sm">
-              {isLoading ? 'Đang tải...' : 'Chưa có dữ liệu'}
+              {isLoading ? t('sellerDashboard.loading') : t('sellerDashboard.noData')}
             </div>
           )}
         </div>
@@ -134,12 +137,12 @@ export function SellerDashboard() {
         {/* Top products */}
         <div className="bg-white border border-border rounded-2xl p-5">
           <h2 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Top sản phẩm
+            {t('sellerDashboard.topProducts')}
           </h2>
           {topProducts.isLoading ? (
             <div className="flex justify-center py-6"><Spinner size="sm" /></div>
           ) : !topProducts.data || topProducts.data.length === 0 ? (
-            <div className="text-sm text-ink-mute text-center py-6">Chưa có dữ liệu</div>
+            <div className="text-sm text-ink-mute text-center py-6">{t('sellerDashboard.noData')}</div>
           ) : (() => {
             const maxSold = Math.max(...topProducts.data.map((p) => p.sold_count), 1)
             return (
@@ -155,11 +158,11 @@ export function SellerDashboard() {
                         />
                       </div>
                       <div className="text-[10px] text-ink-mute mt-0.5">
-                        {p.price.toLocaleString('vi-VN')}₫ · còn {p.stock}
+                        {p.price.toLocaleString(localeStr)}₫ · {t('sellerDashboard.remainingShort').replace('{n}', String(p.stock))}
                       </div>
                     </div>
                     <span className="text-[11px] text-ink-mute min-w-[50px] text-right" style={{ fontFamily: 'var(--font-mono)' }}>
-                      {p.sold_count} đơn
+                      {t('sellerDashboard.soldOrders').replace('{n}', String(p.sold_count))}
                     </span>
                   </div>
                 ))}
@@ -172,7 +175,7 @@ export function SellerDashboard() {
       {analytics.data && analytics.data.length > 0 && (
         <div className="bg-white border border-border rounded-2xl p-5 mb-5">
           <div className="text-xs font-bold uppercase tracking-widest text-ink-mute mb-4">
-            Doanh thu theo sản phẩm
+            {t('sellerDashboard.productRevenue')}
           </div>
           <div className="space-y-3">
             {analytics.data.map(p => (
@@ -180,7 +183,7 @@ export function SellerDashboard() {
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-ink truncate max-w-[200px]">{p.name_vi}</span>
                   <span className="text-ink-mute font-mono">
-                    {p.total_revenue.toLocaleString('vi-VN')}₫ ({p.revenue_pct}%)
+                    {p.total_revenue.toLocaleString(localeStr)}₫ ({p.revenue_pct}%)
                   </span>
                 </div>
                 <div className="h-2 bg-cream rounded-full overflow-hidden">
@@ -199,16 +202,16 @@ export function SellerDashboard() {
       <div className="bg-white border border-border rounded-2xl p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-            Đơn hàng chờ xử lý
+            {t('sellerDashboard.pendingOrders')}
           </h2>
           <Link to="/seller/orders" className="text-xs text-green font-medium no-underline hover:underline">
-            Xem tất cả →
+            {t('sellerDashboard.viewAll')}
           </Link>
         </div>
         <div className="space-y-2">
           {pendingOrders.length === 0 ? (
             <div className="text-sm text-ink-mute text-center py-4">
-              {isLoading ? 'Đang tải...' : 'Không có đơn hàng chờ xử lý'}
+              {isLoading ? t('sellerDashboard.loading') : t('sellerDashboard.noPending')}
             </div>
           ) : (
             pendingOrders.map((order) => (
@@ -216,20 +219,20 @@ export function SellerDashboard() {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-ink">{order.customer_name}</div>
                   <div className="text-xs text-ink-mute">
-                    {new Date(order.created_at).toLocaleDateString('vi-VN')}
+                    {new Date(order.created_at).toLocaleDateString(localeStr)}
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
                   <div className="text-sm font-medium text-green" style={{ fontFamily: 'var(--font-display)' }}>
                     ₫{(order.total_amount / 1_000).toFixed(0)}K
                   </div>
-                  <Badge variant="pending" className="text-[9px]">Chờ xác nhận</Badge>
+                  <Badge variant="pending" className="text-[9px]">{t('sellerDashboard.pendingBadge')}</Badge>
                 </div>
                 <Link
                   to={`/seller/orders/${order.id}`}
                   className="px-3 py-1.5 bg-green text-white text-xs font-semibold rounded-lg hover:bg-green-soft transition-colors no-underline flex-shrink-0"
                 >
-                  Xử lý
+                  {t('sellerDashboard.processOrder')}
                 </Link>
               </div>
             ))

@@ -5,31 +5,22 @@ import { Badge } from '@/components/ui/Badge'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { ChevronRight } from 'lucide-react'
 import type { OrderStatus } from '@/types/api'
+import { useT } from '@/i18n/useT'
 
-const TAB_FILTERS: { key: 'all' | OrderStatus; label: string }[] = [
-  { key: 'all', label: 'Tất cả' },
-  { key: 'pending', label: 'Chờ xác nhận' },
-  { key: 'processing', label: 'Đang xử lý' },
-  { key: 'shipped', label: 'Đang giao' },
-  { key: 'delivered', label: 'Đã giao' },
+const TAB_FILTERS: { key: 'all' | OrderStatus; labelKey: string }[] = [
+  { key: 'all', labelKey: 'sellerOrders.tabAll' },
+  { key: 'pending', labelKey: 'sellerOrders.tabPending' },
+  { key: 'processing', labelKey: 'sellerOrders.tabProcessing' },
+  { key: 'shipped', labelKey: 'sellerOrders.tabShipped' },
+  { key: 'delivered', labelKey: 'sellerOrders.tabDelivered' },
 ]
 
-function statusBadge(status: OrderStatus) {
-  const labels: Record<OrderStatus, string> = {
-    pending: 'Chờ xác nhận',
-    processing: 'Đang xử lý',
-    shipped: 'Đang giao',
-    delivered: 'Đã giao',
-    cancelled: 'Đã huỷ',
-  }
-  const variants: Record<OrderStatus, Parameters<typeof Badge>[0]['variant']> = {
-    pending: 'pending',
-    processing: 'processing',
-    shipped: 'shipped',
-    delivered: 'delivered',
-    cancelled: 'cancelled',
-  }
-  return <Badge variant={variants[status]}>{labels[status]}</Badge>
+const STATUS_KEY: Record<OrderStatus, string> = {
+  pending: 'sellerOrders.statusPending',
+  processing: 'sellerOrders.statusProcessing',
+  shipped: 'sellerOrders.statusShipped',
+  delivered: 'sellerOrders.statusDelivered',
+  cancelled: 'sellerOrders.statusCancelled',
 }
 
 // Seller-appropriate next statuses: pending→processing, processing→shipped
@@ -38,15 +29,8 @@ const SELLER_NEXT_STATUSES: Partial<Record<OrderStatus, OrderStatus[]>> = {
   processing: ['shipped'],
 }
 
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  pending: 'Chờ xác nhận',
-  processing: 'Đang xử lý',
-  shipped: 'Đang giao',
-  delivered: 'Đã giao',
-  cancelled: 'Đã huỷ',
-}
-
 export function SellerOrders() {
+  const { t, lang } = useT()
   const [activeTab, setActiveTab] = useState<'all' | OrderStatus>('all')
   const [trackingInputs, setTrackingInputs] = useState<Record<number, string>>({})
   const { data: orders } = useSellerOrders()
@@ -55,11 +39,24 @@ export function SellerOrders() {
   const source = orders ?? []
   const filtered = activeTab === 'all' ? source : source.filter((o) => o.status === activeTab)
 
+  const statusBadge = (status: OrderStatus) => {
+    const variants: Record<OrderStatus, Parameters<typeof Badge>[0]['variant']> = {
+      pending: 'pending',
+      processing: 'processing',
+      shipped: 'shipped',
+      delivered: 'delivered',
+      cancelled: 'cancelled',
+    }
+    return <Badge variant={variants[status]}>{t(STATUS_KEY[status])}</Badge>
+  }
+
   return (
     <div>
       <PageHeader
-        title="Đơn hàng"
-        subtitle={`${source.length} đơn hàng · ${source.filter((o) => o.status === 'pending').length} chờ xác nhận`}
+        title={t('sellerOrders.title')}
+        subtitle={t('sellerOrders.subtitle')
+          .replace('{total}', String(source.length))
+          .replace('{pending}', String(source.filter((o) => o.status === 'pending').length))}
       />
 
       {/* Tabs */}
@@ -74,7 +71,7 @@ export function SellerOrders() {
                 : 'bg-white border border-border text-ink-soft hover:border-green hover:text-green'
             }`}
           >
-            {tab.label}
+            {t(tab.labelKey)}
             {tab.key !== 'all' && (
               <span className={`ml-1.5 text-[10px] ${activeTab === tab.key ? 'opacity-80' : 'text-ink-mute'}`}>
                 ({source.filter((o) => o.status === tab.key).length})
@@ -87,7 +84,7 @@ export function SellerOrders() {
       <div className="space-y-3">
         {filtered.length === 0 ? (
           <div className="bg-white border border-border rounded-2xl p-12 text-center text-ink-mute text-sm">
-            Không có đơn hàng nào
+            {t('sellerOrders.noOrders')}
           </div>
         ) : (
           filtered.map((order) => {
@@ -106,7 +103,7 @@ export function SellerOrders() {
                     </div>
                     {order.tracking_number && (
                       <div className="text-xs text-green font-mono mt-1">
-                        Tracking: {order.tracking_number}
+                        {t('sellerOrders.trackingLabel')}: {order.tracking_number}
                       </div>
                     )}
                     {/* Status update buttons */}
@@ -117,7 +114,7 @@ export function SellerOrders() {
                             <div key={nextStatus} className="flex items-center gap-2">
                               <input
                                 type="text"
-                                placeholder="AWB / Mã vận đơn"
+                                placeholder={t('sellerOrders.awbPlaceholder')}
                                 value={trackingInputs[order.id] ?? ''}
                                 onChange={(e) =>
                                   setTrackingInputs((prev) => ({ ...prev, [order.id]: e.target.value }))
@@ -135,7 +132,7 @@ export function SellerOrders() {
                                 disabled={updateStatus.isPending}
                                 className="text-xs px-3 py-1.5 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition-colors disabled:opacity-50"
                               >
-                                Giao hàng →
+                                {t('sellerOrders.deliverBtn')}
                               </button>
                             </div>
                           ) : (
@@ -145,7 +142,7 @@ export function SellerOrders() {
                               disabled={updateStatus.isPending}
                               className="px-3 py-1.5 text-xs font-semibold border border-green text-green rounded-lg hover:bg-green hover:text-white transition-all disabled:opacity-50"
                             >
-                              {STATUS_LABELS[nextStatus]}
+                              {t(STATUS_KEY[nextStatus])}
                             </button>
                           )
                         )}
@@ -160,14 +157,14 @@ export function SellerOrders() {
                       {(order.total_amount / 1000).toFixed(0)}K₫
                     </div>
                     <div className="text-[11px] text-ink-mute font-mono">
-                      {new Date(order.created_at).toLocaleDateString('vi-VN')}
+                      {new Date(order.created_at).toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-US')}
                     </div>
                   </div>
                   <Link
                     to={`/seller/orders/${order.id}`}
                     className="flex items-center gap-1 px-3 py-2 border border-border rounded-xl text-sm text-ink-soft hover:border-green hover:text-green transition-colors no-underline flex-shrink-0"
                   >
-                    Chi tiết <ChevronRight size={14} />
+                    {t('sellerOrders.detailsBtn')} <ChevronRight size={14} />
                   </Link>
                 </div>
               </div>

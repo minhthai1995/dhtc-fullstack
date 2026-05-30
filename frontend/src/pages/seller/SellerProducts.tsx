@@ -9,19 +9,21 @@ import type { ProductStatus } from '@/types/api'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/axios'
 import { useToast } from '@/components/ui/Toast'
+import { useT } from '@/i18n/useT'
 
 async function bulkUpdateStock(items: { id: number; stock: number }[]) {
   const { data } = await api.patch<{ updated: number }>('/seller/products/bulk-stock', items)
   return data
 }
 
-function statusBadge(status: ProductStatus) {
-  if (status === 'active') return <Badge variant="active">Hoạt động</Badge>
-  if (status === 'pending') return <Badge variant="pending">Chờ duyệt</Badge>
-  return <Badge variant="cancelled">Ngừng bán</Badge>
+const STATUS_KEY: Record<ProductStatus, string> = {
+  active: 'sellerProducts.statusActive',
+  pending: 'sellerProducts.statusPending',
+  inactive: 'sellerProducts.statusInactive',
 }
 
 export function SellerProducts() {
+  const { t, lang } = useT()
   const { data: products, isLoading } = useSellerProducts()
   const deleteProduct = useDeleteProduct()
   const [deletingId, setDeletingId] = useState<number | null>(null)
@@ -32,6 +34,12 @@ export function SellerProducts() {
 
   const source = products ?? []
   const activeProducts = source.filter((p) => p.status === 'active')
+  const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
+
+  const statusBadge = (status: ProductStatus) => {
+    const variant = status === 'active' ? 'active' : status === 'pending' ? 'pending' : 'cancelled'
+    return <Badge variant={variant}>{t(STATUS_KEY[status])}</Badge>
+  }
 
   const openStockModal = () => {
     const initial: Record<number, number> = {}
@@ -44,10 +52,10 @@ export function SellerProducts() {
     mutationFn: bulkUpdateStock,
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: sellerKeys.products })
-      toast(`Đã cập nhật ${data.updated} sản phẩm`, 'success')
+      toast(t('sellerProducts.updateSuccess').replace('{n}', String(data.updated)), 'success')
       setStockModalOpen(false)
     },
-    onError: () => toast('Cập nhật thất bại', 'error'),
+    onError: () => toast(t('sellerProducts.updateFailed'), 'error'),
   })
 
   const handleSaveBulkStock = () => {
@@ -62,7 +70,7 @@ export function SellerProducts() {
   }
 
   const handleDelete = (id: number) => {
-    if (confirm('Bạn có chắc muốn xoá sản phẩm này?')) {
+    if (confirm(t('sellerProducts.deleteConfirm'))) {
       setDeletingId(id)
       deleteProduct.mutate(id, {
         onSettled: () => setDeletingId(null),
@@ -73,8 +81,10 @@ export function SellerProducts() {
   return (
     <div>
       <PageHeader
-        title="Sản phẩm của tôi"
-        subtitle={`${source.length} sản phẩm · ${activeProducts.length} hoạt động`}
+        title={t('sellerProducts.title')}
+        subtitle={t('sellerProducts.subtitle')
+          .replace('{total}', String(source.length))
+          .replace('{active}', String(activeProducts.length))}
         actions={
           <div className="flex items-center gap-2">
             <button
@@ -82,14 +92,14 @@ export function SellerProducts() {
               className="flex items-center gap-2 px-4 py-2 bg-white border border-border text-ink-soft rounded-xl text-sm font-semibold hover:border-green hover:text-green transition-colors"
             >
               <Layers size={15} />
-              Cập nhật tồn kho
+              {t('sellerProducts.bulkStock')}
             </button>
             <Link
               to="/seller/products/new"
               className="flex items-center gap-2 px-4 py-2 bg-green text-white rounded-xl text-sm font-semibold hover:bg-green-soft transition-colors no-underline"
             >
               <Plus size={15} />
-              Thêm sản phẩm
+              {t('sellerProducts.addProduct')}
             </Link>
           </div>
         }
@@ -105,12 +115,12 @@ export function SellerProducts() {
             <table className="w-full min-w-[700px]">
               <thead>
                 <tr className="bg-cream-dark border-b border-border">
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Sản phẩm</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Giá</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Tồn kho</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Đã bán</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Trạng thái</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Thao tác</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('sellerProducts.thProduct')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('sellerProducts.thPrice')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('sellerProducts.thStock')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('sellerProducts.thSold')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('sellerProducts.thStatus')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('sellerProducts.thActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -136,11 +146,11 @@ export function SellerProducts() {
                       </div>
                     </td>
                     <td className="px-4 py-3 text-sm text-green font-medium" style={{ fontFamily: 'var(--font-display)' }}>
-                      {p.price.toLocaleString('vi-VN')}₫
+                      {p.price.toLocaleString(localeStr)}₫
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-sm font-mono ${p.stock === 0 ? 'text-danger' : 'text-ink-soft'}`}>
-                        {p.stock === 0 ? 'Hết hàng' : p.stock}
+                        {p.stock === 0 ? t('sellerProducts.outOfStock') : p.stock}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-ink-soft font-mono">{p.sold_count}</td>
@@ -150,7 +160,7 @@ export function SellerProducts() {
                         <Link
                           to={`/seller/products/${p.id}/edit`}
                           className="text-ink-mute hover:text-green transition-colors"
-                          title="Chỉnh sửa"
+                          title={t('sellerProducts.editTooltip')}
                         >
                           <Edit size={15} />
                         </Link>
@@ -158,7 +168,7 @@ export function SellerProducts() {
                           onClick={() => handleDelete(p.id)}
                           disabled={deletingId === p.id}
                           className="text-ink-mute hover:text-danger transition-colors disabled:opacity-40"
-                          title="Xoá"
+                          title={t('sellerProducts.deleteTooltip')}
                         >
                           <Trash2 size={15} />
                         </button>
@@ -178,7 +188,7 @@ export function SellerProducts() {
           <div className="bg-white rounded-2xl border border-border w-full max-w-2xl flex flex-col max-h-[80vh]">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border flex-shrink-0">
               <h2 className="text-base font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-                Cập nhật tồn kho hàng loạt
+                {t('sellerProducts.bulkModalTitle')}
               </h2>
               <button
                 onClick={() => setStockModalOpen(false)}
@@ -191,17 +201,17 @@ export function SellerProducts() {
               <table className="w-full">
                 <thead className="sticky top-0 bg-cream-dark">
                   <tr className="border-b border-border">
-                    <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Sản phẩm</th>
-                    <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Giá</th>
-                    <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Tồn kho hiện tại</th>
-                    <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Tồn kho mới</th>
+                    <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('sellerProducts.thProduct')}</th>
+                    <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('sellerProducts.thPrice')}</th>
+                    <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('sellerProducts.thCurrentStock')}</th>
+                    <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('sellerProducts.thNewStock')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {activeProducts.map((p) => (
                     <tr key={p.id} className="border-b border-border last:border-0">
                       <td className="px-4 py-3 text-sm font-medium text-ink max-w-[180px] truncate">{p.name_vi}</td>
-                      <td className="px-4 py-3 text-sm text-green font-mono">{p.price.toLocaleString('vi-VN')}₫</td>
+                      <td className="px-4 py-3 text-sm text-green font-mono">{p.price.toLocaleString(localeStr)}₫</td>
                       <td className="px-4 py-3 text-sm font-mono text-ink-mute">{p.stock}</td>
                       <td className="px-4 py-3">
                         <input
@@ -224,14 +234,14 @@ export function SellerProducts() {
                 onClick={() => setStockModalOpen(false)}
                 className="px-4 py-2 border border-border rounded-xl text-sm font-semibold text-ink-soft hover:border-green hover:text-green transition-colors"
               >
-                Hủy
+                {t('sellerPromotions.cancel')}
               </button>
               <button
                 onClick={handleSaveBulkStock}
                 disabled={bulkStock.isPending}
                 className="px-4 py-2 bg-green text-white rounded-xl text-sm font-semibold hover:bg-green-soft transition-colors disabled:opacity-60"
               >
-                {bulkStock.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+                {bulkStock.isPending ? t('sellerProducts.savingBulk') : t('sellerProducts.saveBulk')}
               </button>
             </div>
           </div>

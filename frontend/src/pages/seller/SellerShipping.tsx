@@ -3,13 +3,14 @@ import { useShippingZones, useCreateShippingZone, useDeleteShippingZone } from '
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Plus, Truck, Trash2, X, Calculator } from 'lucide-react'
 import type { ShippingZoneRead } from '@/types/api'
+import { useT } from '@/i18n/useT'
 
-// DHL calculator mock
 const calcShipping = (weight: number, zone: ShippingZoneRead) => {
   return zone.base_rate + zone.per_kg_rate * weight
 }
 
 export function SellerShipping() {
+  const { t, lang } = useT()
   const { data: zones } = useShippingZones()
   const createZone = useCreateShippingZone()
   const deleteZone = useDeleteShippingZone()
@@ -18,6 +19,7 @@ export function SellerShipping() {
   const [calcZoneId, setCalcZoneId] = useState<number>(1)
 
   const source = zones ?? []
+  const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
 
   const selectedZone = source.find((z) => z.id === calcZoneId)
   const calcResult = calcWeight && selectedZone ? calcShipping(parseFloat(calcWeight), selectedZone) : null
@@ -25,15 +27,15 @@ export function SellerShipping() {
   return (
     <div>
       <PageHeader
-        title="DHL Waybill & Vận chuyển"
-        subtitle={`${source.length} vùng vận chuyển`}
+        title={t('sellerShipping.title')}
+        subtitle={t('sellerShipping.subtitle').replace('{n}', String(source.length))}
         actions={
           <button
             onClick={() => setShowForm(true)}
             className="flex items-center gap-2 px-4 py-2 bg-green text-white rounded-xl text-sm font-semibold hover:bg-green-soft transition-colors"
           >
             <Plus size={15} />
-            Thêm vùng
+            {t('sellerShipping.addZone')}
           </button>
         }
       />
@@ -69,21 +71,21 @@ export function SellerShipping() {
 
               <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-border">
                 <div>
-                  <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">Phí cơ bản</div>
+                  <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">{t('sellerShipping.baseFee')}</div>
                   <div className="text-sm font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>
                     {(zone.base_rate / 1000).toFixed(0)}K₫
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">Phí/kg</div>
+                  <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">{t('sellerShipping.perKgFee')}</div>
                   <div className="text-sm font-semibold text-ink" style={{ fontFamily: 'var(--font-mono)' }}>
                     {(zone.per_kg_rate / 1000).toFixed(0)}K₫
                   </div>
                 </div>
                 <div>
-                  <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">Thời gian</div>
+                  <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">{t('sellerShipping.deliveryTime')}</div>
                   <div className="text-sm font-semibold text-ink">
-                    {zone.estimated_days_min}–{zone.estimated_days_max} ngày
+                    {zone.estimated_days_min}–{zone.estimated_days_max} {t('sellerShipping.daysSuffix')}
                   </div>
                 </div>
               </div>
@@ -97,14 +99,14 @@ export function SellerShipping() {
             <div className="flex items-center gap-2 mb-4">
               <Calculator size={16} className="text-green" />
               <h3 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-                Tính phí vận chuyển
+                {t('sellerShipping.calcTitle')}
               </h3>
             </div>
 
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-semibold text-ink-mute mb-1.5 uppercase tracking-wider">
-                  Vùng đích
+                  {t('sellerShipping.destZone')}
                 </label>
                 <select
                   value={calcZoneId}
@@ -121,7 +123,7 @@ export function SellerShipping() {
 
               <div>
                 <label className="block text-xs font-semibold text-ink-mute mb-1.5 uppercase tracking-wider">
-                  Khối lượng (kg)
+                  {t('sellerShipping.weightKg')}
                 </label>
                 <input
                   type="number"
@@ -139,23 +141,23 @@ export function SellerShipping() {
                   className="rounded-xl p-4 mt-2"
                   style={{ background: 'linear-gradient(135deg, var(--color-green) 0%, var(--color-green-soft) 100%)' }}
                 >
-                  <div className="text-cream/70 text-xs mb-1">Ước tính phí DHL</div>
+                  <div className="text-cream/70 text-xs mb-1">{t('sellerShipping.dhlEstimate')}</div>
                   <div
                     className="text-cream text-2xl font-medium"
                     style={{ fontFamily: 'var(--font-display)' }}
                   >
-                    {calcResult.toLocaleString('vi-VN')}₫
+                    {calcResult.toLocaleString(localeStr)}₫
                   </div>
                   <div className="grid grid-cols-2 gap-2 mt-3">
                     <div className="bg-white/10 rounded-lg p-2">
-                      <div className="text-cream/60 text-[9px] uppercase tracking-wider">Thời gian</div>
+                      <div className="text-cream/60 text-[9px] uppercase tracking-wider">{t('sellerShipping.deliveryTime')}</div>
                       <div className="text-cream text-sm font-semibold mt-0.5">
-                        {selectedZone?.estimated_days_min}–{selectedZone?.estimated_days_max} ngày
+                        {selectedZone?.estimated_days_min}–{selectedZone?.estimated_days_max} {t('sellerShipping.daysSuffix')}
                       </div>
                     </div>
                     <div className="bg-white/10 rounded-lg p-2">
-                      <div className="text-cream/60 text-[9px] uppercase tracking-wider">Dịch vụ</div>
-                      <div className="text-cream text-sm font-semibold mt-0.5">DHL Express</div>
+                      <div className="text-cream/60 text-[9px] uppercase tracking-wider">{t('sellerShipping.serviceLabel')}</div>
+                      <div className="text-cream text-sm font-semibold mt-0.5">{t('sellerShipping.dhlExpress')}</div>
                     </div>
                   </div>
                 </div>
@@ -171,7 +173,7 @@ export function SellerShipping() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between p-5 border-b border-border">
               <h3 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-                Thêm vùng vận chuyển
+                {t('sellerShipping.modalTitle')}
               </h3>
               <button onClick={() => setShowForm(false)} className="text-ink-mute hover:text-ink">
                 <X size={18} />
@@ -193,39 +195,39 @@ export function SellerShipping() {
               }}
             >
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">Tên vùng</label>
-                <input name="zone_name" type="text" required placeholder="Đông Nam Á" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
+                <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerShipping.zoneName')}</label>
+                <input name="zone_name" type="text" required placeholder={t('sellerShipping.zonePlaceholder')} className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">Mã quốc gia (phân cách bởi dấu phẩy)</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerShipping.countriesLabel')}</label>
                 <input name="countries" type="text" required placeholder="SG, MY, TH" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all font-mono" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Phí cơ bản (₫)</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerShipping.baseFeeVnd')}</label>
                   <input name="base_rate" type="number" required min="0" placeholder="250000" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Phí/kg (₫)</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerShipping.perKgFeeVnd')}</label>
                   <input name="per_kg_rate" type="number" required min="0" placeholder="45000" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Ngày tối thiểu</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerShipping.daysMin')}</label>
                   <input name="days_min" type="number" required min="1" placeholder="3" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Ngày tối đa</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerShipping.daysMax')}</label>
                   <input name="days_max" type="number" required min="1" placeholder="7" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
                 </div>
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="submit" disabled={createZone.isPending} className="flex-1 py-2.5 bg-green text-white rounded-xl font-semibold text-sm hover:bg-green-soft disabled:opacity-60 transition-colors">
-                  {createZone.isPending ? 'Đang tạo...' : 'Thêm vùng'}
+                  {createZone.isPending ? t('sellerShipping.creating') : t('sellerShipping.create')}
                 </button>
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2.5 border border-border rounded-xl font-semibold text-sm text-ink-mute hover:border-ink transition-colors">
-                  Huỷ
+                  {t('sellerShipping.cancel')}
                 </button>
               </div>
             </form>

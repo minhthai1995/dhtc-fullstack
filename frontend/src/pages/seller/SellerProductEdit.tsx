@@ -7,6 +7,7 @@ import type { ProductImage } from '@/features/products/types'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Spinner } from '@/components/ui/Spinner'
 import { ArrowLeft, Plus, X } from 'lucide-react'
+import { useT } from '@/i18n/useT'
 
 // Backend stores images as flexible list[dict]; we normalise both legacy
 // `{url}` rows and the new `{id, urls, order}` rows into ProductImage so
@@ -33,6 +34,7 @@ function toProductImages(raw: unknown): ProductImage[] {
 }
 
 export function SellerProductEdit() {
+  const { t } = useT()
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
   const productId = id ? parseInt(id) : 0
@@ -114,13 +116,13 @@ export function SellerProductEdit() {
         { id: parseInt(id!), payload },
         {
           onSuccess: () => navigate('/seller/products'),
-          onError: () => setError('Không thể cập nhật sản phẩm. Vui lòng thử lại.'),
+          onError: () => setError(t('sellerProductEdit.errorUpdate')),
         }
       )
     } else {
       createProduct.mutate(payload, {
         onSuccess: () => navigate('/seller/products'),
-        onError: () => setError('Không thể tạo sản phẩm. Vui lòng thử lại.'),
+        onError: () => setError(t('sellerProductEdit.errorCreate')),
       })
     }
   }
@@ -139,13 +141,13 @@ export function SellerProductEdit() {
           className="inline-flex items-center gap-1.5 text-sm text-ink-mute hover:text-ink no-underline transition-colors"
         >
           <ArrowLeft size={14} />
-          Danh sách sản phẩm
+          {t('sellerProductEdit.backToList')}
         </Link>
       </div>
 
       <PageHeader
-        title={isEdit ? 'Chỉnh sửa sản phẩm' : 'Thêm sản phẩm mới'}
-        subtitle={isEdit ? `Sản phẩm #${id}` : 'Điền đầy đủ thông tin sản phẩm'}
+        title={isEdit ? t('sellerProductEdit.titleEdit') : t('sellerProductEdit.titleNew')}
+        subtitle={isEdit ? t('sellerProductEdit.subtitleEdit').replace('{id}', String(id)) : t('sellerProductEdit.subtitleNew')}
       />
 
       <form onSubmit={handleSubmit}>
@@ -154,7 +156,7 @@ export function SellerProductEdit() {
           <div className="lg:col-span-2 space-y-4">
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Thông tin cơ bản
+                {t('sellerProductEdit.basicInfo')}
               </h3>
               {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
@@ -165,34 +167,34 @@ export function SellerProductEdit() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">
-                    Tên sản phẩm (Tiếng Việt) <span className="text-danger">*</span>
+                    {t('sellerProductEdit.nameVi')} <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
                     value={form.name_vi}
                     onChange={(e) => handleChange('name_vi', e.target.value)}
                     required
-                    placeholder="Cà phê chồn nguyên hạt 500g"
+                    placeholder={t('sellerProductEdit.nameViPlaceholder')}
                     className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">
-                    Tên sản phẩm (English)
+                    {t('sellerProductEdit.nameEn')}
                   </label>
                   <input
                     type="text"
                     value={form.name_en}
                     onChange={(e) => handleChange('name_en', e.target.value)}
-                    placeholder="Weasel Coffee 500g"
+                    placeholder={t('sellerProductEdit.nameEnPlaceholder')}
                     className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-ink-mute mb-1.5">
-                    Ảnh sản phẩm
+                    {t('sellerProductEdit.productImages')}
                   </label>
                   <ImageUploader value={images} onChange={setImages} />
                 </div>
@@ -200,7 +202,7 @@ export function SellerProductEdit() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-ink mb-1.5">
-                      Giá (VND) <span className="text-danger">*</span>
+                      {t('sellerProductEdit.priceVnd')} <span className="text-danger">*</span>
                     </label>
                     <input
                       type="number"
@@ -215,7 +217,7 @@ export function SellerProductEdit() {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-ink mb-1.5">
-                      Số lượng tồn kho <span className="text-danger">*</span>
+                      {t('sellerProductEdit.stock')} <span className="text-danger">*</span>
                     </label>
                     <input
                       type="number"
@@ -230,12 +232,12 @@ export function SellerProductEdit() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Xuất xứ</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProductEdit.origin')}</label>
                   <input
                     type="text"
                     value={form.origin}
                     onChange={(e) => handleChange('origin', e.target.value)}
-                    placeholder="Đắk Lắk, Việt Nam"
+                    placeholder={t('sellerProductEdit.originPlaceholder')}
                     className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                   />
                 </div>
@@ -245,26 +247,26 @@ export function SellerProductEdit() {
             {/* Description */}
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Mô tả sản phẩm
+                {t('sellerProductEdit.descriptionSection')}
               </h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Mô tả (Tiếng Việt)</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProductEdit.descVi')}</label>
                   <textarea
                     value={form.description_vi}
                     onChange={(e) => handleChange('description_vi', e.target.value)}
                     rows={4}
-                    placeholder="Mô tả chi tiết sản phẩm..."
+                    placeholder={t('sellerProductEdit.descViPlaceholder')}
                     className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all resize-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Description (English)</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProductEdit.descEn')}</label>
                   <textarea
                     value={form.description_en}
                     onChange={(e) => handleChange('description_en', e.target.value)}
                     rows={4}
-                    placeholder="Product description in English..."
+                    placeholder={t('sellerProductEdit.descEnPlaceholder')}
                     className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all resize-none"
                   />
                 </div>
@@ -277,7 +279,7 @@ export function SellerProductEdit() {
             {/* Certifications */}
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Chứng nhận
+                {t('sellerProductEdit.certifications')}
               </h3>
               <div className="flex gap-2 mb-3">
                 <input
@@ -285,7 +287,7 @@ export function SellerProductEdit() {
                   value={form.newCert}
                   onChange={(e) => handleChange('newCert', e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCert())}
-                  placeholder="VD: Organic EU"
+                  placeholder={t('sellerProductEdit.certPlaceholder')}
                   className="flex-1 px-3 py-2 border border-border rounded-lg text-sm bg-cream focus:outline-none focus:border-green transition-all"
                 />
                 <button
@@ -312,7 +314,7 @@ export function SellerProductEdit() {
                 </div>
               )}
               <p className="text-[11px] text-ink-mute mt-2">
-                VD: Organic EU, Fairtrade, VietGAP, GlobalG.A.P.
+                {t('sellerProductEdit.certHint')}
               </p>
             </div>
 
@@ -326,19 +328,19 @@ export function SellerProductEdit() {
                 {isPending ? (
                   <>
                     <Spinner className="w-4 h-4 border-2 border-white border-t-transparent" />
-                    Đang lưu...
+                    {t('sellerProductEdit.saving')}
                   </>
                 ) : isEdit ? (
-                  'Cập nhật sản phẩm'
+                  t('sellerProductEdit.updateBtn')
                 ) : (
-                  'Tạo sản phẩm'
+                  t('sellerProductEdit.createBtn')
                 )}
               </button>
               <Link
                 to="/seller/products"
                 className="block w-full py-2.5 text-center text-sm font-semibold text-ink-mute hover:text-ink border border-border rounded-xl transition-colors no-underline"
               >
-                Huỷ
+                {t('sellerProductEdit.cancel')}
               </Link>
             </div>
           </div>

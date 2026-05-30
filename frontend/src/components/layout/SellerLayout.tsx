@@ -18,34 +18,35 @@ import {
 } from 'lucide-react'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useNotificationSocket } from '@/lib/useNotificationSocket'
+import { useT } from '@/i18n/useT'
 
 const navGroups = [
   {
-    label: 'Bán hàng',
+    labelKey: 'sellerLayout.groupSales',
     items: [
-      { label: 'Bảng điều khiển', href: '/seller/dashboard', icon: <LayoutDashboard size={18} /> },
-      { label: 'Sản phẩm của tôi', href: '/seller/products', icon: <Package size={18} />, badge: '8' },
-      { label: 'Đơn hàng', href: '/seller/orders', icon: <ShoppingCart size={18} />, badge: '14' },
-      { label: 'Đổi trả', href: '/seller/returns', icon: <RotateCcw size={18} /> },
-      { label: 'Khuyến mãi', href: '/seller/promotions', icon: <Tag size={18} /> },
+      { labelKey: 'sellerLayout.navDashboard', href: '/seller/dashboard', icon: <LayoutDashboard size={18} /> },
+      { labelKey: 'sellerLayout.navProducts', href: '/seller/products', icon: <Package size={18} />, badge: '8' },
+      { labelKey: 'sellerLayout.navOrders', href: '/seller/orders', icon: <ShoppingCart size={18} />, badge: '14' },
+      { labelKey: 'sellerLayout.navReturns', href: '/seller/returns', icon: <RotateCcw size={18} /> },
+      { labelKey: 'sellerLayout.navPromotions', href: '/seller/promotions', icon: <Tag size={18} /> },
     ],
   },
   {
-    label: 'Tài chính',
+    labelKey: 'sellerLayout.groupFinance',
     items: [
-      { label: 'Ví & rút tiền', href: '/seller/wallet', icon: <Wallet size={18} /> },
+      { labelKey: 'sellerLayout.navWallet', href: '/seller/wallet', icon: <Wallet size={18} /> },
     ],
   },
   {
-    label: 'Vận chuyển',
+    labelKey: 'sellerLayout.groupShipping',
     items: [
-      { label: 'DHL Waybill', href: '/seller/shipping', icon: <Truck size={18} /> },
+      { labelKey: 'sellerLayout.navShipping', href: '/seller/shipping', icon: <Truck size={18} /> },
     ],
   },
   {
-    label: 'Cài đặt',
+    labelKey: 'sellerLayout.groupSettings',
     items: [
-      { label: 'Hồ sơ gian hàng', href: '/seller/profile', icon: <User size={18} /> },
+      { labelKey: 'sellerLayout.navProfile', href: '/seller/profile', icon: <User size={18} /> },
     ],
   },
 ]
@@ -55,6 +56,7 @@ export function SellerLayout() {
   const { data: user } = useCurrentUser()
   const logout = useLogout()
   const navigate = useNavigate()
+  const { t } = useT()
   useNotificationSocket()
 
   const handleLogout = () => {
@@ -82,7 +84,7 @@ export function SellerLayout() {
           <div className="font-bold text-green text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
             DHTC
           </div>
-          <div className="text-ink-mute text-[10px] uppercase tracking-widest">Seller Studio</div>
+          <div className="text-ink-mute text-[10px] uppercase tracking-widest">{t('sellerLayout.brandSubtitle')}</div>
         </div>
         <button
           className="ml-auto lg:hidden text-ink-mute hover:text-ink"
@@ -96,20 +98,20 @@ export function SellerLayout() {
       <div className="mx-3 my-3 p-3 bg-cream rounded-xl border border-border">
         <div className="flex items-center gap-1.5 mb-1.5">
           <Star size={11} className="text-gold fill-gold" />
-          <span className="text-[10px] font-bold text-gold-deep uppercase tracking-wider">Gold Tier</span>
+          <span className="text-[10px] font-bold text-gold-deep uppercase tracking-wider">{t('sellerLayout.goldTier')}</span>
         </div>
         <div className="text-xs font-semibold text-ink leading-tight mb-1">
-          {user?.email ?? 'Seller Store'}
+          {user?.email ?? t('sellerLayout.fallbackStore')}
         </div>
-        <div className="text-[11px] text-ink-mute">Đã xác minh</div>
+        <div className="text-[11px] text-ink-mute">{t('sellerLayout.verified')}</div>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2 px-3">
         {navGroups.map((group) => (
-          <div key={group.label} className="mb-1">
+          <div key={group.labelKey} className="mb-1">
             <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-ink-mute">
-              {group.label}
+              {t(group.labelKey)}
             </div>
             {group.items.map((item) => (
               <NavLink
@@ -126,7 +128,7 @@ export function SellerLayout() {
                 }
               >
                 <span className="flex-shrink-0">{item.icon}</span>
-                <span className="flex-1">{item.label}</span>
+                <span className="flex-1">{t(item.labelKey)}</span>
                 {item.badge && (
                   <span className="text-[10px] bg-green/10 text-green px-1.5 py-0.5 rounded-full font-mono font-bold">
                     {item.badge}
@@ -145,13 +147,13 @@ export function SellerLayout() {
             {user?.email?.[0]?.toUpperCase() ?? 'S'}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-ink text-xs font-semibold truncate">{user?.email ?? 'Seller'}</div>
-            <div className="text-ink-mute text-[10px]">Tiểu thương</div>
+            <div className="text-ink text-xs font-semibold truncate">{user?.email ?? t('sellerLayout.fallbackUser')}</div>
+            <div className="text-ink-mute text-[10px]">{t('sellerLayout.merchant')}</div>
           </div>
           <button
             onClick={handleLogout}
             className="text-ink-mute hover:text-danger transition-colors"
-            title="Đăng xuất"
+            title={t('sellerLayout.logout')}
           >
             <LogOut size={15} />
           </button>
@@ -183,7 +185,7 @@ export function SellerLayout() {
             className="text-green font-semibold text-sm"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            DHTC Seller
+            {t('sellerLayout.mobileTitle')}
           </span>
           <div className="ml-auto">
             <NotificationBell />

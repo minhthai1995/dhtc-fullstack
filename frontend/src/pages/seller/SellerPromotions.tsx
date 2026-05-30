@@ -3,8 +3,10 @@ import { usePromotions, useCreatePromotion, useDeletePromotion } from '@/feature
 import { Badge } from '@/components/ui/Badge'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Plus, Trash2, Tag, X } from 'lucide-react'
+import { useT } from '@/i18n/useT'
 
 export function SellerPromotions() {
+  const { t, lang } = useT()
   const { data: promotions } = usePromotions()
   const createPromotion = useCreatePromotion()
   const deletePromotion = useDeletePromotion()
@@ -44,15 +46,17 @@ export function SellerPromotions() {
   return (
     <div>
       <PageHeader
-        title="Khuyến mãi"
-        subtitle={`${source.length} mã giảm giá · ${source.filter((p) => p.is_active).length} đang hoạt động`}
+        title={t('sellerPromotions.title')}
+        subtitle={t('sellerPromotions.subtitle')
+          .replace('{total}', String(source.length))
+          .replace('{active}', String(source.filter((p) => p.is_active).length))}
         actions={
           <button
             onClick={() => setShowForm(true)}
             className="flex items-center gap-2 px-4 py-2 bg-green text-white rounded-xl text-sm font-semibold hover:bg-green-soft transition-colors"
           >
             <Plus size={15} />
-            Tạo mã khuyến mãi
+            {t('sellerPromotions.createBtn')}
           </button>
         }
       />
@@ -63,7 +67,7 @@ export function SellerPromotions() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
             <div className="flex items-center justify-between p-5 border-b border-border">
               <h3 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-                Tạo mã khuyến mãi
+                {t('sellerPromotions.modalTitle')}
               </h3>
               <button onClick={() => setShowForm(false)} className="text-ink-mute hover:text-ink">
                 <X size={18} />
@@ -71,7 +75,7 @@ export function SellerPromotions() {
             </div>
             <form onSubmit={handleCreate} className="p-5 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">Mã giảm giá</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerPromotions.codeLabel')}</label>
                 <input
                   type="text"
                   value={form.code}
@@ -84,19 +88,19 @@ export function SellerPromotions() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Loại</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerPromotions.typeLabel')}</label>
                   <select
                     value={form.type}
                     onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as 'percentage' | 'fixed' }))}
                     className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                   >
-                    <option value="percentage">Phần trăm (%)</option>
-                    <option value="fixed">Số tiền cố định (₫)</option>
+                    <option value="percentage">{t('sellerPromotions.typePercentage')}</option>
+                    <option value="fixed">{t('sellerPromotions.typeFixed')}</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">
-                    Giá trị {form.type === 'percentage' ? '(%)' : '(₫)'}
+                    {form.type === 'percentage' ? t('sellerPromotions.valueLabelPct') : t('sellerPromotions.valueLabelVnd')}
                   </label>
                   <input
                     type="number"
@@ -112,7 +116,7 @@ export function SellerPromotions() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Đơn hàng tối thiểu (₫)</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerPromotions.minOrderLabel')}</label>
                   <input
                     type="number"
                     value={form.min_order}
@@ -123,12 +127,12 @@ export function SellerPromotions() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Số lần dùng tối đa</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerPromotions.maxUsageLabel')}</label>
                   <input
                     type="number"
                     value={form.max_usage}
                     onChange={(e) => setForm((f) => ({ ...f, max_usage: e.target.value }))}
-                    placeholder="Không giới hạn"
+                    placeholder={t('sellerPromotions.maxUsagePlaceholder')}
                     min="1"
                     className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                   />
@@ -136,7 +140,7 @@ export function SellerPromotions() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">Ngày hết hạn</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerPromotions.expiresLabel')}</label>
                 <input
                   type="date"
                   value={form.expires_at}
@@ -151,14 +155,14 @@ export function SellerPromotions() {
                   disabled={createPromotion.isPending}
                   className="flex-1 py-2.5 bg-green text-white rounded-xl font-semibold text-sm hover:bg-green-soft disabled:opacity-60 transition-colors"
                 >
-                  {createPromotion.isPending ? 'Đang tạo...' : 'Tạo mã'}
+                  {createPromotion.isPending ? t('sellerPromotions.creating') : t('sellerPromotions.createPromo')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
                   className="flex-1 py-2.5 border border-border rounded-xl font-semibold text-sm text-ink-mute hover:border-ink transition-colors"
                 >
-                  Huỷ
+                  {t('sellerPromotions.cancel')}
                 </button>
               </div>
             </form>
@@ -184,7 +188,7 @@ export function SellerPromotions() {
                 <div>
                   <div className="font-bold text-sm font-mono tracking-wider text-ink">{promo.code}</div>
                   <Badge variant={promo.is_active ? 'active' : 'cancelled'} className="text-[9px]">
-                    {promo.is_active ? 'Hoạt động' : 'Tắt'}
+                    {promo.is_active ? t('sellerPromotions.statusActive') : t('sellerPromotions.statusInactive')}
                   </Badge>
                 </div>
               </div>
@@ -200,19 +204,19 @@ export function SellerPromotions() {
               className="text-2xl font-medium text-green mb-3"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              {promo.type === 'percentage' ? `-${promo.value}%` : `-${promo.value.toLocaleString('vi-VN')}₫`}
+              {promo.type === 'percentage' ? `-${promo.value}%` : `-${promo.value.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}₫`}
             </div>
 
             <div className="space-y-1.5 text-xs text-ink-mute">
               {promo.min_order > 0 && (
-                <div>Đơn tối thiểu: <span className="text-ink font-medium">{promo.min_order.toLocaleString('vi-VN')}₫</span></div>
+                <div>{t('sellerPromotions.minOrderShow')} <span className="text-ink font-medium">{promo.min_order.toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US')}₫</span></div>
               )}
               <div>
-                Đã dùng: <span className="text-ink font-medium font-mono">{promo.usage_count}{promo.max_usage ? `/${promo.max_usage}` : ''}</span>
+                {t('sellerPromotions.usedLabel')} <span className="text-ink font-medium font-mono">{promo.usage_count}{promo.max_usage ? `/${promo.max_usage}` : ''}</span>
               </div>
               {promo.expires_at && (
                 <div>
-                  Hết hạn: <span className="text-ink font-medium">{new Date(promo.expires_at).toLocaleDateString('vi-VN')}</span>
+                  {t('sellerPromotions.expiresShow')} <span className="text-ink font-medium">{new Date(promo.expires_at).toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-US')}</span>
                 </div>
               )}
             </div>

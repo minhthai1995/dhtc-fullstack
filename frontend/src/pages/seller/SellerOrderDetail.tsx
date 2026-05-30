@@ -5,15 +5,17 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Spinner } from '@/components/ui/Spinner'
 import { ArrowLeft, Package, MapPin, Phone, Printer } from 'lucide-react'
 import type { OrderDetail, OrderStatus } from '@/types/api'
+import { useT } from '@/i18n/useT'
 
-const STATUS_STEPS: { key: OrderStatus; label: string }[] = [
-  { key: 'pending', label: 'Chờ xác nhận' },
-  { key: 'processing', label: 'Đang xử lý' },
-  { key: 'shipped', label: 'Đang giao' },
-  { key: 'delivered', label: 'Đã giao' },
+const STATUS_STEPS: { key: OrderStatus; labelKey: string }[] = [
+  { key: 'pending', labelKey: 'sellerOrderDetail.stepPending' },
+  { key: 'processing', labelKey: 'sellerOrderDetail.stepProcessing' },
+  { key: 'shipped', labelKey: 'sellerOrderDetail.stepShipped' },
+  { key: 'delivered', labelKey: 'sellerOrderDetail.stepDelivered' },
 ]
 
 export function SellerOrderDetail() {
+  const { t, lang } = useT()
   const { id } = useParams<{ id: string }>()
   const orderId = parseInt(id ?? '0')
   const { data: order, isLoading } = useSellerOrder(orderId)
@@ -32,8 +34,10 @@ export function SellerOrderDetail() {
   }
 
   if (!o) {
-    return <div className="p-8 text-ink-mute text-sm text-center">Chưa có dữ liệu</div>
+    return <div className="p-8 text-ink-mute text-sm text-center">{t('sellerOrderDetail.noData')}</div>
   }
+
+  const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
 
   return (
     <div>
@@ -43,18 +47,18 @@ export function SellerOrderDetail() {
           className="inline-flex items-center gap-1.5 text-sm text-ink-mute hover:text-ink no-underline transition-colors"
         >
           <ArrowLeft size={14} />
-          Danh sách đơn hàng
+          {t('sellerOrderDetail.backToList')}
         </Link>
       </div>
 
       <PageHeader
-        title={`Đơn hàng #ORD-${o.id}`}
-        subtitle={`Đặt lúc ${new Date(o.created_at).toLocaleString('vi-VN')}`}
+        title={t('sellerOrderDetail.title').replace('{id}', String(o.id))}
+        subtitle={t('sellerOrderDetail.subtitle').replace('{time}', new Date(o.created_at).toLocaleString(localeStr))}
         actions={
           <div className="flex gap-2">
             <button className="flex items-center gap-1.5 px-3 py-2 border border-border rounded-xl text-sm text-ink-soft hover:border-green hover:text-green transition-colors">
               <Printer size={14} />
-              In waybill DHL
+              {t('sellerOrderDetail.printWaybill')}
             </button>
             <Badge
               variant={
@@ -67,7 +71,7 @@ export function SellerOrderDetail() {
                   : 'delivered'
               }
             >
-              {STATUS_STEPS.find((s) => s.key === o.status)?.label}
+              {t(STATUS_STEPS.find((s) => s.key === o.status)?.labelKey ?? 'sellerOrderDetail.stepPending')}
             </Badge>
           </div>
         }
@@ -89,7 +93,7 @@ export function SellerOrderDetail() {
                   {i < currentStepIndex ? '✓' : i + 1}
                 </div>
                 <span className="text-[10px] text-ink-mute mt-1 text-center max-w-[60px]">
-                  {step.label}
+                  {t(step.labelKey)}
                 </span>
               </div>
               {i < STATUS_STEPS.length - 1 && (
@@ -109,7 +113,7 @@ export function SellerOrderDetail() {
         <div className="lg:col-span-2 space-y-4">
           <div className="bg-white border border-border rounded-2xl p-5">
             <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Sản phẩm trong đơn
+              {t('sellerOrderDetail.productsInOrder')}
             </h3>
             <div className="space-y-3">
               {o.items.map((item) => (
@@ -118,15 +122,15 @@ export function SellerOrderDetail() {
                     <Package size={20} className="text-ink-mute" />
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-semibold text-ink">Product #{item.product_id}</div>
-                    <div className="text-xs text-ink-mute">Số lượng: {item.quantity}</div>
+                    <div className="text-sm font-semibold text-ink">{t('sellerOrderDetail.productLabel')} #{item.product_id}</div>
+                    <div className="text-xs text-ink-mute">{t('sellerOrderDetail.qtyLabel')}: {item.quantity}</div>
                   </div>
                   <div className="text-right">
                     <div className="text-sm text-ink-mute">
-                      {item.unit_price.toLocaleString('vi-VN')}₫ × {item.quantity}
+                      {item.unit_price.toLocaleString(localeStr)}₫ × {item.quantity}
                     </div>
                     <div className="text-sm font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>
-                      {(item.unit_price * item.quantity).toLocaleString('vi-VN')}₫
+                      {(item.unit_price * item.quantity).toLocaleString(localeStr)}₫
                     </div>
                   </div>
                 </div>
@@ -135,20 +139,20 @@ export function SellerOrderDetail() {
 
             <div className="mt-4 pt-4 border-t border-border">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-ink-mute">Tạm tính</span>
-                <span className="text-sm text-ink">{o.total_amount.toLocaleString('vi-VN')}₫</span>
+                <span className="text-sm text-ink-mute">{t('sellerOrderDetail.subtotal')}</span>
+                <span className="text-sm text-ink">{o.total_amount.toLocaleString(localeStr)}₫</span>
               </div>
               <div className="flex justify-between items-center mt-1">
-                <span className="text-sm text-ink-mute">Phí vận chuyển</span>
-                <span className="text-sm text-ink">DHL Express</span>
+                <span className="text-sm text-ink-mute">{t('sellerOrderDetail.shippingFee')}</span>
+                <span className="text-sm text-ink">{t('sellerOrderDetail.dhlExpress')}</span>
               </div>
               <div className="flex justify-between items-center mt-2 pt-2 border-t border-border">
-                <span className="font-semibold text-ink">Tổng cộng</span>
+                <span className="font-semibold text-ink">{t('sellerOrderDetail.total')}</span>
                 <span
                   className="font-semibold text-lg text-green"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  {o.total_amount.toLocaleString('vi-VN')}₫
+                  {o.total_amount.toLocaleString(localeStr)}₫
                 </span>
               </div>
             </div>
@@ -158,7 +162,7 @@ export function SellerOrderDetail() {
           {o.status === 'pending' && (
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Xác nhận đơn hàng
+                {t('sellerOrderDetail.confirmHeader')}
               </h3>
               <div className="flex gap-3">
                 <button
@@ -168,14 +172,14 @@ export function SellerOrderDetail() {
                   disabled={updateStatus.isPending}
                   className="flex-1 py-2.5 bg-green text-white rounded-xl font-semibold text-sm hover:bg-green-soft disabled:opacity-60 transition-colors"
                 >
-                  Xác nhận & Xử lý đơn
+                  {t('sellerOrderDetail.confirmAndProcess')}
                 </button>
                 <button
                   onClick={() => updateStatus.mutate({ id: o.id, status: 'cancelled' })}
                   disabled={updateStatus.isPending}
                   className="px-4 py-2.5 bg-red-50 text-danger rounded-xl font-semibold text-sm hover:bg-red-100 disabled:opacity-60 transition-colors"
                 >
-                  Huỷ đơn
+                  {t('sellerOrderDetail.cancelOrder')}
                 </button>
               </div>
             </div>
@@ -184,19 +188,19 @@ export function SellerOrderDetail() {
           {o.status === 'processing' && (
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                In vận đơn & Giao hàng
+                {t('sellerOrderDetail.printDeliverHeader')}
               </h3>
               <div className="flex gap-3">
                 <button className="flex-1 py-2.5 bg-green text-white rounded-xl font-semibold text-sm hover:bg-green-soft transition-colors flex items-center justify-center gap-2">
                   <Printer size={15} />
-                  In DHL Waybill
+                  {t('sellerOrderDetail.printDhl')}
                 </button>
                 <button
                   onClick={() => updateStatus.mutate({ id: o.id, status: 'shipped' })}
                   disabled={updateStatus.isPending}
                   className="flex-1 py-2.5 border border-green text-green rounded-xl font-semibold text-sm hover:bg-green/5 disabled:opacity-60 transition-colors"
                 >
-                  Đánh dấu đã giao DHL
+                  {t('sellerOrderDetail.markShipped')}
                 </button>
               </div>
             </div>
@@ -207,7 +211,7 @@ export function SellerOrderDetail() {
         <div className="space-y-4">
           <div className="bg-white border border-border rounded-2xl p-5">
             <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Thông tin giao hàng
+              {t('sellerOrderDetail.shippingInfo')}
             </h3>
             <div className="space-y-3">
               <div className="flex items-start gap-2">
@@ -225,7 +229,7 @@ export function SellerOrderDetail() {
             </div>
             {o.tracking_number && (
               <div className="mt-3 pt-3 border-t border-border">
-                <div className="text-xs text-ink-mute mb-1">Mã tracking</div>
+                <div className="text-xs text-ink-mute mb-1">{t('sellerOrderDetail.trackingCode')}</div>
                 <div className="text-sm font-mono font-semibold text-green">{o.tracking_number}</div>
               </div>
             )}

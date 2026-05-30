@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Wallet, Download, CreditCard, Clock, X } from 'lucide-react'
 import type { WalletTransactionRead } from '@/types/api'
+import { useT } from '@/i18n/useT'
 
 
 function txTypeBadge(type: WalletTransactionRead['type']) {
@@ -17,6 +18,7 @@ function txTypeBadge(type: WalletTransactionRead['type']) {
 }
 
 export function SellerWallet() {
+  const { t, lang } = useT()
   const { data: wallet } = useWallet()
   const { data: transactions } = useWalletTransactions()
   const requestWithdrawal = useRequestWithdrawal()
@@ -27,6 +29,7 @@ export function SellerWallet() {
 
   const w = wallet ?? { available_balance: 0, pending_balance: 0, total_withdrawn: 0 }
   const txList = transactions ?? []
+  const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
 
   const handleWithdraw = (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,15 +47,15 @@ export function SellerWallet() {
   return (
     <div>
       <PageHeader
-        title="Ví của tôi"
-        subtitle="Số dư · Lịch sử giao dịch · Rút tiền"
+        title={t('sellerWallet.title')}
+        subtitle={t('sellerWallet.subtitle')}
         actions={
           <button
             onClick={() => setShowWithdraw(true)}
             className="flex items-center gap-2 px-4 py-2 bg-green text-white rounded-xl text-sm font-semibold hover:bg-green-soft transition-colors"
           >
             <Download size={15} />
-            Yêu cầu rút tiền
+            {t('sellerWallet.requestWithdrawal')}
           </button>
         }
       />
@@ -65,39 +68,39 @@ export function SellerWallet() {
           style={{ background: 'linear-gradient(135deg, var(--color-green) 0%, var(--color-green-soft) 100%)' }}
         >
           <div className="text-[11px] font-bold uppercase tracking-widest" style={{ color: 'var(--color-gold)' }}>
-            Khả dụng
+            {t('sellerWallet.available')}
           </div>
           <div
             className="text-4xl font-medium mt-2"
             style={{ fontFamily: 'var(--font-display)', color: 'var(--color-cream)' }}
           >
-            {(w.available_balance ?? 0).toLocaleString('vi-VN')}₫
+            {(w.available_balance ?? 0).toLocaleString(localeStr)}₫
           </div>
           <div className="text-xs mt-1.5" style={{ color: 'rgba(245,239,224,0.7)' }}>
-            Sẵn sàng rút về VCB
+            {t('sellerWallet.readyVcb')}
           </div>
         </div>
 
         <div className="bg-white border border-border rounded-2xl p-6">
-          <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-2">Đang xử lý T+3</div>
+          <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-2">{t('sellerWallet.pendingT3')}</div>
           <div
             className="text-3xl font-medium"
             style={{ fontFamily: 'var(--font-display)', color: 'var(--color-gold)' }}
           >
             ₫{((w.pending_balance ?? 0) / 1000000).toFixed(2)}<small className="text-lg">M</small>
           </div>
-          <div className="text-xs text-ink-mute mt-1">14 đơn đang chốt</div>
+          <div className="text-xs text-ink-mute mt-1">{t('sellerWallet.ordersFinalizing')}</div>
         </div>
 
         <div className="bg-white border border-border rounded-2xl p-6">
-          <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-2">Đã rút tháng này</div>
+          <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-2">{t('sellerWallet.withdrawnMonth')}</div>
           <div
             className="text-3xl font-medium text-ink"
             style={{ fontFamily: 'var(--font-display)' }}
           >
             ₫{((w.total_withdrawn ?? 0) / 1000000).toFixed(1)}<small className="text-lg">M</small>
           </div>
-          <div className="text-xs text-green mt-1">▲ 4 lần rút</div>
+          <div className="text-xs text-green mt-1">{t('sellerWallet.withdrawalsCount')}</div>
         </div>
       </div>
 
@@ -107,37 +110,37 @@ export function SellerWallet() {
           <div className="bg-white border border-border rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between p-5 border-b border-border">
               <h3 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-                Lịch sử giao dịch
+                {t('sellerWallet.transactionHistory')}
               </h3>
               <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-ink-mute border border-border rounded-lg hover:border-green hover:text-green transition-colors">
                 <Download size={12} />
-                Xuất CSV
+                {t('sellerWallet.exportCsv')}
               </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border bg-cream">
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-ink-mute">Date</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-ink-mute">Mô tả</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-ink-mute">Loại</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-ink-mute">Số tiền</th>
-                    <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-ink-mute">Số dư</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-ink-mute">{t('sellerWallet.thDate')}</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-ink-mute">{t('sellerWallet.thDescription')}</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-ink-mute">{t('sellerWallet.thType')}</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-ink-mute">{t('sellerWallet.thAmount')}</th>
+                    <th className="px-4 py-3 text-right text-[10px] font-semibold uppercase tracking-wider text-ink-mute">{t('sellerWallet.thBalance')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {txList.map((tx) => (
                     <tr key={tx.id} className="hover:bg-cream/50 transition-colors">
                       <td className="px-4 py-3 text-[11px] font-mono text-ink-mute whitespace-nowrap">
-                        {new Date(tx.created_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
+                        {new Date(tx.created_at).toLocaleString(localeStr, { dateStyle: 'short', timeStyle: 'short' })}
                       </td>
                       <td className="px-4 py-3 text-xs text-ink max-w-[200px] truncate">{tx.description}</td>
                       <td className="px-4 py-3">{txTypeBadge(tx.type)}</td>
                       <td className={`px-4 py-3 text-sm font-semibold font-mono text-right ${tx.amount > 0 ? 'text-green' : 'text-danger'}`}>
-                        {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString('vi-VN')}₫
+                        {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString(localeStr)}₫
                       </td>
                       <td className="px-4 py-3 text-sm font-mono text-right text-ink-mute">
-                        {tx.balance_after.toLocaleString('vi-VN')}₫
+                        {tx.balance_after.toLocaleString(localeStr)}₫
                       </td>
                     </tr>
                   ))}
@@ -152,14 +155,14 @@ export function SellerWallet() {
           {/* Receiving account */}
           <div className="bg-white border border-border rounded-2xl p-5">
             <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Tài khoản nhận
+              {t('sellerWallet.receivingAccount')}
             </h3>
             <div
               className="p-4 bg-cream rounded-xl"
               style={{ borderLeft: '3px solid var(--color-gold)' }}
             >
               <div className="text-[11px] font-bold uppercase tracking-widest mb-1.5" style={{ color: 'var(--color-gold-deep)' }}>
-                Tài khoản chính
+                {t('sellerWallet.mainAccount')}
               </div>
               <div className="text-base font-medium mb-1" style={{ fontFamily: 'var(--font-display)' }}>Vietcombank</div>
               <div className="text-sm font-mono text-ink">0011 0023 9876</div>
@@ -167,7 +170,7 @@ export function SellerWallet() {
             </div>
             <button className="w-full mt-3 py-2 text-xs font-semibold text-ink-mute border border-border rounded-xl hover:border-green hover:text-green transition-colors flex items-center justify-center gap-1.5">
               <CreditCard size={12} />
-              + Thêm tài khoản
+              {t('sellerWallet.addAccount')}
             </button>
           </div>
 
@@ -176,28 +179,28 @@ export function SellerWallet() {
             <div className="flex items-center gap-2 mb-4">
               <Clock size={15} className="text-green" />
               <h3 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-                Chu kỳ thanh toán
+                {t('sellerWallet.payoutCycle')}
               </h3>
             </div>
             <div className="space-y-3 text-sm">
               <div>
-                <div className="font-semibold text-ink">T+3 tự động</div>
+                <div className="font-semibold text-ink">{t('sellerWallet.t3Auto')}</div>
                 <div className="text-xs text-ink-mute mt-0.5">
-                  Mỗi đơn đã giao thành công sẽ được giải ngân vào ví khả dụng sau 3 ngày làm việc.
+                  {t('sellerWallet.t3Desc')}
                 </div>
               </div>
               <div className="pt-2 border-t border-border space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-ink-mute text-xs">Rút tối thiểu</span>
+                  <span className="text-ink-mute text-xs">{t('sellerWallet.minWithdraw')}</span>
                   <span className="font-semibold text-xs font-mono">₫500,000</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-ink-mute text-xs">Thời gian rút</span>
-                  <span className="font-semibold text-xs">2–4 giờ làm việc</span>
+                  <span className="text-ink-mute text-xs">{t('sellerWallet.withdrawTime')}</span>
+                  <span className="font-semibold text-xs">{t('sellerWallet.withdrawHours')}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-ink-mute text-xs">Phí rút</span>
-                  <span className="font-semibold text-xs text-green">Miễn phí</span>
+                  <span className="text-ink-mute text-xs">{t('sellerWallet.withdrawFee')}</span>
+                  <span className="font-semibold text-xs text-green">{t('sellerWallet.feeFree')}</span>
                 </div>
               </div>
             </div>
@@ -213,7 +216,7 @@ export function SellerWallet() {
               <div className="flex items-center gap-2">
                 <Wallet size={16} className="text-green" />
                 <h3 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-                  Yêu cầu rút tiền
+                  {t('sellerWallet.modalTitle')}
                 </h3>
               </div>
               <button onClick={() => setShowWithdraw(false)} className="text-ink-mute hover:text-ink">
@@ -222,15 +225,15 @@ export function SellerWallet() {
             </div>
             <form onSubmit={handleWithdraw} className="p-5 space-y-4">
               <div className="p-4 bg-green/5 rounded-xl border border-green/20">
-                <div className="text-xs text-ink-mute mb-1">Số dư khả dụng</div>
+                <div className="text-xs text-ink-mute mb-1">{t('sellerWallet.availableBalanceLabel')}</div>
                 <div className="text-lg font-semibold text-green font-mono">
-                  {(w.available_balance ?? 0).toLocaleString('vi-VN')}₫
+                  {(w.available_balance ?? 0).toLocaleString(localeStr)}₫
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-ink mb-1.5">
-                  Số tiền rút (₫) <span className="text-danger">*</span>
+                  {t('sellerWallet.amountLabel')} <span className="text-danger">*</span>
                 </label>
                 <input
                   type="number"
@@ -243,12 +246,12 @@ export function SellerWallet() {
                   placeholder="500000"
                   className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all font-mono"
                 />
-                <p className="text-xs text-ink-mute mt-1">Tối thiểu ₫500,000</p>
+                <p className="text-xs text-ink-mute mt-1">{t('sellerWallet.amountHint')}</p>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-ink mb-1.5">
-                  Ngân hàng <span className="text-danger">*</span>
+                  {t('sellerWallet.bankLabel')} <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
@@ -262,7 +265,7 @@ export function SellerWallet() {
 
               <div>
                 <label className="block text-sm font-semibold text-ink mb-1.5">
-                  Số tài khoản <span className="text-danger">*</span>
+                  {t('sellerWallet.accountLabel')} <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
@@ -280,14 +283,14 @@ export function SellerWallet() {
                   disabled={requestWithdrawal.isPending}
                   className="flex-1 py-2.5 bg-green text-white rounded-xl font-semibold text-sm hover:bg-green-soft disabled:opacity-60 transition-colors"
                 >
-                  {requestWithdrawal.isPending ? 'Đang xử lý...' : 'Xác nhận rút tiền'}
+                  {requestWithdrawal.isPending ? t('sellerWallet.processing') : t('sellerWallet.confirmBtn')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowWithdraw(false)}
                   className="flex-1 py-2.5 border border-border rounded-xl font-semibold text-sm text-ink-mute hover:border-ink transition-colors"
                 >
-                  Huỷ
+                  {t('sellerWallet.cancel')}
                 </button>
               </div>
             </form>
