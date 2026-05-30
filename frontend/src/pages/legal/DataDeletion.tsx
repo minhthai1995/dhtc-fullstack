@@ -1,12 +1,9 @@
 import { LegalLayout } from './LegalLayout'
+import { useT } from '@/i18n/useT'
 
-export function DataDeletion() {
+function ViBody() {
   return (
-    <LegalLayout
-      title="Hướng dẫn xoá dữ liệu"
-      subtitle="Bạn có quyền yêu cầu Chợ Đêm Sơn Trà xoá toàn bộ dữ liệu cá nhân của mình bất cứ lúc nào. Trang này hướng dẫn cách thực hiện — đáp ứng yêu cầu của Meta App Review và Luật An toàn thông tin mạng Việt Nam."
-      effectiveDate="25/05/2026"
-    >
+    <>
       <h2>1. Có 3 cách để xoá dữ liệu</h2>
 
       <h3>Cách 1: Tự xoá trong tài khoản (Self-service)</h3>
@@ -152,42 +149,174 @@ export function DataDeletion() {
           Trà, thành phố Đà Nẵng, Việt Nam.
         </li>
       </ul>
+    </>
+  )
+}
 
-      <hr />
+function EnBody() {
+  return (
+    <>
+      <h2>1. Three ways to delete your data</h2>
 
-      <h2>English summary (for Meta App Review)</h2>
+      <h3>Method 1: Self-service deletion in your account</h3>
+      <ol>
+        <li>
+          Log in at <a href="/login">dhtcdanang.com/login</a>.
+        </li>
+        <li>
+          Go to <strong>Account → Settings → Delete account</strong>.
+        </li>
+        <li>Enter a deletion reason (optional) and confirm with your password / email OTP.</li>
+        <li>
+          The system deactivates your account immediately and fully purges data within{' '}
+          <strong>30 days</strong>.
+        </li>
+      </ol>
+
+      <h3>Method 2: Email request</h3>
       <p>
-        Users can request deletion of their personal data at any time through 3 methods:
+        If you cannot log in (lost password, lost Facebook access...), email{' '}
+        <a href="mailto:privacy@dhtcdanang.com">privacy@dhtcdanang.com</a> with the subject{' '}
+        <strong>"Data Deletion Request"</strong> and include:
+      </p>
+      <ul>
+        <li>The full name registered on our system.</li>
+        <li>The email or phone number used for registration.</li>
+        <li>
+          If you logged in with Facebook: provide your Facebook App-scoped User ID (see Section 4
+          below to find it).
+        </li>
+        <li>
+          Reason for deletion (optional — helps us improve our service).
+        </li>
+      </ul>
+      <p>
+        We verify identity within <strong>3 business days</strong> and purge data within{' '}
+        <strong>30 days</strong> of successful verification.
+      </p>
+
+      <h3>Method 3: Remove the Chợ Đêm Sơn Trà app from Facebook</h3>
+      <p>
+        If you logged in with Facebook and only want to disconnect (without deleting your main
+        account):
       </p>
       <ol>
         <li>
-          <strong>Self-service:</strong> Log in at <a href="/login">dhtcdanang.com/login</a> →
-          Account → Settings → Delete account.
-        </li>
-        <li>
-          <strong>Email request:</strong> Send email to{' '}
-          <a href="mailto:privacy@dhtcdanang.com">privacy@dhtcdanang.com</a> with subject "Data
-          Deletion Request" and verification details.
-        </li>
-        <li>
-          <strong>Facebook disconnect:</strong> Remove "Chợ Đêm Sơn Trà" app from{' '}
+          Go to{' '}
           <a href="https://www.facebook.com/settings?tab=business_tools">
-            Facebook Settings → Apps and Websites
+            Facebook → Settings & Privacy → Settings → Apps and Websites
           </a>
-          . Our server will receive the Data Deletion Callback and automatically purge all
-          Facebook-derived data (app-scoped User ID, profile picture, locale, OAuth payload).
+          .
         </li>
+        <li>Find the <strong>"Chợ Đêm Sơn Trà"</strong> app under Active.</li>
+        <li>Click <strong>"Remove"</strong>.</li>
       </ol>
       <p>
-        <strong>SLA:</strong> Identity verification within 3 business days; full data purge within 30
-        days from verification. Confirmation email sent upon completion with a unique Deletion
-        Confirmation Code.
+        Facebook will send a <strong>Data Deletion Callback</strong> to our server. On receipt, we
+        automatically:
       </p>
+      <ul>
+        <li>Disable the Facebook Login link to your account.</li>
+        <li>Delete the Facebook App-scoped User ID, profile picture URL, locale, raw OAuth payload.</li>
+        <li>Retain your email/name if you have ever placed an order (required for invoicing).</li>
+        <li>
+          If you want full account deletion (including order history), please use Method 1 or
+          Method 2.
+        </li>
+      </ul>
+
+      <h2>2. What data is deleted?</h2>
+      <ul>
+        <li>Account info: email, hashed password, full name, phone, role.</li>
+        <li>Facebook profile: App-scoped User ID, profile picture, locale, raw OAuth payload.</li>
+        <li>Messenger profile: Page-scoped ID (PSID), message history.</li>
+        <li>Wishlist, cart, product reviews.</li>
+        <li>Visitor ID, session logs, page-view history.</li>
+        <li>Merchant profile (if any): shop name, description, product images.</li>
+      </ul>
+
+      <h2>3. What data is NOT deleted immediately (kept by law)?</h2>
       <p>
-        <strong>Retention exception:</strong> Tax invoices and financial transaction logs are
-        retained for 10 years per Vietnamese Accounting Law (Article 41) and Circular 78/2021/TT-BTC,
-        with personal identifiers anonymized.
+        Under Vietnamese Accounting Law (Article 41) and Circular 78/2021/TT-BTC on e-invoicing,
+        some data is retained in minimal form (used only for tax and audit purposes):
       </p>
+      <ul>
+        <li>
+          E-invoices of completed paid orders — retained <strong>10 years</strong>.
+        </li>
+        <li>
+          Financial transaction logs (amount, date, transaction ID) — retained{' '}
+          <strong>10 years</strong>.
+        </li>
+      </ul>
+      <p>
+        On these records, personal identifiers (email, phone) are <strong>anonymized</strong>{' '}
+        (replaced with hashed identifiers) once you request deletion.
+      </p>
+
+      <h2>4. How to find your Facebook App-scoped User ID</h2>
+      <p>
+        If you need to provide your App-scoped User ID when emailing a deletion request (Method 2):
+      </p>
+      <ol>
+        <li>Log in to Facebook at <a href="https://www.facebook.com">facebook.com</a>.</li>
+        <li>
+          Go to{' '}
+          <a href="https://www.facebook.com/settings?tab=business_tools">
+            Settings → Apps and Websites
+          </a>
+          .
+        </li>
+        <li>
+          Click the <strong>"Chợ Đêm Sơn Trà"</strong> app.
+        </li>
+        <li>
+          Under <strong>"User ID for this app"</strong>, copy the long numeric string (e.g.{' '}
+          <code>10221234567890123</code>).
+        </li>
+      </ol>
+
+      <h2>5. Confirmation of completion</h2>
+      <p>
+        Once deletion is complete, we email a confirmation to your registered address, including:
+      </p>
+      <ul>
+        <li><strong>Deletion Confirmation Code</strong>.</li>
+        <li>
+          <strong>Status URL</strong> for you to check deletion status at any time:{' '}
+          <code>https://dhtcdanang.com/data-deletion/status/&lt;code&gt;</code>.
+        </li>
+        <li>A list of deleted data types and data types retained by law.</li>
+      </ul>
+
+      <h2>6. Contact</h2>
+      <ul>
+        <li>
+          <strong>Data deletion request email:</strong>{' '}
+          <a href="mailto:privacy@dhtcdanang.com">privacy@dhtcdanang.com</a>
+        </li>
+        <li>
+          <strong>Support hotline:</strong> +84 236 3 888 666 (business hours, GMT+7)
+        </li>
+        <li>
+          <strong>Address:</strong> Chợ Đêm Sơn Trà, Mai Hắc Đế street, An Hải Tây ward, Sơn Trà
+          district, Đà Nẵng city, Vietnam.
+        </li>
+      </ul>
+    </>
+  )
+}
+
+export function DataDeletion() {
+  const { t, lang } = useT()
+  const effectiveDate = lang === 'en' ? 'May 25, 2026' : '25/05/2026'
+  return (
+    <LegalLayout
+      title={t('legalPage.dataDeletion.title')}
+      subtitle={t('legalPage.dataDeletion.subtitle')}
+      effectiveDate={effectiveDate}
+    >
+      {lang === 'en' ? <EnBody /> : <ViBody />}
     </LegalLayout>
   )
 }

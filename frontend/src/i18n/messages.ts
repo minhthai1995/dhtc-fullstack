@@ -701,6 +701,31 @@ const vi: Dict = {
   'account.pwMismatch': 'Mật khẩu xác nhận không khớp',
   'account.pwChanging': 'Đang đổi...',
   'account.pwChange': 'Đổi mật khẩu',
+
+  // Legal layout shell (used by Privacy / Terms / DataDeletion pages)
+  'legalLayout.backHome': '← Về trang chủ',
+  'legalLayout.eyebrow': 'Tài liệu pháp lý · Legal document',
+  'legalLayout.effectiveFrom': 'Hiệu lực từ · Effective from',
+  'legalLayout.footerHome': 'Trang chủ',
+  'legalLayout.footerPrivacy': 'Chính sách bảo mật',
+  'legalLayout.footerTerms': 'Điều khoản',
+  'legalLayout.footerDataDeletion': 'Xoá dữ liệu',
+  'legalLayout.copyright': '© 2026 Chợ Đêm Sơn Trà · Đà Nẵng',
+
+  // Legal pages — Privacy Policy (title + subtitle)
+  'legalPage.privacy.title': 'Chính sách bảo mật',
+  'legalPage.privacy.subtitle':
+    'Chúng tôi tôn trọng quyền riêng tư của bạn. Tài liệu này giải thích cách Chợ Đêm Sơn Trà thu thập, sử dụng, lưu trữ và bảo vệ dữ liệu cá nhân khi bạn sử dụng dịch vụ — bao gồm cả tích hợp Facebook Login và Messenger.',
+
+  // Legal pages — Terms of Service (title + subtitle)
+  'legalPage.terms.title': 'Điều khoản sử dụng',
+  'legalPage.terms.subtitle':
+    'Hợp đồng pháp lý giữa bạn và Chợ Đêm Sơn Trà khi sử dụng nền tảng — bao gồm vai trò khách hàng, tiểu thương, thanh toán, vận chuyển, đổi trả và giải quyết tranh chấp.',
+
+  // Legal pages — Data Deletion (title + subtitle)
+  'legalPage.dataDeletion.title': 'Hướng dẫn xoá dữ liệu',
+  'legalPage.dataDeletion.subtitle':
+    'Bạn có quyền yêu cầu Chợ Đêm Sơn Trà xoá toàn bộ dữ liệu cá nhân của mình bất cứ lúc nào. Trang này hướng dẫn cách thực hiện — đáp ứng yêu cầu của Meta App Review và Luật An toàn thông tin mạng Việt Nam.',
 }
 
 const en: Dict = {
@@ -1397,6 +1422,31 @@ const en: Dict = {
   'account.pwMismatch': 'Passwords do not match',
   'account.pwChanging': 'Changing...',
   'account.pwChange': 'Change password',
+
+  // Legal layout shell (used by Privacy / Terms / DataDeletion pages)
+  'legalLayout.backHome': '← Back to home',
+  'legalLayout.eyebrow': 'Legal document · Tài liệu pháp lý',
+  'legalLayout.effectiveFrom': 'Effective from · Hiệu lực từ',
+  'legalLayout.footerHome': 'Home',
+  'legalLayout.footerPrivacy': 'Privacy policy',
+  'legalLayout.footerTerms': 'Terms',
+  'legalLayout.footerDataDeletion': 'Data deletion',
+  'legalLayout.copyright': '© 2026 Chợ Đêm Sơn Trà · Đà Nẵng',
+
+  // Legal pages — Privacy Policy (title + subtitle)
+  'legalPage.privacy.title': 'Privacy Policy',
+  'legalPage.privacy.subtitle':
+    'We respect your privacy. This document explains how Chợ Đêm Sơn Trà collects, uses, stores, and protects personal data when you use our services — including Facebook Login and Messenger integrations.',
+
+  // Legal pages — Terms of Service (title + subtitle)
+  'legalPage.terms.title': 'Terms of Service',
+  'legalPage.terms.subtitle':
+    'The legal agreement between you and Chợ Đêm Sơn Trà when using the platform — covering customer and merchant roles, payment, shipping, returns, and dispute resolution.',
+
+  // Legal pages — Data Deletion (title + subtitle)
+  'legalPage.dataDeletion.title': 'Data deletion instructions',
+  'legalPage.dataDeletion.subtitle':
+    'You have the right to request that Chợ Đêm Sơn Trà delete all of your personal data at any time. This page explains how — meeting Meta App Review requirements and Vietnam Cybersecurity Law.',
 }
 
 export const messages: Record<Lang, Dict> = { vi, en }

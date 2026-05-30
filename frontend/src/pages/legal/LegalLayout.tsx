@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
+import { useT } from '@/i18n/useT'
 
 interface LegalLayoutProps {
   title: string
@@ -9,6 +10,7 @@ interface LegalLayoutProps {
 }
 
 export function LegalLayout({ title, subtitle, effectiveDate, children }: LegalLayoutProps) {
+  const { t } = useT()
   return (
     <div
       className="min-h-screen relative overflow-x-hidden"
@@ -38,7 +40,7 @@ export function LegalLayout({ title, subtitle, effectiveDate, children }: LegalL
             to="/"
             className="text-sm font-semibold text-ink-soft hover:text-ink no-underline transition-colors"
           >
-            ← Về trang chủ
+            {t('legalLayout.backHome')}
           </Link>
         </header>
 
@@ -49,7 +51,7 @@ export function LegalLayout({ title, subtitle, effectiveDate, children }: LegalL
               className="text-[11px] text-green font-bold uppercase tracking-[0.2em]"
               style={{ fontFamily: 'var(--font-mono)' }}
             >
-              Tài liệu pháp lý · Legal document
+              {t('legalLayout.eyebrow')}
             </span>
           </div>
           <h1
@@ -70,7 +72,7 @@ export function LegalLayout({ title, subtitle, effectiveDate, children }: LegalL
             className="text-[12px] text-ink-mute uppercase tracking-[0.1em] font-semibold mb-10"
             style={{ fontFamily: 'var(--font-mono)' }}
           >
-            Hiệu lực từ · Effective from {effectiveDate}
+            {t('legalLayout.effectiveFrom')} {effectiveDate}
           </p>
 
           <div className="legal-prose text-ink-soft leading-relaxed">{children}</div>
@@ -79,20 +81,20 @@ export function LegalLayout({ title, subtitle, effectiveDate, children }: LegalL
         <footer className="mt-16 pt-6 border-t border-border flex flex-col sm:flex-row sm:justify-between gap-4 text-[12px] text-ink-mute">
           <div className="flex flex-wrap gap-x-4 gap-y-2">
             <Link to="/" className="hover:text-ink no-underline">
-              Trang chủ
+              {t('legalLayout.footerHome')}
             </Link>
             <Link to="/privacy" className="hover:text-ink no-underline">
-              Chính sách bảo mật
+              {t('legalLayout.footerPrivacy')}
             </Link>
             <Link to="/terms" className="hover:text-ink no-underline">
-              Điều khoản
+              {t('legalLayout.footerTerms')}
             </Link>
             <Link to="/data-deletion" className="hover:text-ink no-underline">
-              Xoá dữ liệu
+              {t('legalLayout.footerDataDeletion')}
             </Link>
           </div>
           <span style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.05em' }}>
-            © 2026 Chợ Đêm Sơn Trà · Đà Nẵng
+            {t('legalLayout.copyright')}
           </span>
         </footer>
       </div>

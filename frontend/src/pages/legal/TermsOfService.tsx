@@ -1,12 +1,9 @@
 import { LegalLayout } from './LegalLayout'
+import { useT } from '@/i18n/useT'
 
-export function TermsOfService() {
+function ViBody() {
   return (
-    <LegalLayout
-      title="Điều khoản sử dụng"
-      subtitle="Điều khoản này là hợp đồng pháp lý giữa bạn và Chợ Đêm Sơn Trà khi sử dụng dịch vụ tại dhtcdanang.com. Vui lòng đọc kỹ trước khi đăng ký."
-      effectiveDate="25/05/2026"
-    >
+    <>
       <h2>1. Chấp nhận điều khoản</h2>
       <p>
         Bằng việc tạo tài khoản, đăng nhập, hoặc sử dụng bất kỳ tính năng nào của Chợ Đêm Sơn Trà
@@ -209,6 +206,228 @@ export function TermsOfService() {
           Trà, thành phố Đà Nẵng, Việt Nam.
         </li>
       </ul>
+    </>
+  )
+}
+
+function EnBody() {
+  return (
+    <>
+      <h2>1. Acceptance of terms</h2>
+      <p>
+        By creating an account, logging in, or using any feature of Chợ Đêm Sơn Trà (hereafter the{' '}
+        <strong>"Platform"</strong>), you confirm that you have read, understood, and agree to be
+        bound by these Terms together with our <a href="/privacy">Privacy Policy</a>. If you do not
+        agree, please stop using the services.
+      </p>
+
+      <h2>2. Eligibility</h2>
+      <ul>
+        <li>You must be <strong>18 or older</strong>, or have guardian consent.</li>
+        <li>
+          You commit to providing <strong>accurate, complete</strong> information and to keeping it
+          updated when needed.
+        </li>
+        <li>
+          A person may only own one account. Creating multiple accounts for fraudulent purposes may
+          lead to permanent suspension.
+        </li>
+      </ul>
+
+      <h2>3. Account security</h2>
+      <ul>
+        <li>You are responsible for securing your password and all activity under your account.</li>
+        <li>
+          If you detect unauthorized access, notify{' '}
+          <a href="mailto:support@dhtcdanang.com">support@dhtcdanang.com</a> immediately.
+        </li>
+        <li>
+          When logging in with Facebook, you are also subject to the{' '}
+          <a href="https://www.facebook.com/legal/terms">Facebook Terms of Service</a> for the data
+          Facebook provides to us.
+        </li>
+      </ul>
+
+      <h2>4. User roles</h2>
+
+      <h3>4.1. Customers</h3>
+      <ul>
+        <li>Commit to full payment at order time and to providing an accurate shipping address.</li>
+        <li>Do not use the Platform for unlawful, fraudulent, or deceptive purposes.</li>
+        <li>
+          Reviews must be honest, non-defamatory, and free of obscene language.
+        </li>
+      </ul>
+
+      <h3>4.2. Sellers (merchants)</h3>
+      <ul>
+        <li>
+          Commit to selling products <strong>as described</strong> and <strong>at the stated
+          quality</strong>, in compliance with food safety regulations where applicable.
+        </li>
+        <li>
+          Do not sell counterfeit, knock-off, prohibited goods, or goods that infringe intellectual
+          property rights.
+        </li>
+        <li>
+          Bear responsibility for VAT and personal income tax obligations under Vietnamese law.
+        </li>
+        <li>Process orders and respond to complaints within 48 hours.</li>
+        <li>
+          Warrant that product images <strong>are owned by you</strong> or properly licensed.
+        </li>
+      </ul>
+
+      <h2>5. Payment</h2>
+      <ul>
+        <li>
+          Payments are processed via <strong>Vietcombank VietQR</strong> — funds are held in
+          escrow until the customer confirms receipt (or automatically after 7 days).
+        </li>
+        <li>
+          Service fee: <strong>5%</strong> of order value (includes payment processing fees).
+        </li>
+        <li>
+          Minimum merchant withdrawal: 100,000 VND, processed within 2 business days.
+        </li>
+        <li>Every transaction generates an e-invoice per Circular 78/2021/TT-BTC.</li>
+      </ul>
+
+      <h2>6. Shipping</h2>
+      <ul>
+        <li>
+          Primary shipping partners: <strong>DHL Express</strong> (international),{' '}
+          <strong>Giao Hàng Nhanh / Viettel Post</strong> (domestic).
+        </li>
+        <li>International delivery time: 5-10 business days.</li>
+        <li>Domestic delivery time: 1-3 business days.</li>
+        <li>
+          If loss or damage occurs in transit, customers are compensated under the carrier's
+          policy.
+        </li>
+      </ul>
+
+      <h2>7. Returns and refunds</h2>
+      <ul>
+        <li>
+          Customers may request a return within <strong>7 days</strong> of receipt, provided the
+          product is sealed and unused.
+        </li>
+        <li>
+          Fresh produce is non-returnable unless there is a clear defect (spoiled, wrong item).
+        </li>
+        <li>Merchants have 48 hours to respond to a return request.</li>
+        <li>
+          In disputes, Chợ Đêm Sơn Trà administrators mediate; the final decision is based on
+          evidence (photos, video, chat history).
+        </li>
+      </ul>
+
+      <h2>8. Intellectual property</h2>
+      <ul>
+        <li>
+          The "Chợ Đêm Sơn Trà" logo and brand, and the platform's UI design, are owned by us.
+        </li>
+        <li>
+          Content posted by merchants (product descriptions, images) is owned by the merchant — they
+          grant us a non-exclusive, worldwide, royalty-free license to display it on the platform
+          and to promote the platform.
+        </li>
+        <li>
+          Scraping or copying product data for commercial purposes without written consent is
+          prohibited.
+        </li>
+      </ul>
+
+      <h2>9. Prohibited content</h2>
+      <p>You agree NOT to post or transact in the following content/products:</p>
+      <ul>
+        <li>Counterfeit goods, knock-offs, or items infringing copyright/trademark.</li>
+        <li>Weapons, explosives, controlled substances, drugs, e-cigarettes.</li>
+        <li>Wildlife or wildlife-derived products listed under CITES.</li>
+        <li>Pornographic, violent, or hate-inciting content.</li>
+        <li>Misinformation about disease outbreaks, politics, or religion.</li>
+        <li>Malware, spyware, hacking tools.</li>
+      </ul>
+      <p>
+        Violations will result in product removal, account suspension, and possible report to
+        authorities.
+      </p>
+
+      <h2>10. Termination</h2>
+      <ul>
+        <li>
+          You may delete your account at any time — see instructions at{' '}
+          <a href="/data-deletion">/data-deletion</a>.
+        </li>
+        <li>
+          We reserve the right to suspend or terminate your account if violations are detected, with
+          7 days' notice (except for serious violations).
+        </li>
+        <li>
+          After termination, any wallet balance is returned to your registered bank account within
+          30 days.
+        </li>
+      </ul>
+
+      <h2>11. Disclaimer</h2>
+      <p>
+        The service is provided <strong>"as is"</strong>. We do not warrant that the service will
+        always be available, uninterrupted, or error-free. To the extent permitted by law, we are not
+        liable for indirect, incidental, or data-loss damages arising from your use of the service.
+      </p>
+
+      <h2>12. Dispute resolution</h2>
+      <ul>
+        <li>
+          Disputes are first resolved by negotiation. Contact{' '}
+          <a href="mailto:support@dhtcdanang.com">support@dhtcdanang.com</a>.
+        </li>
+        <li>
+          If negotiation fails, disputes will be resolved at the{' '}
+          <strong>People's Court of Đà Nẵng City</strong>, under Vietnamese law.
+        </li>
+      </ul>
+
+      <h2>13. Changes to terms</h2>
+      <p>
+        We may update these Terms. Material changes will be announced via email and a banner at
+        least 15 days before they take effect. Continued use of the service after the effective date
+        constitutes acceptance of the new terms.
+      </p>
+
+      <h2>14. Contact</h2>
+      <ul>
+        <li>
+          <strong>Support email:</strong>{' '}
+          <a href="mailto:support@dhtcdanang.com">support@dhtcdanang.com</a>
+        </li>
+        <li>
+          <strong>Legal email:</strong>{' '}
+          <a href="mailto:legal@dhtcdanang.com">legal@dhtcdanang.com</a>
+        </li>
+        <li>
+          <strong>Hotline:</strong> +84 236 3 888 666 (8:00 - 22:00 GMT+7)
+        </li>
+        <li>
+          <strong>Address:</strong> Chợ Đêm Sơn Trà, Mai Hắc Đế street, An Hải Tây ward, Sơn Trà
+          district, Đà Nẵng city, Vietnam.
+        </li>
+      </ul>
+    </>
+  )
+}
+
+export function TermsOfService() {
+  const { t, lang } = useT()
+  const effectiveDate = lang === 'en' ? 'May 25, 2026' : '25/05/2026'
+  return (
+    <LegalLayout
+      title={t('legalPage.terms.title')}
+      subtitle={t('legalPage.terms.subtitle')}
+      effectiveDate={effectiveDate}
+    >
+      {lang === 'en' ? <EnBody /> : <ViBody />}
     </LegalLayout>
   )
 }

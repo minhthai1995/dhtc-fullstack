@@ -1,12 +1,9 @@
 import { LegalLayout } from './LegalLayout'
+import { useT } from '@/i18n/useT'
 
-export function PrivacyPolicy() {
+function ViBody() {
   return (
-    <LegalLayout
-      title="Chính sách bảo mật"
-      subtitle="Chợ Đêm Sơn Trà cam kết bảo vệ quyền riêng tư của khách hàng, tiểu thương và đối tác. Tài liệu này mô tả cách chúng tôi thu thập, sử dụng, lưu trữ và bảo vệ dữ liệu cá nhân."
-      effectiveDate="25/05/2026"
-    >
+    <>
       <h2>1. Giới thiệu</h2>
       <p>
         Chợ Đêm Sơn Trà (sau đây gọi là <strong>"Chúng tôi"</strong>) là chợ đêm văn hoá - du lịch
@@ -268,34 +265,283 @@ export function PrivacyPolicy() {
           Trà, thành phố Đà Nẵng, Việt Nam.
         </li>
       </ul>
+    </>
+  )
+}
 
-      <hr />
+function EnBody() {
+  return (
+    <>
+      <h2>1. Introduction</h2>
+      <p>
+        Chợ Đêm Sơn Trà (hereafter <strong>"We"</strong>) is a cultural and tourism night market
+        located in Sơn Trà District, Đà Nẵng City, Vietnam. We operate an e-commerce platform at{' '}
+        <a href="https://dhtcdanang.com">dhtcdanang.com</a> connecting more than 300 traditional
+        vendors with domestic and international customers.
+      </p>
+      <p>
+        By using our services, you (<strong>"User"</strong>) agree to the terms of this Privacy
+        Policy. If you do not agree, please stop using the services.
+      </p>
 
-      <h2>English summary (for Meta App Review)</h2>
+      <h2>2. Data we collect</h2>
+
+      <h3>2.1. Information you provide directly</h3>
+      <ul>
+        <li>
+          <strong>Account:</strong> email address, password (bcrypt-hashed), full name, phone number,
+          role (customer / merchant / admin).
+        </li>
+        <li>
+          <strong>Merchant profile:</strong> shop name, tax ID (if any), business address, bank
+          account for receiving payments.
+        </li>
+        <li>
+          <strong>Orders:</strong> shipping address, products purchased, transaction history, notes.
+        </li>
+        <li>
+          <strong>Product images:</strong> photos uploaded by merchants, automatically processed
+          (resize, EXIF-orient) and stored on our servers.
+        </li>
+      </ul>
+
+      <h3>2.2. Information from Facebook Login (Meta Platforms, Inc.)</h3>
       <p>
-        <strong>Chợ Đêm Sơn Trà</strong> (Son Tra Night Market) is a cultural night market in Da
-        Nang, Vietnam, operating an e-commerce platform at <code>dhtcdanang.com</code> to connect
-        local vendors with domestic and international customers.
+        When you choose to log in with Facebook, we request the minimum scopes (<code>email</code>,{' '}
+        <code>public_profile</code>) and receive the following fields from the Facebook Graph API
+        v19.0:
       </p>
+      <ul>
+        <li>
+          <strong>Facebook App-scoped User ID</strong> (a unique identifier scoped to our app — not
+          the global Facebook UID).
+        </li>
+        <li>
+          <strong>Email</strong> (if granted — used to link to an existing account or create a new
+          one).
+        </li>
+        <li>
+          <strong>First and last name</strong> — displayed on your account profile.
+        </li>
+        <li>
+          <strong>Profile picture</strong> (high-quality URL) — displayed in merchant/customer UI.
+        </li>
+        <li>
+          <strong>Preferred locale</strong> (e.g. <code>vi_VN</code>, <code>en_US</code>) — to render
+          the matching language.
+        </li>
+      </ul>
+      <div className="callout">
+        <strong>Note:</strong> If you do not grant email permission, we generate an internal-only
+        address of the form <code>fb_&lt;id&gt;@dhtc.local</code> solely for internal identification
+        — this address is never used to send mail and is never disclosed to third parties.
+      </div>
+
+      <h3>2.3. Information from Facebook Messenger (when you initiate a chat with our page)</h3>
       <p>
-        <strong>Data collected via Facebook Login</strong> (scopes: <code>email</code>,{' '}
-        <code>public_profile</code>): App-scoped User ID, email (optional), first/last name, profile
-        picture URL, locale.
+        When you click the Messenger button on our site or message our official Chợ Đêm Sơn Trà
+        Facebook Page, we receive and store:
       </p>
+      <ul>
+        <li>
+          <strong>Page-scoped ID (PSID)</strong> — an identifier issued by Facebook scoped to our
+          Page (not the global Facebook UID).
+        </li>
+        <li>
+          <strong>Message content</strong> you send to the Page — used to power auto-reply and keep
+          a support history.
+        </li>
+        <li>
+          <strong>Send timestamp and read status</strong> — used to compute average response time.
+        </li>
+        <li>
+          <strong>Information you voluntarily share in messages</strong> such as phone, shipping
+          address, order code — we extract these via regex to link to your account (if any) and
+          handle customer support.
+        </li>
+      </ul>
+
+      <h3>2.4. Automatically collected information (page tracking)</h3>
+      <ul>
+        <li>
+          <strong>Visitor ID & Session ID</strong> (random values stored in browser{' '}
+          <code>localStorage</code>) — not tied to your real identity.
+        </li>
+        <li>
+          <strong>Pages viewed</strong>, <strong>time on page</strong>, <strong>referrer</strong>,{' '}
+          <strong>device type</strong> (mobile/desktop/tablet derived from User-Agent).
+        </li>
+        <li>
+          <strong>Country code</strong> (if the reverse proxy attaches the <code>CF-IPCountry</code>{' '}
+          header) — used for market analytics.
+        </li>
+        <li>
+          <strong>IP address</strong> — kept only temporarily for rate-limiting and abuse
+          prevention, deleted after 7 days.
+        </li>
+      </ul>
+
+      <h2>3. How we use data</h2>
+      <ol>
+        <li>Provide e-commerce services (sign-up, login, ordering, payment, shipping).</li>
+        <li>Authenticate identity and protect accounts (fraud, bot, spam prevention).</li>
+        <li>Communicate about orders and promotions (only with your opt-in).</li>
+        <li>Aggregate statistical analysis (NOT individually identifying) to improve UX.</li>
+        <li>Comply with legal obligations (e-invoices, tax reporting under Vietnamese law).</li>
+      </ol>
+
+      <h2>4. Sharing with third parties</h2>
       <p>
-        <strong>Data collected via Messenger Platform</strong> (when user initiates conversation with
-        our official Facebook Page): Page-scoped ID (PSID), message content, timestamps. Used solely
-        for customer support and auto-reply.
+        We <strong>do not sell</strong> your personal data. Data is shared only with service partners
+        when necessary to complete a transaction:
       </p>
+      <ul>
+        <li>
+          <strong>Vietcombank (VietQR API):</strong> transaction info (amount, reference code, order
+          ID) for payment processing.
+        </li>
+        <li>
+          <strong>DHL Express:</strong> shipping address, recipient phone, item list to generate
+          international waybills.
+        </li>
+        <li>
+          <strong>Meta Platforms (Facebook):</strong> only the source of data flowing to us via OAuth
+          + Messenger — we do NOT push customer data back to Meta beyond direct user-to-Page
+          interactions.
+        </li>
+        <li>
+          <strong>Infrastructure providers:</strong> AWS Singapore (data hosting), Cloudflare (CDN +
+          DDoS protection).
+        </li>
+        <li>
+          <strong>Government bodies:</strong> upon valid written legal requests (search warrants,
+          requests from the Cybersecurity Department or General Department of Taxation).
+        </li>
+      </ul>
+
+      <h2>5. Storage and security</h2>
+      <ul>
+        <li>
+          <strong>Transport encryption:</strong> all traffic over HTTPS (TLS 1.2+).
+        </li>
+        <li>
+          <strong>At-rest encryption:</strong> passwords hashed with <code>bcrypt</code> (cost
+          factor 12), not reversible.
+        </li>
+        <li>
+          <strong>Facebook tokens & API keys:</strong> kept only in server environment variables,
+          never logged, never shown in the UI.
+        </li>
+        <li>
+          <strong>Access control:</strong> customer data is only accessible to merchants with related
+          orders and admins with 2-factor authentication.
+        </li>
+        <li>
+          <strong>Server location:</strong> AWS Asia Pacific (Singapore), with daily backups.
+        </li>
+      </ul>
+
+      <h2>6. Retention periods</h2>
+      <ul>
+        <li><strong>Active accounts:</strong> retained until you request deletion.</li>
+        <li>
+          <strong>Inactive accounts:</strong> after 24 months without login, we send a reminder email
+          and delete after 30 days if no response.
+        </li>
+        <li>
+          <strong>Invoices and tax records:</strong> retained 10 years per Vietnamese Accounting Law
+          (Article 41).
+        </li>
+        <li>
+          <strong>Messenger chat history:</strong> 12 months from the last message.
+        </li>
+        <li>
+          <strong>Page-view logs:</strong> 90 days at row-level, then aggregated anonymously.
+        </li>
+        <li><strong>IP addresses:</strong> 7 days.</li>
+      </ul>
+
+      <h2>7. Your rights</h2>
+      <p>You have the following rights regarding your personal data:</p>
+      <ul>
+        <li><strong>Right of access:</strong> view the data we store about you.</li>
+        <li><strong>Right to rectification:</strong> update incorrect or outdated information.</li>
+        <li>
+          <strong>Right to erasure ("right to be forgotten"):</strong> request full data deletion —
+          see detailed steps at <a href="/data-deletion">the Data Deletion page</a>.
+        </li>
+        <li><strong>Right to data portability:</strong> download a copy of your data as JSON.</li>
+        <li>
+          <strong>Right to withdraw consent:</strong> revoke Facebook Login by going to{' '}
+          <a href="https://www.facebook.com/settings?tab=business_tools">
+            Facebook Settings → Business Integrations
+          </a>{' '}
+          and removing the "Chợ Đêm Sơn Trà" app.
+        </li>
+      </ul>
+
+      <h2>8. Cookies and browser storage</h2>
+      <ul>
+        <li>
+          <code>access_token</code> (sessionStorage) — login JWT, auto-cleared when the tab closes.
+        </li>
+        <li>
+          <code>visitor_id</code> (localStorage) — random visitor ID used to group sessions from the
+          same device.
+        </li>
+        <li>
+          <code>fb_oauth_state</code> (HttpOnly cookie, TTL 600s) — CSRF token for the Facebook
+          Login flow.
+        </li>
+      </ul>
       <p>
-        <strong>Data sharing:</strong> No data is sold or shared with advertisers. Limited sharing
-        with Vietcombank (payment), DHL (shipping), AWS/Cloudflare (infrastructure).
+        We do NOT use third-party tracking cookies (Google Analytics, Facebook Pixel) at this time.
       </p>
+
+      <h2>9. Children under 13</h2>
       <p>
-        <strong>User rights:</strong> Access, rectification, deletion, portability. Self-service
-        deletion available at <a href="/data-deletion">/data-deletion</a>. Email{' '}
-        <a href="mailto:privacy@dhtcdanang.com">privacy@dhtcdanang.com</a> for any requests.
+        Our services are not directed to children under 13. We do not knowingly collect children's
+        data. If you are a parent and discover your child has registered, please contact{' '}
+        <a href="mailto:privacy@dhtcdanang.com">privacy@dhtcdanang.com</a> and we will delete the
+        data immediately.
       </p>
+
+      <h2>10. Policy changes</h2>
+      <p>
+        We may update this Privacy Policy. Material changes will be announced via email and a
+        homepage banner at least 15 days before they take effect. Continued use of the services after
+        the effective date constitutes acceptance of the new policy.
+      </p>
+
+      <h2>11. Contact</h2>
+      <p>For any questions about this Privacy Policy, contact our Data Protection Officer (DPO):</p>
+      <ul>
+        <li>
+          <strong>Email:</strong>{' '}
+          <a href="mailto:privacy@dhtcdanang.com">privacy@dhtcdanang.com</a>
+        </li>
+        <li>
+          <strong>Hotline:</strong> +84 236 3 888 666 (business hours, GMT+7)
+        </li>
+        <li>
+          <strong>Address:</strong> Chợ Đêm Sơn Trà, Mai Hắc Đế street, An Hải Tây ward, Sơn Trà
+          district, Đà Nẵng city, Vietnam.
+        </li>
+      </ul>
+    </>
+  )
+}
+
+export function PrivacyPolicy() {
+  const { t, lang } = useT()
+  const effectiveDate = lang === 'en' ? 'May 25, 2026' : '25/05/2026'
+  return (
+    <LegalLayout
+      title={t('legalPage.privacy.title')}
+      subtitle={t('legalPage.privacy.subtitle')}
+      effectiveDate={effectiveDate}
+    >
+      {lang === 'en' ? <EnBody /> : <ViBody />}
     </LegalLayout>
   )
 }
