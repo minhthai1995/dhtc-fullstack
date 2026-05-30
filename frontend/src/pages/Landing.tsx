@@ -112,49 +112,13 @@ const eventsMeta = [
 ] as const
 
 const testimonials = [
-  {
-    quote: 'After the Dragon Bridge fire show, walking over for late supper here is the best routine in Đà Nẵng.',
-    name: 'Erico T.',
-    country: 'Singapore',
-    flag: '🇸🇬',
-    source: 'Tripadvisor',
-  },
-  {
-    quote: 'The atmosphere is lively and fun, especially in the evening with all the lights and energy from the crowd.',
-    name: 'Silvia C.',
-    country: 'Italia',
-    flag: '🇮🇹',
-    source: 'Tripadvisor',
-  },
-  {
-    quote: 'Son Tra night market is an unmissable experience. Visit before the dragon bridge shows.',
-    name: 'Pek Jenny',
-    country: 'Singapore',
-    flag: '🇸🇬',
-    source: 'Tripadvisor',
-  },
-  {
-    quote: 'Hỏi giá trước khi gọi món là ổn. Tôm hùm nướng phô mai 380k cho 1kg vẫn rẻ hơn ngoài trung tâm.',
-    name: 'Minh Hoàng',
-    country: 'Hà Nội',
-    flag: '🇻🇳',
-    source: 'Google Maps',
-  },
-  {
-    quote: 'Đi cả gia đình 4 người ăn no nê chỉ 600k. Các cô bán hàng dễ thương, có cô nói tiếng Anh tốt.',
-    name: 'Trần Thu Hà',
-    country: 'TP. HCM',
-    flag: '🇻🇳',
-    source: 'Google Maps',
-  },
-  {
-    quote: 'Best place to try authentic Central Vietnamese food in one stop. Mì Quảng was unforgettable.',
-    name: 'Sarah K.',
-    country: 'Australia',
-    flag: '🇦🇺',
-    source: 'Tripadvisor',
-  },
-]
+  { n: 1, name: 'Erico T.',    flag: '🇸🇬', source: 'Tripadvisor' },
+  { n: 2, name: 'Silvia C.',   flag: '🇮🇹', source: 'Tripadvisor' },
+  { n: 3, name: 'Pek Jenny',   flag: '🇸🇬', source: 'Tripadvisor' },
+  { n: 4, name: 'Minh Hoàng',  flag: '🇻🇳', source: 'Google Maps' },
+  { n: 5, name: 'Trần Thu Hà', flag: '🇻🇳', source: 'Google Maps' },
+  { n: 6, name: 'Sarah K.',    flag: '🇦🇺', source: 'Tripadvisor' },
+] as const
 
 const tipsMeta = [1, 2, 3, 4, 5, 6] as const
 const faqsMeta = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const
@@ -1064,7 +1028,7 @@ export function Landing() {
             >
               “
             </span>
-            {testimonials[0].quote}
+            {t(`testi.${testimonials[0].n}.quote`)}
           </blockquote>
           <footer
             className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px] sm:text-[13px] text-ink-soft mb-12 sm:mb-14"
@@ -1072,7 +1036,7 @@ export function Landing() {
           >
             <span className="font-semibold text-ink">{testimonials[0].name}</span>
             <span className="text-ink-mute">
-              {testimonials[0].flag} {testimonials[0].country}
+              {testimonials[0].flag} {t(`testi.${testimonials[0].n}.country`)}
             </span>
             <span className="w-1 h-1 rounded-full bg-ink-mute" />
             <span
@@ -1110,13 +1074,13 @@ export function Landing() {
                       className="text-[14px] sm:text-[15.5px] text-ink leading-relaxed m-0"
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      “{tt.quote}”
+                      “{t(`testi.${tt.n}.quote`)}”
                     </p>
                     <p
                       className="text-[11px] sm:text-[11.5px] text-ink-mute mt-2 m-0 tracking-wide"
                       style={{ fontFamily: 'var(--font-mono)' }}
                     >
-                      — {tt.name} · {tt.flag} {tt.country} · {tt.source}
+                      — {tt.name} · {tt.flag} {t(`testi.${tt.n}.country`)} · {tt.source}
                     </p>
                   </div>
                 </li>

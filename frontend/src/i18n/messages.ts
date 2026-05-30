@@ -197,6 +197,18 @@ const vi: Dict = {
   // Testimonials
   'testi.label': 'Tiếng nói thực khách · trích từ Tripadvisor & Google Maps',
   'testi.more': 'Năm trích đoạn khác chúng tôi đọc tuần này',
+  'testi.1.quote': 'Sau màn phun lửa của cầu Rồng, đi bộ qua đây ăn khuya là thói quen tuyệt nhất ở Đà Nẵng.',
+  'testi.1.country': 'Singapore',
+  'testi.2.quote': 'Không khí sống động và vui nhộn, nhất là buổi tối khi ánh đèn và năng lượng đám đông hoà quyện.',
+  'testi.2.country': 'Italia',
+  'testi.3.quote': 'Chợ đêm Sơn Trà là trải nghiệm không thể bỏ lỡ. Ghé trước khi cầu Rồng phun lửa.',
+  'testi.3.country': 'Singapore',
+  'testi.4.quote': 'Hỏi giá trước khi gọi món là ổn. Tôm hùm nướng phô mai 380k cho 1kg vẫn rẻ hơn ngoài trung tâm.',
+  'testi.4.country': 'Hà Nội',
+  'testi.5.quote': 'Đi cả gia đình 4 người ăn no nê chỉ 600k. Các cô bán hàng dễ thương, có cô nói tiếng Anh tốt.',
+  'testi.5.country': 'TP. HCM',
+  'testi.6.quote': 'Nơi tốt nhất để thử ẩm thực miền Trung Việt Nam chính gốc trong một điểm đến. Mì Quảng thì không thể nào quên.',
+  'testi.6.country': 'Australia',
 
   // Tips
   'tips.section': 'VI · MẸO ĐỊA PHƯƠNG',
@@ -1752,6 +1764,18 @@ const en: Dict = {
   // Testimonials
   'testi.label': 'Voices of real visitors · pulled from Tripadvisor & Google Maps',
   'testi.more': 'Five other clips we read this week',
+  'testi.1.quote': 'After the Dragon Bridge fire show, walking over for late supper here is the best routine in Đà Nẵng.',
+  'testi.1.country': 'Singapore',
+  'testi.2.quote': 'The atmosphere is lively and fun, especially in the evening with all the lights and energy from the crowd.',
+  'testi.2.country': 'Italy',
+  'testi.3.quote': 'Son Tra night market is an unmissable experience. Visit before the dragon bridge shows.',
+  'testi.3.country': 'Singapore',
+  'testi.4.quote': 'Asking the price before ordering works fine. Grilled lobster with cheese at 380k per kg is still cheaper than downtown.',
+  'testi.4.country': 'Hanoi',
+  'testi.5.quote': 'Took the whole family of four, ate our fill for just 600k. The vendors are sweet, and some speak good English.',
+  'testi.5.country': 'Ho Chi Minh City',
+  'testi.6.quote': 'Best place to try authentic Central Vietnamese food in one stop. Mì Quảng was unforgettable.',
+  'testi.6.country': 'Australia',
 
   // Tips
   'tips.section': 'VI · LOCAL TIPS',
