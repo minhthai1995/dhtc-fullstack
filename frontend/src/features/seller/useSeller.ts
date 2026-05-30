@@ -3,6 +3,7 @@ import * as sellerApi from './seller.api'
 import type { SetupMerchantPayload } from './seller.api'
 import type { OrderStatus, SellerDashboard } from '@/types/api'
 import { useToast } from '@/components/ui/Toast'
+import { useT } from '@/i18n/useT'
 
 export const sellerKeys = {
   dashboard: ['seller', 'dashboard'] as const,
@@ -27,6 +28,7 @@ export function useSellerDashboardFull() {
 export function useSellerUpdateOrderStatus() {
   const qc = useQueryClient()
   const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: ({
       id,
@@ -43,9 +45,9 @@ export function useSellerUpdateOrderStatus() {
       qc.invalidateQueries({ queryKey: sellerKeys.orders })
       qc.invalidateQueries({ queryKey: sellerKeys.order(variables.id) })
       qc.invalidateQueries({ queryKey: sellerKeys.dashboard })
-      toast('Đã cập nhật trạng thái', 'success')
+      toast(t('toasts.statusUpdated'), 'success')
     },
-    onError: (error: Error) => toast('Lỗi: ' + error.message, 'error'),
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }
 

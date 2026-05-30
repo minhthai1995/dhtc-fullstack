@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getProfile, updateProfile, changePassword } from './profile.api'
 import { useToast } from '@/components/ui/Toast'
+import { useT } from '@/i18n/useT'
 
 export const profileKeys = {
   profile: ['customer', 'profile'] as const,
@@ -24,13 +25,14 @@ export function useUpdateProfile() {
 
 export function useChangePassword() {
   const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
       changePassword(currentPassword, newPassword),
-    onSuccess: () => toast('Đã đổi mật khẩu thành công', 'success'),
+    onSuccess: () => toast(t('toasts.passwordChanged'), 'success'),
     onError: (err: unknown) => {
       const axiosErr = err as { response?: { data?: { detail?: string } } }
-      toast(axiosErr?.response?.data?.detail || 'Không thể đổi mật khẩu', 'error')
+      toast(axiosErr?.response?.data?.detail || t('toasts.errorChangePassword'), 'error')
     },
   })
 }

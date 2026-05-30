@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as ordersApi from './orders.api'
 import type { CreateOrderPayload } from './orders.api'
 import { useToast } from '@/components/ui/Toast'
+import { useT } from '@/i18n/useT'
 
 export const orderKeys = {
   all: ['orders'] as const,
@@ -27,10 +28,11 @@ export function useOrder(id: number) {
 export function useCreateOrder() {
   const qc = useQueryClient()
   const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: (payload: CreateOrderPayload) => ordersApi.createOrder(payload),
     onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.list }),
-    onError: (error: Error) => toast('Lỗi: ' + error.message, 'error'),
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }
 
@@ -45,15 +47,16 @@ export function useOrderEvents(orderId: number) {
 export function useCancelOrder() {
   const qc = useQueryClient()
   const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: ordersApi.cancelOrder,
     onSuccess: () => {
-      toast('Đã hủy đơn hàng thành công', 'success')
+      toast(t('toasts.orderCancelled'), 'success')
       qc.invalidateQueries({ queryKey: ['orders', 'list'] })
     },
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-      toast(message || 'Không thể hủy đơn', 'error')
+      toast(message || t('toasts.errorCancelOrder'), 'error')
     },
   })
 }

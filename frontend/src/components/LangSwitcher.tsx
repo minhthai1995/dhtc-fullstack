@@ -6,9 +6,9 @@ type Props = {
 }
 
 export function LangSwitcher({ className = '', variant = 'pill' }: Props) {
-  const { lang, toggle } = useT()
+  const { t, lang, toggle } = useT()
   const next = lang === 'vi' ? 'EN' : 'VI'
-  const ariaLabel = lang === 'vi' ? 'Switch to English' : 'Chuyển sang Tiếng Việt'
+  const ariaLabel = lang === 'vi' ? t('langSwitcher.toEn') : t('langSwitcher.toVi')
   const base =
     variant === 'pill'
       ? 'inline-flex h-9 items-center gap-1 rounded-full border border-border bg-white/80 px-3 text-[12px] font-medium tracking-wide text-ink hover:bg-cream-dark/60 hover:text-ink transition-colors'

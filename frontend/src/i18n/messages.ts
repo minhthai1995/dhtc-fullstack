@@ -1605,6 +1605,39 @@ const vi: Dict = {
   'adminIntegrations.descZalo': 'Thông báo đơn hàng & marketing qua Zalo',
   'adminIntegrations.descGemini': 'Chatbot tự động hỗ trợ tư vấn sản phẩm',
   'adminIntegrations.descVNPOST': 'Theo dõi vận đơn nội địa VNPOST',
+
+  // Toast messages — feature hooks
+  'toasts.errorWithMsg': 'Lỗi: {msg}',
+  'toasts.updated': 'Đã cập nhật',
+  'toasts.statusUpdated': 'Đã cập nhật trạng thái',
+  'toasts.withdrawalApproved': 'Đã duyệt yêu cầu rút tiền',
+  'toasts.requestRejected': 'Đã từ chối yêu cầu',
+  'toasts.accountSuspended': 'Đã tạm khóa tài khoản',
+  'toasts.accountActivated': 'Đã kích hoạt tài khoản',
+  'toasts.categoryCreated': 'Đã tạo danh mục',
+  'toasts.categoryDeleted': 'Đã xóa danh mục',
+  'toasts.errorCreateCategory': 'Lỗi tạo danh mục',
+  'toasts.errorUpdateCategory': 'Lỗi cập nhật',
+  'toasts.errorDeleteCategory': 'Không thể xóa',
+  'toasts.returnSubmitted': 'Đã gửi yêu cầu đổi trả',
+  'toasts.returnApproved': 'Đã chấp nhận yêu cầu đổi trả',
+  'toasts.returnRejected': 'Đã từ chối yêu cầu đổi trả',
+  'toasts.errorSubmitReturn': 'Lỗi gửi yêu cầu',
+  'toasts.errorProcessReturn': 'Lỗi xử lý yêu cầu',
+  'toasts.passwordChanged': 'Đã đổi mật khẩu thành công',
+  'toasts.errorChangePassword': 'Không thể đổi mật khẩu',
+  'toasts.addressAdded': 'Đã thêm địa chỉ',
+  'toasts.addressRemoved': 'Đã xoá địa chỉ',
+  'toasts.orderCancelled': 'Đã hủy đơn hàng thành công',
+  'toasts.errorCancelOrder': 'Không thể hủy đơn',
+  'toasts.productsApproved': 'Đã duyệt {n} sản phẩm',
+
+  // LangSwitcher aria
+  'langSwitcher.toEn': 'Switch to English',
+  'langSwitcher.toVi': 'Chuyển sang Tiếng Việt',
+
+  // DataTable
+  'dataTable.empty': 'Không có dữ liệu',
 }
 
 const en: Dict = {
@@ -3205,6 +3238,39 @@ const en: Dict = {
   'adminIntegrations.descZalo': 'Order notifications & marketing via Zalo',
   'adminIntegrations.descGemini': 'Automated chatbot for product consultation',
   'adminIntegrations.descVNPOST': 'Domestic shipment tracking via VNPOST',
+
+  // Toast messages — feature hooks
+  'toasts.errorWithMsg': 'Error: {msg}',
+  'toasts.updated': 'Updated',
+  'toasts.statusUpdated': 'Status updated',
+  'toasts.withdrawalApproved': 'Withdrawal request approved',
+  'toasts.requestRejected': 'Request rejected',
+  'toasts.accountSuspended': 'Account suspended',
+  'toasts.accountActivated': 'Account activated',
+  'toasts.categoryCreated': 'Category created',
+  'toasts.categoryDeleted': 'Category deleted',
+  'toasts.errorCreateCategory': 'Failed to create category',
+  'toasts.errorUpdateCategory': 'Failed to update',
+  'toasts.errorDeleteCategory': 'Unable to delete',
+  'toasts.returnSubmitted': 'Return request submitted',
+  'toasts.returnApproved': 'Return request approved',
+  'toasts.returnRejected': 'Return request rejected',
+  'toasts.errorSubmitReturn': 'Failed to submit request',
+  'toasts.errorProcessReturn': 'Failed to process request',
+  'toasts.passwordChanged': 'Password changed successfully',
+  'toasts.errorChangePassword': 'Unable to change password',
+  'toasts.addressAdded': 'Address added',
+  'toasts.addressRemoved': 'Address removed',
+  'toasts.orderCancelled': 'Order cancelled',
+  'toasts.errorCancelOrder': 'Unable to cancel order',
+  'toasts.productsApproved': '{n} products approved',
+
+  // LangSwitcher aria
+  'langSwitcher.toEn': 'Switch to English',
+  'langSwitcher.toVi': 'Chuyển sang Tiếng Việt',
+
+  // DataTable
+  'dataTable.empty': 'No data',
 }
 
 export const messages: Record<Lang, Dict> = { vi, en }

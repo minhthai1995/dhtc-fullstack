@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as returnsApi from './returns.api'
 import { useToast } from '@/components/ui/Toast'
+import { useT } from '@/i18n/useT'
 
 export function useMyReturns() {
   return useQuery({ queryKey: ['customer', 'returns'], queryFn: returnsApi.getMyReturns })
@@ -9,14 +10,15 @@ export function useMyReturns() {
 export function useRequestReturn() {
   const qc = useQueryClient()
   const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: ({ orderId, reason }: { orderId: number; reason: string }) =>
       returnsApi.requestReturn(orderId, reason),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['customer', 'returns'] })
-      toast('Đã gửi yêu cầu đổi trả', 'success')
+      toast(t('toasts.returnSubmitted'), 'success')
     },
-    onError: (error: Error) => toast(error.message || 'Lỗi gửi yêu cầu', 'error'),
+    onError: (error: Error) => toast(error.message || t('toasts.errorSubmitReturn'), 'error'),
   })
 }
 
@@ -27,28 +29,30 @@ export function useSellerReturns() {
 export function useApproveReturn() {
   const qc = useQueryClient()
   const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: ({ returnId, note }: { returnId: number; note?: string }) =>
       returnsApi.approveReturn(returnId, note),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['seller', 'returns'] })
-      toast('Đã chấp nhận yêu cầu đổi trả', 'success')
+      toast(t('toasts.returnApproved'), 'success')
     },
-    onError: () => toast('Lỗi xử lý yêu cầu', 'error'),
+    onError: () => toast(t('toasts.errorProcessReturn'), 'error'),
   })
 }
 
 export function useRejectReturn() {
   const qc = useQueryClient()
   const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: ({ returnId, note }: { returnId: number; note?: string }) =>
       returnsApi.rejectReturn(returnId, note),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['seller', 'returns'] })
-      toast('Đã từ chối yêu cầu đổi trả', 'success')
+      toast(t('toasts.returnRejected'), 'success')
     },
-    onError: () => toast('Lỗi xử lý yêu cầu', 'error'),
+    onError: () => toast(t('toasts.errorProcessReturn'), 'error'),
   })
 }
 

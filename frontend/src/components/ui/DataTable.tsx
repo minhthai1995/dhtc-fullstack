@@ -1,4 +1,5 @@
 import { cn } from '@/lib/cn'
+import { useT } from '@/i18n/useT'
 
 interface Column<T> {
   key: string
@@ -19,9 +20,11 @@ export function DataTable<T>({
   columns,
   data,
   keyExtractor,
-  emptyMessage = 'Không có dữ liệu',
+  emptyMessage,
   className,
 }: DataTableProps<T>) {
+  const { t } = useT()
+  const effectiveEmptyMessage = emptyMessage ?? t('dataTable.empty')
   return (
     <div className={cn('overflow-x-auto rounded-xl border border-border', className)}>
       <table className="w-full min-w-[600px]">
@@ -47,7 +50,7 @@ export function DataTable<T>({
                 colSpan={columns.length}
                 className="text-center py-12 text-ink-mute text-sm"
               >
-                {emptyMessage}
+                {effectiveEmptyMessage}
               </td>
             </tr>
           ) : (

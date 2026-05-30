@@ -3,6 +3,7 @@ import * as adminApi from './admin.api'
 import type { RevenueReport, WithdrawalItem, OriginRevenue, CRMStats, FunnelStage, SegmentCount, CustomerRow, CustomerDetail, CRMCustomersParams, Demographics, ConversationOverview, ConversationProfile, ConversationSummary, ChatMessageOut, BehaviorOverview, SessionSummary } from './admin.api'
 import type { AdminDashboard, AdminMerchantDetail, ProductRead } from '@/types/api'
 import { useToast } from '@/components/ui/Toast'
+import { useT } from '@/i18n/useT'
 
 export const adminKeys = {
   all: ['admin'] as const,
@@ -27,15 +28,16 @@ export function useAdminDashboardFull() {
 export function useAdminUpdateOrderStatus() {
   const qc = useQueryClient()
   const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: ({ orderId, status, note }: { orderId: number; status: string; note?: string }) =>
       adminApi.adminUpdateOrderStatus(orderId, status, note),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: adminKeys.orders })
       qc.invalidateQueries({ queryKey: adminKeys.dashboard })
-      toast('Đã cập nhật trạng thái', 'success')
+      toast(t('toasts.statusUpdated'), 'success')
     },
-    onError: (error: Error) => toast('Lỗi: ' + error.message, 'error'),
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }
 
@@ -113,26 +115,28 @@ export function useAdminWithdrawals() {
 export function useApproveWithdrawal() {
   const qc = useQueryClient()
   const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: adminApi.approveWithdrawal,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: adminKeys.withdrawals })
-      toast('Đã duyệt yêu cầu rút tiền', 'success')
+      toast(t('toasts.withdrawalApproved'), 'success')
     },
-    onError: (error: Error) => toast('Lỗi: ' + error.message, 'error'),
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }
 
 export function useRejectWithdrawal() {
   const qc = useQueryClient()
   const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: adminApi.rejectWithdrawal,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: adminKeys.withdrawals })
-      toast('Đã từ chối yêu cầu', 'success')
+      toast(t('toasts.requestRejected'), 'success')
     },
-    onError: (error: Error) => toast('Lỗi: ' + error.message, 'error'),
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }
 
@@ -143,39 +147,42 @@ export function useAdminCustomers(search = '') {
 export function useBulkApproveProducts() {
   const qc = useQueryClient()
   const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: adminApi.bulkApproveProducts,
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: adminKeys.products })
-      toast(`Đã duyệt ${data.approved.length} sản phẩm`, 'success')
+      toast(t('toasts.productsApproved').replace('{n}', String(data.approved.length)), 'success')
     },
-    onError: (error: Error) => toast('Lỗi: ' + error.message, 'error'),
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }
 
 export function useSuspendUser() {
   const qc = useQueryClient()
   const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: adminApi.suspendUser,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'customers'] })
-      toast('Đã tạm khóa tài khoản', 'success')
+      toast(t('toasts.accountSuspended'), 'success')
     },
-    onError: (error: Error) => toast('Lỗi: ' + error.message, 'error'),
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }
 
 export function useActivateUser() {
   const qc = useQueryClient()
   const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: adminApi.activateUser,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'customers'] })
-      toast('Đã kích hoạt tài khoản', 'success')
+      toast(t('toasts.accountActivated'), 'success')
     },
-    onError: (error: Error) => toast('Lỗi: ' + error.message, 'error'),
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }
 
