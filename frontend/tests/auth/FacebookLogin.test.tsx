@@ -6,14 +6,19 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 
 import { FacebookLoginButton } from '@/features/auth/FacebookLoginButton'
 import { FacebookReturnPage } from '@/pages/auth/FacebookReturnPage'
+import { LocaleProvider } from '@/i18n/LocaleProvider'
 
 function withProviders(ui: React.ReactElement, initialEntries: string[] = ['/']) {
+  // Tests assert Vietnamese strings; pin lang to 'vi' regardless of jsdom navigator.
+  localStorage.setItem('dhtc_lang', 'vi')
   const qc = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
   return (
     <QueryClientProvider client={qc}>
-      <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
+      <LocaleProvider>
+        <MemoryRouter initialEntries={initialEntries}>{ui}</MemoryRouter>
+      </LocaleProvider>
     </QueryClientProvider>
   )
 }

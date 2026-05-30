@@ -407,7 +407,7 @@ const vi: Dict = {
 
   // Facebook OAuth return page
   'fbReturn.errInvalidState': 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng thử lại.',
-  'fbReturn.errCancelled': 'Bạn đã huỷ đăng nhập bằng Facebook.',
+  'fbReturn.errCancelled': 'Bạn đã hủy đăng nhập bằng Facebook.',
   'fbReturn.errFbDown': 'Không kết nối được Facebook. Vui lòng thử lại sau ít phút.',
   'fbReturn.errGeneric': 'Đã có lỗi xảy ra. Vui lòng thử lại.',
   'fbReturn.errWithCode': 'Đăng nhập thất bại ({code}).',
