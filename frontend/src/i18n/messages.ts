@@ -744,8 +744,8 @@ const vi: Dict = {
 
   // Legal layout shell (used by Privacy / Terms / DataDeletion pages)
   'legalLayout.backHome': '← Về trang chủ',
-  'legalLayout.eyebrow': 'Tài liệu pháp lý · Legal document',
-  'legalLayout.effectiveFrom': 'Hiệu lực từ · Effective from',
+  'legalLayout.eyebrow': 'Tài liệu pháp lý',
+  'legalLayout.effectiveFrom': 'Hiệu lực từ',
   'legalLayout.footerHome': 'Trang chủ',
   'legalLayout.footerPrivacy': 'Chính sách bảo mật',
   'legalLayout.footerTerms': 'Điều khoản',
@@ -2405,8 +2405,8 @@ const en: Dict = {
 
   // Legal layout shell (used by Privacy / Terms / DataDeletion pages)
   'legalLayout.backHome': '← Back to home',
-  'legalLayout.eyebrow': 'Legal document · Tài liệu pháp lý',
-  'legalLayout.effectiveFrom': 'Effective from · Hiệu lực từ',
+  'legalLayout.eyebrow': 'Legal document',
+  'legalLayout.effectiveFrom': 'Effective from',
   'legalLayout.footerHome': 'Home',
   'legalLayout.footerPrivacy': 'Privacy policy',
   'legalLayout.footerTerms': 'Terms',
