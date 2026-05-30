@@ -6,6 +6,7 @@ import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/features
 import { Spinner } from '@/components/ui/Spinner'
 import { Heart, Truck, CreditCard, RotateCcw, Minus, Plus, ShoppingCart, ChevronRight } from 'lucide-react'
 import { addToRecentlyViewed } from '@/pages/customer/Shop'
+import { useT } from '@/i18n/useT'
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>()
@@ -21,6 +22,10 @@ export function ProductDetail() {
   const isWishlisted = wishlist.some(w => w.product_id === productId)
   const [qty, setQty] = useState(1)
   const [activeImage, setActiveImage] = useState(0)
+  const { t, lang } = useT()
+  const locale = lang === 'vi' ? 'vi-VN' : 'en-US'
+  const displayName = product ? (lang === 'en' && product.name_en ? product.name_en : product.name_vi) : ''
+  const displayDescription = product ? (lang === 'en' && product.description_en ? product.description_en : (product.description_vi ?? '')) : ''
 
   useEffect(() => {
     if (product) addToRecentlyViewed(product)
@@ -33,9 +38,9 @@ export function ProductDetail() {
   if (!product) {
     return (
       <div className="flex flex-col items-center py-20 text-center">
-        <div className="text-ink-mute text-sm">Không tìm thấy sản phẩm</div>
+        <div className="text-ink-mute text-sm">{t('product.notFound')}</div>
         <Link to="/shop" className="mt-4 text-sm text-green font-semibold hover:underline">
-          ← Quay lại cửa hàng
+          {t('product.backToShop')}
         </Link>
       </div>
     )
@@ -48,9 +53,9 @@ export function ProductDetail() {
     <div>
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wide text-ink-mute mb-5">
-        <Link to="/shop" className="hover:text-green transition-colors">Mua sắm</Link>
+        <Link to="/shop" className="hover:text-green transition-colors">{t('product.breadcrumbShop')}</Link>
         <ChevronRight size={10} />
-        <span className="text-ink">{product.name_vi}</span>
+        <span className="text-ink">{displayName}</span>
       </div>
 
       {/* Main product section */}
@@ -61,7 +66,7 @@ export function ProductDetail() {
             {product.images?.[activeImage]?.url ? (
               <img
                 src={product.images[activeImage].url}
-                alt={product.name_vi}
+                alt={displayName}
                 className="max-w-full max-h-full object-contain"
               />
             ) : (
@@ -105,7 +110,7 @@ export function ProductDetail() {
             className="text-4xl font-medium leading-tight tracking-tight text-ink mb-3"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            {product.name_vi}
+            {displayName}
           </h1>
 
           {/* Merchant link */}
@@ -120,19 +125,19 @@ export function ProductDetail() {
               M
             </div>
             <div className="flex-1">
-              <div className="text-sm font-semibold text-ink">Xem gian hàng</div>
+              <div className="text-sm font-semibold text-ink">{t('product.viewShopCta')}</div>
               <div className="text-xs text-ink-mute">{product.rating ? `${product.rating.toFixed(1)}★` : ''} · {product.origin}</div>
             </div>
-            <span className="text-xs font-semibold text-green">Xem gian hàng →</span>
+            <span className="text-xs font-semibold text-green">{t('product.viewShopArrow')}</span>
           </Link>
 
           {/* Rating */}
           <div className="flex items-center gap-3.5 mb-5">
             <div className="text-lg font-semibold" style={{ color: 'var(--color-gold-deep)' }}>★★★★★</div>
             <div className="text-sm font-semibold text-ink">{product.rating?.toFixed(1)}</div>
-            <a href="#reviews" className="text-xs text-ink-mute underline">{product.sold_count?.toLocaleString()} đánh giá</a>
+            <a href="#reviews" className="text-xs text-ink-mute underline">{t('product.reviewCount').replace('{count}', product.sold_count?.toLocaleString() ?? '0')}</a>
             <span className="text-border">·</span>
-            <span className="text-xs text-ink-mute">{product.sold_count?.toLocaleString()} đã bán</span>
+            <span className="text-xs text-ink-mute">{t('product.soldCount').replace('{count}', product.sold_count?.toLocaleString() ?? '0')}</span>
           </div>
 
           {/* Price */}
@@ -150,7 +155,7 @@ export function ProductDetail() {
 
           {/* Description */}
           <p className="text-sm leading-relaxed text-ink-soft mb-5">
-            {product.description_vi}
+            {displayDescription}
           </p>
 
           {/* Attributes */}
@@ -190,7 +195,7 @@ export function ProductDetail() {
                 disabled
                 className="flex-1 py-3 bg-border text-ink-mute rounded-xl font-semibold text-sm cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Hết hàng
+                {t('product.outOfStock')}
               </button>
             ) : (
               <button
@@ -199,7 +204,7 @@ export function ProductDetail() {
                 className="flex-1 py-3 bg-green text-white rounded-xl font-semibold text-sm hover:bg-green-soft disabled:opacity-60 transition-colors flex items-center justify-center gap-2"
               >
                 <ShoppingCart size={15} />
-                {addToCart.isPending ? 'Đang thêm...' : 'Thêm vào giỏ'}
+                {addToCart.isPending ? t('product.addingToCart') : t('product.addToCart')}
               </button>
             )}
             <button
@@ -210,7 +215,7 @@ export function ProductDetail() {
                   ? 'border-vermillion bg-vermillion/10 text-vermillion hover:bg-vermillion/20'
                   : 'border-border text-ink-mute hover:border-vermillion hover:text-vermillion'
               }`}
-              title={isWishlisted ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}
+              title={isWishlisted ? t('product.wishlistRemove') : t('product.wishlistAdd')}
             >
               <Heart size={18} fill={isWishlisted ? 'currentColor' : 'none'} />
             </button>
@@ -218,16 +223,16 @@ export function ProductDetail() {
               to="/shop/checkout"
               className="flex-1 py-3 border-2 border-green text-green rounded-xl font-semibold text-sm hover:bg-green/5 transition-colors flex items-center justify-center no-underline"
             >
-              Mua ngay
+              {t('product.buyNow')}
             </Link>
           </div>
 
           {/* Stock indicator */}
           <div className="mb-4 text-xs text-ink-mute">
             {product.stock === 0 ? (
-              <span className="font-semibold text-danger">Đã hết hàng</span>
+              <span className="font-semibold text-danger">{t('product.stockSoldOut')}</span>
             ) : (
-              <span>Còn lại: <span className="font-semibold text-ink">{product.stock} sản phẩm</span></span>
+              <span>{t('product.stockRemaining')} <span className="font-semibold text-ink">{t('product.stockUnits').replace('{count}', String(product.stock))}</span></span>
             )}
           </div>
 
@@ -235,15 +240,15 @@ export function ProductDetail() {
           <div className="p-4 border border-border rounded-xl bg-white space-y-2.5">
             <div className="flex items-center gap-3 text-[12.5px]">
               <Truck size={16} className="text-green flex-shrink-0" />
-              <span><strong>Ship DHL Express → mọi quốc gia</strong> · 4-7 ngày</span>
+              <span><strong>{t('product.shipLine')}</strong> · {t('product.shipDuration')}</span>
             </div>
             <div className="flex items-center gap-3 text-[12.5px]">
               <CreditCard size={16} className="text-green flex-shrink-0" />
-              <span><strong>VietQR · </strong>Cross-border, thẻ Visa/Master</span>
+              <span><strong>{t('product.payLine')}</strong>{t('product.payDetail')}</span>
             </div>
             <div className="flex items-center gap-3 text-[12.5px]">
               <RotateCcw size={16} className="text-green flex-shrink-0" />
-              <span><strong>Đổi trả 14 ngày</strong> · Không lý do</span>
+              <span><strong>{t('product.returnLine')}</strong> · {t('product.returnDetail')}</span>
             </div>
           </div>
         </div>
@@ -253,16 +258,13 @@ export function ProductDetail() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {/* Description */}
-          {product.description_vi && (
+          {displayDescription && (
             <div className="bg-white border border-border rounded-2xl p-6">
               <h2 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)', fontSize: '18px' }}>
-                Mô tả sản phẩm
+                {t('product.descriptionTitle')}
               </h2>
               <div className="text-sm leading-relaxed text-ink-soft">
-                <p>{product.description_vi}</p>
-                {product.description_en && (
-                  <p className="mt-3 text-ink-mute italic">{product.description_en}</p>
-                )}
+                <p>{displayDescription}</p>
               </div>
             </div>
           )}
@@ -271,20 +273,20 @@ export function ProductDetail() {
           <div id="reviews" className="bg-white border border-border rounded-2xl p-6">
             <div className="flex items-center justify-between mb-5">
               <h2 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)', fontSize: '18px' }}>
-                Đánh giá ({reviews.length})
+                {t('product.reviewsTitle').replace('{count}', String(reviews.length))}
               </h2>
               <div className="flex items-center gap-2">
                 <div className="text-3xl font-medium" style={{ fontFamily: 'var(--font-display)' }}>{product.rating?.toFixed(1)}</div>
                 <div>
                   <div className="text-yellow-500 text-sm">★★★★★</div>
-                  <div className="text-xs text-ink-mute">{product.sold_count} đánh giá</div>
+                  <div className="text-xs text-ink-mute">{t('product.reviewCount').replace('{count}', String(product.sold_count))}</div>
                 </div>
               </div>
             </div>
             {/* Sort tabs */}
             <div className="flex gap-2 mb-4">
               {(['newest', 'rating_desc', 'rating_asc'] as const).map((v) => {
-                const label = v === 'newest' ? 'Mới nhất' : v === 'rating_desc' ? 'Điểm cao nhất' : 'Điểm thấp nhất'
+                const label = v === 'newest' ? t('product.reviewSortNewest') : v === 'rating_desc' ? t('product.reviewSortHigh') : t('product.reviewSortLow')
                 return (
                   <button
                     key={v}
@@ -302,15 +304,15 @@ export function ProductDetail() {
             </div>
 
             {reviews.length === 0 ? (
-              <div className="text-center text-ink-mute text-sm py-6">Chưa có đánh giá nào</div>
+              <div className="text-center text-ink-mute text-sm py-6">{t('product.noReviews')}</div>
             ) : (
               <div className="space-y-4">
                 {reviews.map((review) => (
                   <div key={review.id} className="p-4 bg-cream rounded-xl">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="font-semibold text-sm text-ink">Khách #{review.customer_id}</span>
+                      <span className="font-semibold text-sm text-ink">{t('product.customerRef').replace('{id}', String(review.customer_id))}</span>
                       <div className="text-yellow-500 text-xs ml-auto">{'★'.repeat(review.rating)}</div>
-                      <span className="text-xs text-ink-mute">{new Date(review.created_at).toLocaleDateString('vi-VN')}</span>
+                      <span className="text-xs text-ink-mute">{new Date(review.created_at).toLocaleDateString(locale)}</span>
                     </div>
                     {review.comment && (
                       <p className="text-sm text-ink-soft leading-relaxed">{review.comment}</p>
@@ -325,11 +327,12 @@ export function ProductDetail() {
           {relatedProducts && relatedProducts.length > 0 && (
             <div className="bg-white border border-border rounded-2xl p-6">
               <h2 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)', fontSize: '18px' }}>
-                Sản phẩm liên quan
+                {t('product.relatedTitle')}
               </h2>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {relatedProducts.map((p) => {
                   const img = p.images?.[0]?.url
+                  const pName = lang === 'en' && p.name_en ? p.name_en : p.name_vi
                   return (
                     <Link
                       key={p.id}
@@ -338,14 +341,14 @@ export function ProductDetail() {
                     >
                       <div className="h-28 bg-cream flex items-center justify-center overflow-hidden">
                         {img ? (
-                          <img src={img} alt={p.name_vi} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          <img src={img} alt={pName} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                         ) : (
                           <div className="text-2xl">🌿</div>
                         )}
                       </div>
                       <div className="p-2.5">
                         <div className="text-xs font-medium text-ink line-clamp-2 mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-                          {p.name_vi}
+                          {pName}
                         </div>
                         <div className="text-xs font-semibold text-green">{p.price.toLocaleString('vi-VN')}₫</div>
                         {p.rating && (
@@ -365,17 +368,17 @@ export function ProductDetail() {
           <div>
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Chứng nhận
+                {t('product.certsTitle')}
               </h3>
               <div className="space-y-2.5">
                 {product.certifications.map((cert) => (
                   <div key={cert} className="flex items-center justify-between p-3 bg-cream rounded-xl">
                     <div>
                       <div className="font-semibold text-sm text-ink">{cert}</div>
-                      <div className="text-xs text-ink-mute">Đang hiệu lực</div>
+                      <div className="text-xs text-ink-mute">{t('product.certValid')}</div>
                     </div>
                     <span className="text-[10px] font-bold text-green bg-green/10 px-2 py-0.5 rounded-full">
-                      ✓ ACTIVE
+                      {t('product.certActiveBadge')}
                     </span>
                   </div>
                 ))}

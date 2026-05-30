@@ -3,6 +3,7 @@ import { useMerchant, useMerchantProducts } from '@/features/products/useProduct
 import { useAddToCart } from '@/features/cart/useCart'
 import { Spinner } from '@/components/ui/Spinner'
 import { Star, ShoppingCart } from 'lucide-react'
+import { useT } from '@/i18n/useT'
 
 export function MerchantPage() {
   const { id } = useParams<{ id: string }>()
@@ -10,6 +11,7 @@ export function MerchantPage() {
   const { data: merchant, isLoading } = useMerchant(merchantId)
   const { data: products } = useMerchantProducts(merchantId)
   const addToCart = useAddToCart()
+  const { t, lang } = useT()
 
   if (isLoading) {
     return <div className="flex justify-center py-16"><Spinner /></div>
@@ -18,15 +20,16 @@ export function MerchantPage() {
   if (!merchant) {
     return (
       <div className="flex flex-col items-center py-20 text-center">
-        <div className="text-ink-mute text-sm">Không tìm thấy gian hàng</div>
+        <div className="text-ink-mute text-sm">{t('merchant.notFound')}</div>
         <Link to="/shop" className="mt-4 text-sm text-green font-semibold hover:underline">
-          ← Quay lại cửa hàng
+          {t('merchant.backToShop')}
         </Link>
       </div>
     )
   }
 
   const productList = products ?? []
+  const merchantDisplayName = lang === 'en' && merchant.business_name_en ? merchant.business_name_en : (merchant.business_name ?? merchant.shop_name ?? '')
 
   return (
     <div>
@@ -47,7 +50,7 @@ export function MerchantPage() {
             className="w-20 h-20 rounded-2xl flex items-center justify-center font-bold text-4xl flex-shrink-0"
             style={{ background: 'var(--color-gold)', color: 'var(--color-green)', fontFamily: 'var(--font-display)' }}
           >
-            {(merchant.business_name ?? merchant.shop_name ?? 'M').charAt(0)}
+            {(merchantDisplayName || 'M').charAt(0)}
           </div>
 
           <div className="flex-1 min-w-[240px]">
@@ -55,12 +58,12 @@ export function MerchantPage() {
             <div className="flex flex-wrap gap-1.5 mb-3">
               {merchant.tier === 'gold' && (
                 <span className="px-2.5 py-1 rounded text-[10px] font-bold" style={{ background: 'rgba(201,169,97,0.25)', color: 'var(--color-gold)' }}>
-                  ★ GOLD TIER
+                  {t('merchant.goldTier')}
                 </span>
               )}
               {merchant.status === 'verified' && (
                 <span className="px-2.5 py-1 rounded text-[10px] font-bold" style={{ background: 'rgba(245,239,224,0.2)', color: 'var(--color-cream)' }}>
-                  ✓ VERIFIED
+                  {t('merchant.verified')}
                 </span>
               )}
               {merchant.certifications?.slice(0, 2).map((cert) => (
@@ -74,7 +77,7 @@ export function MerchantPage() {
               className="text-4xl font-medium leading-tight tracking-tight mb-1.5"
               style={{ fontFamily: 'var(--font-display)', color: 'var(--color-cream)' }}
             >
-              {merchant.business_name ?? merchant.shop_name}
+              {merchantDisplayName}
             </h1>
             {merchant.region && (
               <div className="text-sm mb-3" style={{ color: 'rgba(245,239,224,0.8)' }}>
@@ -102,14 +105,14 @@ export function MerchantPage() {
             )}
             {merchant.total_sales && (
               <div className="text-xs mt-1.5" style={{ color: 'rgba(245,239,224,0.7)' }}>
-                {merchant.total_sales.toLocaleString()} đơn đã hoàn thành
+                {t('merchant.ordersCompleted').replace('{count}', merchant.total_sales.toLocaleString())}
               </div>
             )}
             <button
               className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold transition-opacity hover:opacity-90"
               style={{ background: 'var(--color-gold)', color: 'var(--color-green)' }}
             >
-              + Theo dõi gian hàng
+              {t('merchant.followShop')}
             </button>
           </div>
         </div>
@@ -123,16 +126,16 @@ export function MerchantPage() {
               {merchant.region}
             </div>
             <div className="text-[10.5px] font-bold uppercase tracking-widest mt-2" style={{ color: 'var(--color-gold-deep)' }}>
-              Xuất xứ
+              {t('merchant.statOrigin')}
             </div>
           </div>
         )}
         <div className="bg-white border border-border rounded-2xl p-4 text-center">
           <div className="text-2xl font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>
-            {productList.length} SKU
+            {t('merchant.skuCount').replace('{count}', String(productList.length))}
           </div>
           <div className="text-[10.5px] font-bold uppercase tracking-widest mt-2" style={{ color: 'var(--color-gold-deep)' }}>
-            Sản phẩm
+            {t('merchant.statProducts')}
           </div>
         </div>
         {merchant.total_sales != null && (
@@ -141,7 +144,7 @@ export function MerchantPage() {
               {merchant.total_sales.toLocaleString()}
             </div>
             <div className="text-[10.5px] font-bold uppercase tracking-widest mt-2" style={{ color: 'var(--color-gold-deep)' }}>
-              Đơn hoàn thành
+              {t('merchant.statOrders')}
             </div>
           </div>
         )}
@@ -151,21 +154,22 @@ export function MerchantPage() {
       <section>
         <div className="flex items-baseline justify-between mb-5">
           <h2 className="text-3xl font-medium tracking-tight text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-            Sản phẩm của gian hàng
+            {t('merchant.productsTitle')}
           </h2>
           <Link to="/shop" className="text-sm text-green font-semibold hover:underline no-underline">
-            Xem tất cả →
+            {t('merchant.viewAll')}
           </Link>
         </div>
 
         {productList.length === 0 ? (
           <div className="bg-white border border-border rounded-2xl p-12 text-center text-ink-mute text-sm">
-            Gian hàng chưa có sản phẩm
+            {t('merchant.noProducts')}
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {productList.map((product) => {
               const primaryImage = product.images?.find((img) => img.is_primary)?.url
+              const pName = lang === 'en' && product.name_en ? product.name_en : product.name_vi
               return (
                 <div
                   key={product.id}
@@ -173,7 +177,7 @@ export function MerchantPage() {
                 >
                   <Link to={`/shop/products/${product.id}`} className="block h-44 bg-cream flex items-center justify-center overflow-hidden">
                     {primaryImage ? (
-                      <img src={primaryImage} alt={product.name_vi} className="w-full h-full object-cover" />
+                      <img src={primaryImage} alt={pName} className="w-full h-full object-cover" />
                     ) : (
                       <div className="text-4xl">🌿</div>
                     )}
@@ -184,13 +188,13 @@ export function MerchantPage() {
                         className="text-sm font-medium text-ink mb-1 group-hover:text-green transition-colors"
                         style={{ fontFamily: 'var(--font-display)' }}
                       >
-                        {product.name_vi}
+                        {pName}
                       </h3>
                     </Link>
                     <div className="flex items-center gap-1 text-xs text-ink-mute mb-2">
                       <Star size={10} className="text-yellow-500" fill="currentColor" />
                       <span>{product.rating?.toFixed(1)}</span>
-                      <span>· {product.sold_count?.toLocaleString()} đã bán</span>
+                      <span>· {t('shop.soldCount').replace('{count}', product.sold_count?.toLocaleString() ?? '0')}</span>
                     </div>
                     <div
                       className="mt-auto text-base font-semibold text-green"
@@ -203,7 +207,7 @@ export function MerchantPage() {
                       className="mt-2 w-full py-2 bg-cream border border-green text-green rounded-lg text-xs font-medium hover:bg-green hover:text-cream transition-all flex items-center justify-center gap-1"
                     >
                       <ShoppingCart size={11} />
-                      Thêm vào giỏ
+                      {t('merchant.addToCart')}
                     </button>
                   </div>
                 </div>

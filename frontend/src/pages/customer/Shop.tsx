@@ -4,6 +4,7 @@ import { useProducts, useCategories } from '@/features/products/useProducts'
 import { useAddToCart } from '@/features/cart/useCart'
 import { Search, ShoppingCart, Star } from 'lucide-react'
 import { productImageSrc, type ProductRead } from '@/types/api'
+import { useT } from '@/i18n/useT'
 
 const RECENTLY_VIEWED_KEY = 'dhtc_rv'
 const MAX_RV = 8
@@ -37,25 +38,25 @@ function useRecentlyViewed() {
 }
 
 const SORT_OPTIONS = [
-  { value: 'newest', label: 'Mới nhất' },
-  { value: 'best_seller', label: 'Bán chạy' },
-  { value: 'rating', label: 'Đánh giá cao' },
-  { value: 'price_asc', label: 'Giá tăng dần' },
-  { value: 'price_desc', label: 'Giá giảm dần' },
+  { value: 'newest', labelKey: 'shop.sortNewest' },
+  { value: 'best_seller', labelKey: 'shop.sortBestSeller' },
+  { value: 'rating', labelKey: 'shop.sortRating' },
+  { value: 'price_asc', labelKey: 'shop.sortPriceAsc' },
+  { value: 'price_desc', labelKey: 'shop.sortPriceDesc' },
 ]
 
 const CERTIFICATIONS = [
-  { key: 'OCOP', label: 'OCOP', count: 128 },
-  { key: 'VietGAP', label: 'VietGAP', count: 94 },
-  { key: 'Organic', label: 'Hữu cơ', count: 76 },
-  { key: 'HACCP', label: 'HACCP', count: 42 },
+  { key: 'OCOP', labelKey: 'shop.certOcop', count: 128 },
+  { key: 'VietGAP', labelKey: 'shop.certVietGAP', count: 94 },
+  { key: 'Organic', labelKey: 'shop.certOrganic', count: 76 },
+  { key: 'HACCP', labelKey: 'shop.certHACCP', count: 42 },
 ]
 
 const REGIONS = [
-  { key: 'tayNguyen', label: 'Tây Nguyên' },
-  { key: 'dbscl', label: 'ĐBSCL' },
-  { key: 'bacBo', label: 'Bắc Bộ' },
-  { key: 'trungBo', label: 'Trung Bộ' },
+  { key: 'tayNguyen', labelKey: 'shop.regionTayNguyen' },
+  { key: 'dbscl', labelKey: 'shop.regionDbscl' },
+  { key: 'bacBo', labelKey: 'shop.regionBacBo' },
+  { key: 'trungBo', labelKey: 'shop.regionTrungBo' },
 ]
 
 const REGION_ORIGIN_MAP: Record<string, string> = {
@@ -67,6 +68,8 @@ const REGION_ORIGIN_MAP: Record<string, string> = {
 
 function ProductCard({ product }: { product: ProductRead }) {
   const addToCart = useAddToCart()
+  const { t, lang } = useT()
+  const displayName = lang === 'en' && product.name_en ? product.name_en : product.name_vi
   const primary = product.images?.find((i) => i.is_primary) ?? product.images?.[0]
   const primaryImage = primary ? productImageSrc(primary, 'medium') : undefined
   const hasOcop = product.certifications?.some((c) => c.includes('OCOP'))
@@ -77,7 +80,7 @@ function ProductCard({ product }: { product: ProductRead }) {
       <Link to={`/shop/products/${product.id}`} className="block relative">
         <div className="h-48 bg-cream flex items-center justify-center overflow-hidden">
           {primaryImage ? (
-            <img src={primaryImage} alt={product.name_vi} className="w-full h-full object-cover" />
+            <img src={primaryImage} alt={displayName} className="w-full h-full object-cover" />
           ) : (
             <div className="text-4xl">🌿</div>
           )}
@@ -107,13 +110,13 @@ function ProductCard({ product }: { product: ProductRead }) {
             className="text-sm font-medium leading-tight mb-1 text-ink group-hover:text-green transition-colors"
             style={{ fontFamily: 'var(--font-display)', minHeight: '36px' }}
           >
-            {product.name_vi}
+            {displayName}
           </h3>
         </Link>
         <div className="flex items-center gap-1 text-[11.5px] mb-2" style={{ color: 'var(--color-gold-deep)' }}>
           <Star size={11} fill="currentColor" />
           <span className="font-semibold">{product.rating?.toFixed(1)}</span>
-          <span className="text-ink-mute text-[10.5px] ml-1.5">{product.sold_count?.toLocaleString()} đã bán</span>
+          <span className="text-ink-mute text-[10.5px] ml-1.5">{t('shop.soldCount').replace('{count}', product.sold_count?.toLocaleString() ?? '0')}</span>
         </div>
         <div className="mt-auto">
           <div
@@ -132,7 +135,7 @@ function ProductCard({ product }: { product: ProductRead }) {
           className="mt-2.5 w-full py-2 bg-cream border border-green text-green rounded-[9px] text-xs font-medium hover:bg-green hover:text-cream transition-all flex items-center justify-center gap-1.5"
         >
           <ShoppingCart size={12} />
-          Thêm vào giỏ
+          {t('shop.addToCart')}
         </button>
       </div>
     </div>
@@ -142,6 +145,7 @@ function ProductCard({ product }: { product: ProductRead }) {
 const PAGE_SIZE = 12
 
 export function Shop() {
+  const { t, lang } = useT()
   const [activeCategoryId, setActiveCategoryId] = useState<number | undefined>(undefined)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -196,10 +200,10 @@ export function Shop() {
       {/* Page title */}
       <div className="mb-6">
         <h1 className="text-3xl font-medium tracking-tight text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-          Tất cả sản phẩm
+          {t('shop.title')}
         </h1>
         <p className="text-ink-mute mt-1 text-sm">
-          {isLoading ? 'Đang tải...' : `${source.length} sản phẩm trên trang này`}
+          {isLoading ? t('shop.loading') : t('shop.productsOnPage').replace('{count}', String(source.length))}
         </p>
       </div>
 
@@ -207,20 +211,20 @@ export function Shop() {
         {/* Filter sidebar */}
         <aside className="bg-white border border-border rounded-2xl p-5 h-fit lg:sticky lg:top-20">
           <h3 className="font-medium text-ink mb-4" style={{ fontFamily: 'var(--font-display)', fontSize: '16px' }}>
-            Bộ lọc
+            {t('shop.filter')}
           </h3>
 
           {/* Price */}
           <div className="py-3.5 border-t border-dashed border-border">
             <h4 className="text-[10.5px] font-bold uppercase tracking-widest text-ink-mute mb-2.5">
-              Khoảng giá (₫)
+              {t('shop.priceLabel')}
             </h4>
             <div className="flex items-center gap-2">
               <input
                 type="number"
                 value={priceMin}
                 onChange={(e) => setPriceMin(e.target.value)}
-                placeholder="0"
+                placeholder={t('shop.priceMin')}
                 className="flex-1 w-0 px-2.5 py-1.5 border border-border rounded-lg text-xs bg-cream focus:outline-none focus:border-green"
               />
               <span className="text-ink-mute">—</span>
@@ -228,7 +232,7 @@ export function Shop() {
                 type="number"
                 value={priceMax}
                 onChange={(e) => setPriceMax(e.target.value)}
-                placeholder="500K"
+                placeholder={t('shop.priceMax')}
                 className="flex-1 w-0 px-2.5 py-1.5 border border-border rounded-lg text-xs bg-cream focus:outline-none focus:border-green"
               />
             </div>
@@ -236,7 +240,7 @@ export function Shop() {
 
           {/* Certifications */}
           <div className="py-3.5 border-t border-dashed border-border">
-            <h4 className="text-[10.5px] font-bold uppercase tracking-widest text-ink-mute mb-2.5">Chứng nhận</h4>
+            <h4 className="text-[10.5px] font-bold uppercase tracking-widest text-ink-mute mb-2.5">{t('shop.certsLabel')}</h4>
             <ul className="space-y-0.5">
               {CERTIFICATIONS.map((cert) => (
                 <li key={cert.key} className="flex items-center py-1.5 text-sm cursor-pointer" onClick={() => toggleCert(cert.key)}>
@@ -247,7 +251,7 @@ export function Shop() {
                     className="mr-2 accent-green"
                     onClick={(e) => e.stopPropagation()}
                   />
-                  {cert.label}
+                  {t(cert.labelKey)}
                   <span className="ml-auto text-[11px] text-ink-mute font-mono">{cert.count}</span>
                 </li>
               ))}
@@ -256,7 +260,7 @@ export function Shop() {
 
           {/* Regions */}
           <div className="py-3.5 border-t border-dashed border-border">
-            <h4 className="text-[10.5px] font-bold uppercase tracking-widest text-ink-mute mb-2.5">Vùng miền</h4>
+            <h4 className="text-[10.5px] font-bold uppercase tracking-widest text-ink-mute mb-2.5">{t('shop.regionsLabel')}</h4>
             <ul className="space-y-0.5">
               {REGIONS.map((r) => (
                 <li
@@ -271,7 +275,7 @@ export function Shop() {
                     className="mr-2 accent-green"
                     onClick={(e) => e.stopPropagation()}
                   />
-                  {r.label}
+                  {t(r.labelKey)}
                 </li>
               ))}
             </ul>
@@ -279,7 +283,7 @@ export function Shop() {
 
           {/* Rating */}
           <div className="py-3.5 border-t border-dashed border-border">
-            <h4 className="text-[10.5px] font-bold uppercase tracking-widest text-ink-mute mb-2.5">Đánh giá</h4>
+            <h4 className="text-[10.5px] font-bold uppercase tracking-widest text-ink-mute mb-2.5">{t('shop.ratingLabel')}</h4>
             <ul className="space-y-0.5">
               {([5, 4, 3] as const).map((rating) => (
                 <li
@@ -294,7 +298,7 @@ export function Shop() {
                     className="mr-2 accent-green"
                     onClick={(e) => e.stopPropagation()}
                   />
-                  {'★'.repeat(rating)}{rating < 5 ? ' trở lên' : ''}
+                  {'★'.repeat(rating)}{rating < 5 ? t('shop.ratingMore') : ''}
                 </li>
               ))}
             </ul>
@@ -318,7 +322,7 @@ export function Shop() {
                 }}
                 className="w-full py-2 text-xs font-semibold text-danger border border-danger/30 rounded-xl hover:bg-danger/5 transition-colors"
               >
-                Xóa bộ lọc
+                {t('shop.clearFilters')}
               </button>
             </div>
           )}
@@ -335,20 +339,20 @@ export function Shop() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm bánh dừa, cà phê, xoài sấy..."
+                placeholder={t('shop.searchPlaceholder')}
                 className="flex-1 bg-transparent text-sm focus:outline-none"
               />
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="text-xs text-ink-mute">Hiển thị {source.length} sản phẩm</span>
+              <span className="text-xs text-ink-mute">{t('shop.showingCount').replace('{count}', String(source.length))}</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-3 py-2 border border-border rounded-xl text-xs bg-white focus:outline-none focus:border-green"
               >
                 {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value}>{t(opt.labelKey)}</option>
                 ))}
               </select>
             </div>
@@ -364,7 +368,7 @@ export function Shop() {
                   : 'bg-white border border-border text-ink-soft hover:border-green hover:text-green'
               }`}
             >
-              Tất cả
+              {t('shop.allCategory')}
             </button>
             {(categories ?? []).map((cat) => (
               <button
@@ -376,14 +380,14 @@ export function Shop() {
                     : 'bg-white border border-border text-ink-soft hover:border-green hover:text-green'
                 }`}
               >
-                {cat.name_vi}
+                {lang === 'en' && cat.name_en ? cat.name_en : cat.name_vi}
               </button>
             ))}
           </div>
 
           {source.length === 0 ? (
             <div className="bg-white border border-border rounded-2xl p-16 text-center text-ink-mute">
-              Không tìm thấy sản phẩm nào
+              {t('shop.empty')}
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -400,22 +404,22 @@ export function Shop() {
               disabled={page === 1}
               className="px-4 py-2 border border-border rounded-xl text-sm font-medium text-ink-soft disabled:opacity-40 hover:border-green hover:text-green transition-colors disabled:cursor-not-allowed"
             >
-              ← Trước
+              {t('shop.prev')}
             </button>
-            <span className="text-sm text-ink-mute">Trang {page}</span>
+            <span className="text-sm text-ink-mute">{t('shop.page').replace('{page}', String(page))}</span>
             <button
               onClick={() => setPage(p => p + 1)}
               disabled={(products ?? []).length < PAGE_SIZE}
               className="px-4 py-2 border border-border rounded-xl text-sm font-medium text-ink-soft disabled:opacity-40 hover:border-green hover:text-green transition-colors disabled:cursor-not-allowed"
             >
-              Tiếp →
+              {t('shop.next')}
             </button>
           </div>
 
           {/* Recently viewed */}
           {rv.length > 0 && !search && !activeCategoryId && (
             <div className="mt-12 pt-8 border-t border-border">
-              <div className="text-[10.5px] font-bold uppercase tracking-widest text-ink-mute mb-4">Đã xem gần đây</div>
+              <div className="text-[10.5px] font-bold uppercase tracking-widest text-ink-mute mb-4">{t('shop.recentlyViewed')}</div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {rv.slice(0, 8).map((item) => (
                   <Link
