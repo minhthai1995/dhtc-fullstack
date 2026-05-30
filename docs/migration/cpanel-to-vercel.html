@@ -1026,6 +1026,9 @@
             <div class="callout callout-info">
               Đăng nhập ở <code>https://dhtcdanang.com/wp-admin</code> (apex vẫn trỏ cPanel + đã có SSL). Chưa cần <code>old.</code> để login.
             </div>
+            <div class="callout callout-warn">
+              <strong>Cả 3 cách trên đều không vào được?</strong> → Bỏ qua 3.5 + 3.6, dùng bước <strong>3.6-ALT</strong> bên dưới: đổi URL bằng <code>wp-config.php</code> qua File Manager — không cần wp-admin.
+            </div>
           </div>
         </div>
       </div>
@@ -1048,6 +1051,64 @@
               <li>Bỏ dry run → <strong>Run Search/Replace</strong></li>
             </ol>
             Hoặc nhanh hơn (nếu chỉ cần): WP admin → Settings → General → đổi <strong>WordPress Address (URL)</strong> + <strong>Site Address (URL)</strong> → <code>https://old.dhtcdanang.com</code> → Save.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <input type="checkbox" class="step-check" id="s3-6alt">
+        <div class="step-content">
+          <label for="s3-6alt" class="step-title"><span class="step-num">3.6-ALT</span>Không vào được wp-admin? Đổi URL bằng wp-config.php (cPanel-only)</label>
+          <div class="step-detail">
+            <div class="callout callout-info">
+              <div class="callout-title">Khi nào dùng bước này</div>
+              Cả 3 cách ở bước 3.5 đều không vào được wp-admin (cPanel không có nút <em>Log In</em>, email reset không tới, phpMyAdmin reset xong vẫn không login được vì 2FA hoặc lỗi khác). Bước này dùng <strong>chỉ cPanel File Manager</strong> — không cần wp-admin, không sửa database.
+            </div>
+            <strong>Vì sao chạy được:</strong> WordPress đọc 2 hằng số <code>WP_HOME</code> + <code>WP_SITEURL</code> trong <code>wp-config.php</code> ưu tiên hơn giá trị trong DB (<code>wp_options.siteurl</code>/<code>home</code>). Định nghĩa 2 dòng này → URL chính của site đổi ngay, không cần wp-admin, không sửa <code>wp_options</code>.
+            <ol>
+              <li>
+                <strong>Backup file gốc</strong> — File Manager → <code>public_html</code> → <code>wp-config.php</code> → chuột phải → <em>Copy</em> → đặt tên <code>wp-config.bak.php</code>. Cần để rollback nhanh.
+              </li>
+              <li>
+                File Manager → <code>public_html</code> → <code>wp-config.php</code> → chuột phải → <strong>Edit</strong> (hộp thoại encoding → giữ mặc định <em>utf-8</em> → <strong>Edit</strong>).
+              </li>
+              <li>
+                Tìm dòng comment <code>/* That's all, stop editing! Happy publishing. */</code> (gần cuối file). <strong>Chèn ngay PHÍA TRÊN</strong> dòng đó:
+              </li>
+            </ol>
+            <div class="code-block"><button class="btn-copy" onclick="copyText(&quot;define( 'WP_HOME', 'https://old.dhtcdanang.com' );\ndefine( 'WP_SITEURL', 'https://old.dhtcdanang.com' );&quot;)">copy</button>define( 'WP_HOME',    'https://old.dhtcdanang.com' );
+define( 'WP_SITEURL', 'https://old.dhtcdanang.com' );   <span class="code-comment"># 2 dòng — không có https quá hạn, không có dấu / cuối</span></div>
+            <ol start="4">
+              <li><strong>Save Changes</strong> ở góc trên phải editor.</li>
+              <li>Mở <code>https://old.dhtcdanang.com</code> trong tab ẩn danh → trang chủ hiển thị, URL trên thanh địa chỉ luôn là <code>old.dhtcdanang.com</code> (không bị 301 về <code>dhtcdanang.com</code>).</li>
+              <li>Thử <code>https://old.dhtcdanang.com/wp-login.php</code> → trang login hiện ra (chưa cần đăng nhập, chỉ cần URL không 404 / không redirect sai).</li>
+            </ol>
+            <div class="callout callout-info">
+              <div class="callout-title">Giới hạn — đọc trước khi chạy bước 3.7</div>
+              Hằng số chỉ ép <em>siteurl</em> + <em>home</em>. URL kiểu <code>https://dhtcdanang.com/wp-content/uploads/...</code> hardcode trong:
+              <ul>
+                <li>nội dung bài post (cột <code>post_content</code> trong <code>wp_posts</code>)</li>
+                <li>widget / theme options (serialized PHP trong <code>wp_options</code>)</li>
+                <li>menu items, customizer settings</li>
+              </ul>
+              vẫn trỏ về <code>dhtcdanang.com</code> — sau cutover các URL này sẽ rớt sang Vercel (404). Nếu chỉ là <strong>archive đọc</strong> hiếm khi click vào ảnh/menu → bỏ qua, chấp nhận. Nếu cần old.* trông sạch → làm thêm bước phụ bên dưới.
+            </div>
+            <details>
+              <summary><strong>Tuỳ chọn — thay thế URL trong DB không cần wp-admin (serialized-safe)</strong></summary>
+              <ol>
+                <li>Tải về tool open-source <strong>Search-Replace-DB</strong> của interconnect/it: <code>https://interconnectit.com/products/search-and-replace-for-wordpress-databases/</code> → giải nén lấy thư mục <code>Search-Replace-DB-master</code>.</li>
+                <li>Đổi tên thư mục thành chuỗi ngẫu nhiên (vd <code>srdb-9k2x</code>) để URL khó đoán.</li>
+                <li>File Manager → <code>public_html</code> → <strong>Upload</strong> → tải toàn bộ thư mục lên.</li>
+                <li>Trình duyệt mở <code>https://old.dhtcdanang.com/srdb-9k2x/</code> → tool tự đọc <code>wp-config.php</code> để connect DB (không nhập tay password).</li>
+                <li><em>search for</em>: <code>https://dhtcdanang.com</code> · <em>replace with</em>: <code>https://old.dhtcdanang.com</code></li>
+                <li>Bấm <strong>Dry run</strong> trước → xem số dòng sẽ đổi → nếu OK, bấm <strong>Live run</strong>.</li>
+                <li><strong>BẮT BUỘC</strong> sau khi xong: bấm <strong>Delete me</strong> trong tool, hoặc File Manager → xoá thư mục <code>srdb-9k2x</code>. Tool còn nằm trên server = lỗ hổng nghiêm trọng.</li>
+              </ol>
+            </details>
+            <div class="callout callout-danger">
+              <div class="callout-title">Rollback (nếu cần huỷ ALT)</div>
+              File Manager → xoá 2 dòng <code>define(...)</code> vừa thêm (hoặc rename <code>wp-config.bak.php</code> → <code>wp-config.php</code>, ghi đè). DB chưa bị đụng → WP về lại URL cũ ngay lập tức. Nếu đã chạy SRDB live run → restore DB từ backup Phase 1.4.
+            </div>
           </div>
         </div>
       </div>
