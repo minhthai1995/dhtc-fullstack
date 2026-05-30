@@ -1585,6 +1585,26 @@ const vi: Dict = {
   'productCard.stockLeft': 'Còn {n}',
   'productCard.sold': '({n} đã bán)',
   'fbBtn.label': 'Tiếp tục với Facebook',
+
+  // Image uploader
+  'imageUploader.unsupported': '"{name}" không phải định dạng ảnh hỗ trợ (JPG/PNG/WebP/HEIC)',
+  'imageUploader.tooLarge': '"{name}" quá lớn ({mb}MB) — chọn ảnh nhỏ hơn 10MB',
+  'imageUploader.slotsExceeded': 'Chỉ thêm được {slots} ảnh nữa — bỏ qua {drop} ảnh dư',
+  'imageUploader.uploadFailed': 'Tải lên thất bại — thử lại',
+  'imageUploader.primaryBadge': 'Ảnh chính',
+  'imageUploader.removeImage': 'Xoá ảnh',
+  'imageUploader.cancelUpload': 'Huỷ ảnh đang tải',
+  'imageUploader.dropPrompt': 'Kéo thả ảnh vào đây hoặc bấm để chọn',
+  'imageUploader.dropHint': 'JPG / PNG / WebP / HEIC · còn {remaining}/{max} ảnh · 2MB mỗi ảnh',
+  'imageUploader.maxReached': 'Đã đạt tối đa {max} ảnh. Xoá bớt để thêm mới.',
+
+  // Admin integrations — mock descriptions
+  'adminIntegrations.descVietQR': 'Thanh toán QR Code & chuyển khoản ngân hàng',
+  'adminIntegrations.descDHL': 'Vận chuyển quốc tế & in waybill tự động',
+  'adminIntegrations.descMessenger': 'Hỗ trợ khách hàng qua Facebook Messenger',
+  'adminIntegrations.descZalo': 'Thông báo đơn hàng & marketing qua Zalo',
+  'adminIntegrations.descGemini': 'Chatbot tự động hỗ trợ tư vấn sản phẩm',
+  'adminIntegrations.descVNPOST': 'Theo dõi vận đơn nội địa VNPOST',
 }
 
 const en: Dict = {
@@ -3165,6 +3185,26 @@ const en: Dict = {
   'productCard.stockLeft': '{n} left',
   'productCard.sold': '({n} sold)',
   'fbBtn.label': 'Continue with Facebook',
+
+  // Image uploader
+  'imageUploader.unsupported': '"{name}" is not a supported image format (JPG/PNG/WebP/HEIC)',
+  'imageUploader.tooLarge': '"{name}" is too large ({mb}MB) — choose an image under 10MB',
+  'imageUploader.slotsExceeded': 'Only {slots} more image slot(s) — skipping {drop} extra',
+  'imageUploader.uploadFailed': 'Upload failed — try again',
+  'imageUploader.primaryBadge': 'Main image',
+  'imageUploader.removeImage': 'Remove image',
+  'imageUploader.cancelUpload': 'Cancel upload',
+  'imageUploader.dropPrompt': 'Drop images here or click to choose',
+  'imageUploader.dropHint': 'JPG / PNG / WebP / HEIC · {remaining}/{max} slots left · 2MB each',
+  'imageUploader.maxReached': 'Maximum of {max} images reached. Remove some to add more.',
+
+  // Admin integrations — mock descriptions
+  'adminIntegrations.descVietQR': 'QR Code payments & bank transfers',
+  'adminIntegrations.descDHL': 'International shipping & automated waybill printing',
+  'adminIntegrations.descMessenger': 'Customer support via Facebook Messenger',
+  'adminIntegrations.descZalo': 'Order notifications & marketing via Zalo',
+  'adminIntegrations.descGemini': 'Automated chatbot for product consultation',
+  'adminIntegrations.descVNPOST': 'Domestic shipment tracking via VNPOST',
 }
 
 export const messages: Record<Lang, Dict> = { vi, en }

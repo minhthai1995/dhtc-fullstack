@@ -31,10 +31,19 @@ interface ChatMessage {
   text: string
 }
 
+const NAME_TO_DESC_KEY: Record<string, string> = {
+  'Vietcombank VietQR': 'adminIntegrations.descVietQR',
+  'DHL Express API': 'adminIntegrations.descDHL',
+  'Messenger Webhook': 'adminIntegrations.descMessenger',
+  'Zalo OA API': 'adminIntegrations.descZalo',
+  'AI Chatbot (Gemini)': 'adminIntegrations.descGemini',
+  'VNPOST Tracking': 'adminIntegrations.descVNPOST',
+}
+
 const MOCK_INTEGRATIONS: IntegrationCard[] = [
   {
     name: 'Vietcombank VietQR',
-    description: 'Thanh toán QR Code & chuyển khoản ngân hàng',
+    description: '',
     status: 'online',
     uptime: 99.9,
     latency: 142,
@@ -44,7 +53,7 @@ const MOCK_INTEGRATIONS: IntegrationCard[] = [
   },
   {
     name: 'DHL Express API',
-    description: 'Vận chuyển quốc tế & in waybill tự động',
+    description: '',
     status: 'online',
     uptime: 99.7,
     latency: 238,
@@ -54,7 +63,7 @@ const MOCK_INTEGRATIONS: IntegrationCard[] = [
   },
   {
     name: 'Messenger Webhook',
-    description: 'Hỗ trợ khách hàng qua Facebook Messenger',
+    description: '',
     status: 'online',
     uptime: 98.5,
     latency: 89,
@@ -64,7 +73,7 @@ const MOCK_INTEGRATIONS: IntegrationCard[] = [
   },
   {
     name: 'Zalo OA API',
-    description: 'Thông báo đơn hàng & marketing qua Zalo',
+    description: '',
     status: 'degraded',
     uptime: 95.2,
     latency: 520,
@@ -74,7 +83,7 @@ const MOCK_INTEGRATIONS: IntegrationCard[] = [
   },
   {
     name: 'AI Chatbot (Gemini)',
-    description: 'Chatbot tự động hỗ trợ tư vấn sản phẩm',
+    description: '',
     status: 'online',
     uptime: 99.1,
     latency: 320,
@@ -84,7 +93,7 @@ const MOCK_INTEGRATIONS: IntegrationCard[] = [
   },
   {
     name: 'VNPOST Tracking',
-    description: 'Theo dõi vận đơn nội địa VNPOST',
+    description: '',
     status: 'offline',
     uptime: 87.3,
     latency: 0,
@@ -284,7 +293,9 @@ export function AdminIntegrations() {
                   <h3 className="font-semibold text-ink">{int.name}</h3>
                   {statusBadge(int.status)}
                 </div>
-                <p className="text-xs text-ink-mute mb-3">{int.description}</p>
+                <p className="text-xs text-ink-mute mb-3">
+                  {NAME_TO_DESC_KEY[int.name] ? t(NAME_TO_DESC_KEY[int.name]) : int.description}
+                </p>
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>

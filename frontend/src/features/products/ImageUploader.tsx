@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'r
 import { ImagePlus, X } from 'lucide-react'
 import imageCompression from 'browser-image-compression'
 import { useToast } from '@/components/ui/Toast'
+import { useT } from '@/i18n/useT'
 import { uploadProductImage } from './productImages.api'
 import type { ProductImage } from './types'
 
@@ -47,6 +48,7 @@ const nextLocalId = () => `pending-${++pendingCounter}`
 export function ImageUploader({ value, onChange }: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
+  const { t } = useT()
   const [dragOver, setDragOver] = useState(false)
   const [pending, setPending] = useState<PendingItem[]>([])
 
@@ -63,11 +65,11 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
     // Empty content_type sneaks past on some mobile pickers — fall back to extension
     const type = file.type || `image/${file.name.split('.').pop()?.toLowerCase() ?? ''}`
     if (!ALLOWED_MIME.has(type)) {
-      return `"${file.name}" không phải định dạng ảnh hỗ trợ (JPG/PNG/WebP/HEIC)`
+      return t('imageUploader.unsupported').replace('{name}', file.name)
     }
     if (file.size > HARD_LIMIT_BYTES) {
       const mb = (file.size / 1024 / 1024).toFixed(1)
-      return `"${file.name}" quá lớn (${mb}MB) — chọn ảnh nhỏ hơn 10MB`
+      return t('imageUploader.tooLarge').replace('{name}', file.name).replace('{mb}', mb)
     }
     return null
   }
@@ -77,7 +79,12 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
 
     const slots = Math.max(0, MAX_IMAGES - value.length - pending.length)
     if (files.length > slots) {
-      toast(`Chỉ thêm được ${slots} ảnh nữa — bỏ qua ${files.length - slots} ảnh dư`, 'info')
+      toast(
+        t('imageUploader.slotsExceeded')
+          .replace('{slots}', String(slots))
+          .replace('{drop}', String(files.length - slots)),
+        'info',
+      )
     }
 
     const accepted: File[] = []
@@ -119,7 +126,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
         .catch((err: unknown) => {
           const detail =
             (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
-          const msg = typeof detail === 'string' ? detail : 'Tải lên thất bại — thử lại'
+          const msg = typeof detail === 'string' ? detail : t('imageUploader.uploadFailed')
           toast(msg, 'error')
           setPending((prev) =>
             prev.map((p) =>
@@ -216,13 +223,13 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
               <img src={img.urls.medium} alt="" className="w-full h-full object-cover" />
               {index === 0 && (
                 <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-full bg-green text-white text-[10px] font-bold">
-                  Ảnh chính
+                  {t('imageUploader.primaryBadge')}
                 </span>
               )}
               <button
                 type="button"
                 onClick={() => removeUploaded(img.id)}
-                aria-label="Xoá ảnh"
+                aria-label={t('imageUploader.removeImage')}
                 className="absolute top-1 right-1 w-7 h-7 rounded-full bg-white/90 border border-border flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-danger hover:text-white transition-all"
               >
                 <X size={14} />
@@ -254,7 +261,7 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
               <button
                 type="button"
                 onClick={() => removePending(p.localId)}
-                aria-label="Huỷ ảnh đang tải"
+                aria-label={t('imageUploader.cancelUpload')}
                 className="absolute top-1 right-1 w-7 h-7 rounded-full bg-white/90 border border-border flex items-center justify-center hover:bg-danger hover:text-white transition-all"
               >
                 <X size={14} />
@@ -281,16 +288,18 @@ export function ImageUploader({ value, onChange }: ImageUploaderProps) {
           }
         >
           <ImagePlus size={28} className="text-ink-mute" />
-          <p className="text-sm font-semibold text-ink">Kéo thả ảnh vào đây hoặc bấm để chọn</p>
+          <p className="text-sm font-semibold text-ink">{t('imageUploader.dropPrompt')}</p>
           <p className="text-xs text-ink-mute">
-            JPG / PNG / WebP / HEIC · còn {remaining}/{MAX_IMAGES} ảnh · 2MB mỗi ảnh
+            {t('imageUploader.dropHint')
+              .replace('{remaining}', String(remaining))
+              .replace('{max}', String(MAX_IMAGES))}
           </p>
         </div>
       )}
 
       {remaining === 0 && (
         <p className="text-xs text-ink-mute italic mt-2">
-          Đã đạt tối đa {MAX_IMAGES} ảnh. Xoá bớt để thêm mới.
+          {t('imageUploader.maxReached').replace('{max}', String(MAX_IMAGES))}
         </p>
       )}
     </div>
