@@ -37,7 +37,7 @@ const vi: Dict = {
   'hero.headlinePost': 'ở đây.',
   'hero.sub':
     'Khói than nướng, đèn lồng đỏ và sóng người dưới chân Cầu Rồng — hơn 150 gian hàng trải khắp 4 khu. Hải sản tươi, mì Quảng, bánh tráng nướng, kem bơ; mở đèn từ 17:30 mỗi đêm.',
-  'hero.cta1': 'Khám phá ẩm thực',
+  'hero.cta1': 'Xem 8 món phải thử',
   'hero.cta2': 'Đường đến chợ',
   'hero.fact1.value': '150+',
   'hero.fact1.label': 'gian hàng',
@@ -1673,7 +1673,7 @@ const en: Dict = {
   'hero.headlinePost': 'right here.',
   'hero.sub':
     'Charcoal smoke, red lanterns and a river of people at the foot of Dragon Bridge — 150+ stalls across 4 zones. Fresh seafood, mì Quảng, grilled rice paper, avocado ice cream; lights on from 17:30 every night.',
-  'hero.cta1': 'Explore the flavors',
+  'hero.cta1': 'See the 8 must-try dishes',
   'hero.cta2': 'How to get here',
   'hero.fact1.value': '150+',
   'hero.fact1.label': 'stalls',
