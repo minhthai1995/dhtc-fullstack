@@ -7,6 +7,8 @@
  *
  * Visual: full-width pill button, FB blue background, white "f" mark.
  */
+import { useT } from '@/i18n/useT'
+
 const FB_OAUTH_START_PATH = '/api/v1/auth/facebook/start'
 
 type Props = {
@@ -16,10 +18,12 @@ type Props = {
 }
 
 export function FacebookLoginButton({
-  label = 'Tiếp tục với Facebook',
+  label,
   className = '',
   disabled = false,
 }: Props) {
+  const { t } = useT()
+  const text = label ?? t('fbBtn.label')
   const handleClick = () => {
     if (disabled) return
     window.location.href = FB_OAUTH_START_PATH
@@ -30,7 +34,7 @@ export function FacebookLoginButton({
       type="button"
       onClick={handleClick}
       disabled={disabled}
-      aria-label={label}
+      aria-label={text}
       className={
         'w-full py-3 rounded-xl font-semibold text-sm text-white ' +
         'bg-[#1877F2] hover:bg-[#166fe5] disabled:opacity-60 disabled:cursor-not-allowed ' +
@@ -39,7 +43,7 @@ export function FacebookLoginButton({
       }
     >
       <FacebookIcon className="w-4 h-4" />
-      {label}
+      {text}
     </button>
   )
 }

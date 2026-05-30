@@ -1572,6 +1572,19 @@ const vi: Dict = {
   'adminCRM.timeMinAgo': '{n} phút trước',
   'adminCRM.timeHourAgo': '{n} giờ trước',
   'adminCRM.timeDayAgo': '{n} ngày trước',
+
+  // Global UI — error boundary, notifications, product card, FB button
+  'errors.boundaryTitle': 'Đã xảy ra lỗi',
+  'errors.reload': 'Tải lại trang',
+  'notifications.aria': 'Thông báo',
+  'notifications.title': 'Thông báo',
+  'notifications.markAllRead': 'Đọc tất cả',
+  'notifications.empty': 'Không có thông báo',
+  'productCard.pending': 'Chờ duyệt',
+  'productCard.outOfStock': 'Hết hàng',
+  'productCard.stockLeft': 'Còn {n}',
+  'productCard.sold': '({n} đã bán)',
+  'fbBtn.label': 'Tiếp tục với Facebook',
 }
 
 const en: Dict = {
@@ -3139,6 +3152,19 @@ const en: Dict = {
   'adminCRM.timeMinAgo': '{n} min ago',
   'adminCRM.timeHourAgo': '{n} h ago',
   'adminCRM.timeDayAgo': '{n} d ago',
+
+  // Global UI — error boundary, notifications, product card, FB button
+  'errors.boundaryTitle': 'Something went wrong',
+  'errors.reload': 'Reload page',
+  'notifications.aria': 'Notifications',
+  'notifications.title': 'Notifications',
+  'notifications.markAllRead': 'Mark all as read',
+  'notifications.empty': 'No notifications',
+  'productCard.pending': 'Pending review',
+  'productCard.outOfStock': 'Out of stock',
+  'productCard.stockLeft': '{n} left',
+  'productCard.sold': '({n} sold)',
+  'fbBtn.label': 'Continue with Facebook',
 }
 
 export const messages: Record<Lang, Dict> = { vi, en }

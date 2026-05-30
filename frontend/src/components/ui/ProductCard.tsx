@@ -1,6 +1,7 @@
 import { cn } from '@/lib/cn'
 import { Star } from 'lucide-react'
 import { productImageSrc, type ProductRead } from '@/types/api'
+import { useT } from '@/i18n/useT'
 
 interface ProductCardProps {
   product: ProductRead
@@ -8,16 +9,18 @@ interface ProductCardProps {
   className?: string
 }
 
-function formatPrice(price: number): string {
+function formatPrice(price: number, locale: string): string {
   if (price >= 1_000_000) {
     return `₫${(price / 1_000_000).toFixed(1)}M`
   }
-  return `₫${price.toLocaleString('vi-VN')}`
+  return `₫${price.toLocaleString(locale)}`
 }
 
 export function ProductCard({ product, onClick, className }: ProductCardProps) {
+  const { t, lang } = useT()
   const primary = product.images?.find((i) => i.is_primary) ?? product.images?.[0]
   const image = productImageSrc(primary, 'medium')
+  const locale = lang === 'vi' ? 'vi-VN' : 'en-US'
 
   return (
     <div
@@ -50,7 +53,7 @@ export function ProductCard({ product, onClick, className }: ProductCardProps) {
         )}
         {product.status === 'pending' && (
           <div className="absolute top-2.5 right-2.5 bg-warning text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-            Chờ duyệt
+            {t('productCard.pending')}
           </div>
         )}
       </div>
@@ -68,12 +71,12 @@ export function ProductCard({ product, onClick, className }: ProductCardProps) {
           </div>
           {product.stock === 0 && (
             <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-danger/10 text-danger flex-shrink-0">
-              Hết hàng
+              {t('productCard.outOfStock')}
             </span>
           )}
           {product.stock > 0 && product.stock <= 10 && (
             <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-warning/10 text-warning flex-shrink-0">
-              Còn {product.stock}
+              {t('productCard.stockLeft').replace('{n}', String(product.stock))}
             </span>
           )}
         </div>
@@ -82,7 +85,7 @@ export function ProductCard({ product, onClick, className }: ProductCardProps) {
             className="text-xl font-medium text-green"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            {formatPrice(product.price)}
+            {formatPrice(product.price, locale)}
           </span>
         </div>
 
@@ -97,7 +100,7 @@ export function ProductCard({ product, onClick, className }: ProductCardProps) {
               />
             ))}
           </div>
-          <span className="text-[11px] text-ink-mute">({product.sold_count} đã bán)</span>
+          <span className="text-[11px] text-ink-mute">{t('productCard.sold').replace('{n}', String(product.sold_count))}</span>
         </div>
 
         {/* Cert badges */}

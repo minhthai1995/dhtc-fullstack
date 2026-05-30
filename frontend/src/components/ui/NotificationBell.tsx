@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Bell, BellRing, Check } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useMarkAllRead, useMarkRead, useNotifications, useUnreadCount } from '@/features/notifications/useNotifications'
+import { useT } from '@/i18n/useT'
 
 const TYPE_ICON: Record<string, string> = {
   order_new: '🛒',
@@ -20,6 +21,7 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
+  const { t, lang } = useT()
 
   const { data: countData } = useUnreadCount()
   const { data: notifications = [] } = useNotifications()
@@ -42,7 +44,7 @@ export function NotificationBell() {
       <button
         onClick={() => setOpen(o => !o)}
         className="relative p-2 rounded-lg hover:bg-cream transition-colors"
-        aria-label="Thông báo"
+        aria-label={t('notifications.aria')}
       >
         {unread > 0 ? <BellRing size={18} className="text-ink" /> : <Bell size={18} className="text-ink-mute" />}
         {unread > 0 && (
@@ -55,13 +57,13 @@ export function NotificationBell() {
       {open && (
         <div className="absolute right-0 mt-2 w-96 bg-white border border-border rounded-2xl shadow-xl z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-            <span className="font-semibold text-sm text-ink">Thông báo</span>
+            <span className="font-semibold text-sm text-ink">{t('notifications.title')}</span>
             {unread > 0 && (
               <button
                 onClick={() => markAll.mutate()}
                 className="text-xs text-green font-medium flex items-center gap-1 hover:underline"
               >
-                <Check size={12} /> Đọc tất cả
+                <Check size={12} /> {t('notifications.markAllRead')}
               </button>
             )}
           </div>
@@ -70,7 +72,7 @@ export function NotificationBell() {
             {notifications.length === 0 ? (
               <div className="py-10 text-center text-sm text-ink-mute">
                 <Bell size={28} className="mx-auto mb-2 opacity-30" />
-                Không có thông báo
+                {t('notifications.empty')}
               </div>
             ) : (
               notifications.slice(0, 20).map(n => (
@@ -92,7 +94,7 @@ export function NotificationBell() {
                       <div className="text-sm font-medium text-ink leading-snug">{n.title}</div>
                       <div className="text-xs text-ink-mute mt-0.5 leading-relaxed">{n.message}</div>
                       <div className="text-[10px] text-ink-mute font-mono mt-1">
-                        {new Date(n.created_at).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}
+                        {new Date(n.created_at).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}
                       </div>
                     </div>
                     {!n.is_read && <div className="w-2 h-2 bg-green rounded-full flex-shrink-0 mt-1.5" />}
