@@ -69,6 +69,29 @@ const vi: Dict = {
   'stats.3.unit': ' khu',
   'stats.4.unit': ' năm',
 
+  // Press / Social proof strip (sits between hero and story — independent of stats band)
+  'press.label': 'Được nhắc đến trên',
+  'press.note': 'Tổng hợp từ trang Tripadvisor, Google Maps và fanpage chính thức · 31/05/2026.',
+  'press.tripadvisor.name': 'Tripadvisor',
+  'press.tripadvisor.score': '4,5 / 5',
+  'press.tripadvisor.count': '1.200+ đánh giá',
+  'press.google.name': 'Google Maps',
+  'press.google.score': '4,4 / 5',
+  'press.google.count': '8.700+ đánh giá',
+  'press.fanpage.name': 'Facebook fanpage',
+  'press.fanpage.score': '215k thích',
+  'press.fanpage.count': 'Phản hồi trong vài phút',
+  'press.diff.name': 'DIFF 2025 partner',
+  'press.diff.score': 'Đối tác đêm pháo hoa',
+  'press.diff.count': 'Sun Group · Đà Nẵng',
+
+  // Chapter divider — used to separate major narrative blocks
+  'chapter.act1': 'Hồi I · Bối cảnh',
+  'chapter.act2': 'Hồi II · Khoảnh khắc',
+  'chapter.act3': 'Hồi III · Vị giác',
+  'chapter.act4': 'Hồi IV · Nhịp đêm',
+  'chapter.act5': 'Hồi V · Đường đến',
+
   // Story
   'story.section': 'I · CHƯƠNG MỞ',
   'story.title': 'Câu chuyện chợ đêm',
@@ -1706,6 +1729,29 @@ const en: Dict = {
   'stats.2.unit': 'm²',
   'stats.3.unit': ' zones',
   'stats.4.unit': ' years',
+
+  // Press / Social proof strip (sits between hero and story — independent of stats band)
+  'press.label': 'As seen on',
+  'press.note': 'Aggregated from Tripadvisor, Google Maps and the official fanpage · 2026-05-31.',
+  'press.tripadvisor.name': 'Tripadvisor',
+  'press.tripadvisor.score': '4.5 / 5',
+  'press.tripadvisor.count': '1,200+ reviews',
+  'press.google.name': 'Google Maps',
+  'press.google.score': '4.4 / 5',
+  'press.google.count': '8,700+ reviews',
+  'press.fanpage.name': 'Facebook fanpage',
+  'press.fanpage.score': '215k likes',
+  'press.fanpage.count': 'Replies within minutes',
+  'press.diff.name': 'DIFF 2025 partner',
+  'press.diff.score': 'Fireworks-night partner',
+  'press.diff.count': 'Sun Group · Đà Nẵng',
+
+  // Chapter divider — used to separate major narrative blocks
+  'chapter.act1': 'Act I · Backdrop',
+  'chapter.act2': 'Act II · The moment',
+  'chapter.act3': 'Act III · Tastes',
+  'chapter.act4': 'Act IV · Night rhythm',
+  'chapter.act5': 'Act V · Getting there',
 
   // Story
   'story.section': 'I · OPENING CHAPTER',

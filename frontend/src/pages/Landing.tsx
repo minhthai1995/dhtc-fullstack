@@ -208,6 +208,26 @@ function Pill({ children, tone = 'cream' }: { children: React.ReactNode; tone?: 
   )
 }
 
+// Editorial chapter divider — centered Roman-style label + gold rules left/right
+function ChapterDivider({ label }: { label: string }) {
+  return (
+    <div
+      aria-hidden
+      className="relative flex items-center gap-5 sm:gap-7 max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14"
+      data-reveal
+    >
+      <span className="flex-1 h-px bg-gradient-to-r from-transparent via-gold-deep/40 to-gold-deep/70" />
+      <span
+        className="text-[11px] sm:text-[12px] uppercase font-bold text-gold-deep tracking-[0.32em] whitespace-nowrap"
+        style={{ fontFamily: 'var(--font-mono)' }}
+      >
+        {label}
+      </span>
+      <span className="flex-1 h-px bg-gradient-to-l from-transparent via-gold-deep/40 to-gold-deep/70" />
+    </div>
+  )
+}
+
 // ─── Main component ────────────────────────────────────────────────────────
 
 export function Landing() {
@@ -477,14 +497,22 @@ export function Landing() {
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(180deg, rgba(15,25,20,0.65) 0%, rgba(15,25,20,0.45) 35%, rgba(15,25,20,0.85) 100%)',
+              'linear-gradient(180deg, rgba(10,18,14,0.78) 0%, rgba(10,18,14,0.40) 32%, rgba(10,18,14,0.55) 62%, rgba(10,18,14,0.94) 100%)',
           }}
         />
         <div
-          className="absolute inset-0 opacity-[0.08] mix-blend-overlay pointer-events-none"
+          className="absolute inset-0 opacity-[0.18] mix-blend-overlay pointer-events-none"
           style={{
             backgroundImage:
-              'radial-gradient(circle at 20% 20%, rgba(201,169,97,0.4), transparent 40%), radial-gradient(circle at 80% 80%, rgba(139,38,53,0.3), transparent 40%)',
+              'radial-gradient(circle at 18% 24%, rgba(201,169,97,0.55), transparent 42%), radial-gradient(circle at 82% 78%, rgba(139,38,53,0.42), transparent 44%)',
+          }}
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(ellipse at center, transparent 55%, rgba(10,18,14,0.55) 100%)',
           }}
         />
 
@@ -603,6 +631,75 @@ export function Landing() {
         </div>
       </header>
 
+      {/* ── Press / Social-proof strip — sits directly under hero so external
+            validation lands before the longform story ────────────────────── */}
+      <section
+        aria-labelledby="press-heading"
+        className="relative border-y border-border overflow-hidden"
+        style={{ background: 'var(--color-ink)' }}
+      >
+        {/* Faint gold radial wash for warmth */}
+        <span
+          aria-hidden
+          className="absolute inset-0 pointer-events-none opacity-[0.18]"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 12% 50%, rgba(201,169,97,0.22), transparent 38%), radial-gradient(circle at 88% 50%, rgba(201,169,97,0.18), transparent 42%)',
+          }}
+        />
+        <div className="relative max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-12">
+          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-7 md:gap-12 items-start">
+            <div data-reveal>
+              <div
+                id="press-heading"
+                className="text-[10.5px] uppercase tracking-[0.22em] font-bold text-gold mb-2.5"
+                style={{ fontFamily: 'var(--font-mono)' }}
+              >
+                {t('press.label')}
+              </div>
+              <p className="text-[11.5px] sm:text-[12px] text-cream/55 leading-snug max-w-[200px] m-0">
+                {t('press.note')}
+              </p>
+            </div>
+            <ul className="grid grid-cols-2 md:grid-cols-4 gap-y-7 gap-x-6 sm:gap-x-8 m-0 p-0 list-none">
+              {(
+                [
+                  { key: 'tripadvisor', icon: <Star size={16} className="fill-current" /> },
+                  { key: 'google', icon: <MapPin size={16} /> },
+                  { key: 'fanpage', icon: <Facebook size={16} /> },
+                  { key: 'diff', icon: <Sparkles size={16} /> },
+                ] as const
+              ).map((p) => (
+                <li
+                  key={p.key}
+                  className="flex flex-col gap-2 pl-4 sm:pl-5 border-l border-cream/15"
+                  data-reveal
+                >
+                  <div
+                    className="inline-flex items-center gap-2 text-gold"
+                    style={{ fontFamily: 'var(--font-mono)' }}
+                  >
+                    {p.icon}
+                    <span className="text-[11px] uppercase tracking-[0.16em] font-bold text-cream/85">
+                      {t(`press.${p.key}.name`)}
+                    </span>
+                  </div>
+                  <div
+                    className="text-[22px] sm:text-[26px] font-normal leading-none text-cream tracking-tight"
+                    style={{ fontFamily: 'var(--font-display)' }}
+                  >
+                    {t(`press.${p.key}.score`)}
+                  </div>
+                  <div className="text-[11px] sm:text-[11.5px] text-cream/55 leading-tight">
+                    {t(`press.${p.key}.count`)}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
       {/* ── Stats band ──────────────────────────────────────────────── */}
       <section className="bg-white border-y border-border">
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-9 sm:py-12">
@@ -638,8 +735,10 @@ export function Landing() {
         </div>
       </section>
 
+      <ChapterDivider label={t('chapter.act1')} />
+
       {/* ── STORY ────────────────────────────────────────────────────── */}
-      <section id="story" className="py-16 sm:py-20 lg:py-28">
+      <section id="story" className="pt-4 pb-16 sm:pt-6 sm:pb-20 lg:pb-28">
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
           <SectionLabel no={t('story.section')} title={t('story.title')} />
 
@@ -851,6 +950,8 @@ export function Landing() {
         </div>
       </section>
 
+      <ChapterDivider label={t('chapter.act3')} />
+
       {/* ── SIGNATURE DISHES · editorial typography cards ────────────── */}
       <section id="flavors" className="py-16 sm:py-20 lg:py-28">
         <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
@@ -1035,6 +1136,8 @@ export function Landing() {
           </div>
         </div>
       </section>
+
+      <ChapterDivider label={t('chapter.act4')} />
 
       {/* ── EVENTS TIMELINE ──────────────────────────────────────────── */}
       <section id="events" className="py-16 sm:py-20 lg:py-28">
@@ -1245,6 +1348,8 @@ export function Landing() {
           </div>
         </div>
       </section>
+
+      <ChapterDivider label={t('chapter.act5')} />
 
       {/* ── VISIT / MAP ──────────────────────────────────────────────── */}
       <section id="visit" className="py-16 sm:py-20 lg:py-28" style={{ background: 'var(--color-cream-dark)' }}>
