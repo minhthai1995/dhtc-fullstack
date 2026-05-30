@@ -266,8 +266,14 @@ export function Landing() {
     return () => window.clearInterval(id)
   }, [])
 
-  // Reveal-on-scroll: single observer watching every [data-reveal] element
+  // Reveal-on-scroll: single observer watching every [data-reveal] element.
+  // Adds `.js-reveal` to <html> so the hidden-by-default CSS only applies once
+  // we know JS is alive. A 1500ms safety net reveals anything still hidden,
+  // so a stalled observer (slow device, headless screenshot tool) can't trap
+  // content invisible.
   useEffect(() => {
+    const html = document.documentElement
+    html.classList.add('js-reveal')
     const els = document.querySelectorAll<HTMLElement>('[data-reveal]')
     if (!els.length) return
     if (typeof IntersectionObserver === 'undefined') {
@@ -283,10 +289,16 @@ export function Landing() {
           }
         })
       },
-      { threshold: 0.1, rootMargin: '0px 0px -8% 0px' },
+      { threshold: 0.05, rootMargin: '0px 0px 25% 0px' },
     )
     els.forEach((el) => io.observe(el))
-    return () => io.disconnect()
+    const safety = window.setTimeout(() => {
+      els.forEach((el) => el.classList.add('is-in'))
+    }, 1500)
+    return () => {
+      io.disconnect()
+      window.clearTimeout(safety)
+    }
   }, [lang])
 
   const nextHero = () => setHeroSlide((s) => (s + 1) % HERO_SLIDES.length)
@@ -297,11 +309,15 @@ export function Landing() {
       className="min-h-screen relative overflow-x-hidden"
       style={{ background: 'var(--color-cream)', scrollBehavior: 'smooth' }}
     >
-      {/* Reveal-on-scroll + Ken Burns animations */}
+      {/* Reveal-on-scroll + Ken Burns animations.
+          Progressive enhancement: content is visible by default; the hidden→reveal
+          animation only kicks in when JS has added `.js-reveal` to <html>. This
+          guarantees content shows even if IntersectionObserver fails to fire
+          (slow devices, headless renderers, SEO crawlers). */}
       <style>{`
-        [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity 700ms ease,transform 700ms cubic-bezier(.2,.7,.2,1)}
-        [data-reveal].is-in{opacity:1;transform:none}
-        @media (prefers-reduced-motion: reduce){[data-reveal]{opacity:1;transform:none;transition:none}}
+        .js-reveal [data-reveal]:not(.is-in){opacity:0;transform:translateY(14px);transition:opacity 700ms ease,transform 700ms cubic-bezier(.2,.7,.2,1)}
+        .js-reveal [data-reveal].is-in{opacity:1;transform:none;transition:opacity 700ms ease,transform 700ms cubic-bezier(.2,.7,.2,1)}
+        @media (prefers-reduced-motion: reduce){.js-reveal [data-reveal]{opacity:1;transform:none;transition:none}}
         @keyframes dhtc-kenburns{0%{transform:scale(1.04) translateY(0)}100%{transform:scale(1.12) translateY(-1.5%)}}
         .dhtc-kenburns-active{animation:dhtc-kenburns 9s ease-out forwards}
         @media (prefers-reduced-motion: reduce){.dhtc-kenburns-active{animation:none;transform:none}}
