@@ -53,6 +53,9 @@ const vi: Dict = {
   'hero.prevSlide': 'Ảnh trước',
   'hero.nextSlide': 'Ảnh tiếp',
   'hero.slideTabs': 'Chuyển ảnh hero',
+  'hero.slide1.alt': 'Đèn lồng và đèn trái tim trong khuôn viên chợ đêm về tối',
+  'hero.slide2.alt': 'Cổng chính chợ Đêm Sơn Trà rực sáng đèn',
+  'hero.slide3.alt': 'Ngày khai trương chợ Đêm Sơn Trà năm 2018',
 
   // Stats
   'stats.label': 'Bằng số liệu',
@@ -1686,6 +1689,9 @@ const en: Dict = {
   'hero.prevSlide': 'Previous slide',
   'hero.nextSlide': 'Next slide',
   'hero.slideTabs': 'Hero slides',
+  'hero.slide1.alt': 'Heart-light installation and lanterns at the night market',
+  'hero.slide2.alt': 'Main entrance of Sơn Trà Night Market lit up at night',
+  'hero.slide3.alt': 'Opening day of Sơn Trà Night Market in 2018',
 
   // Stats
   'stats.label': 'By the numbers',

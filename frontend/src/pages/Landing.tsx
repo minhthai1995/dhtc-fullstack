@@ -55,7 +55,11 @@ const IMG_LIGHTS = '/img/market/anhsang1.jpg' // heart-light installation at nig
 const IMG_ENTRANCE = '/img/market/091704-cho-dem-son-tra.jpg' // main entrance arch
 const IMG_OPENING = '/img/market/1-1552259562.jpg' // 2018 opening day
 
-const HERO_SLIDES = [{ src: IMG_LIGHTS, altKey: 'hero.slide1.alt' }]
+const HERO_SLIDES = [
+  { src: IMG_LIGHTS, altKey: 'hero.slide1.alt' },
+  { src: IMG_ENTRANCE, altKey: 'hero.slide2.alt' },
+  { src: IMG_OPENING, altKey: 'hero.slide3.alt' },
+]
 
 const STORY_IMG = IMG_OPENING
 
