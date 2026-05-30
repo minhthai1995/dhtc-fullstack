@@ -504,32 +504,35 @@ export function Landing() {
             <div className="flex flex-wrap gap-3 mb-10 sm:mb-12" data-reveal>
               <a
                 href="#flavors"
-                className="px-5 sm:px-6 py-3 sm:py-3.5 bg-gold text-ink text-[13px] sm:text-sm font-semibold rounded-xl hover:bg-gold-deep hover:text-cream transition-colors no-underline inline-flex items-center gap-2"
+                className="group px-5 sm:px-6 py-3 sm:py-3.5 bg-gold text-ink text-[13px] sm:text-sm font-semibold rounded-xl hover:bg-cream transition-all duration-300 no-underline inline-flex items-center gap-2 shadow-[0_10px_30px_-10px_rgba(201,169,97,0.65)] hover:shadow-[0_14px_36px_-10px_rgba(201,169,97,0.85)] hover:-translate-y-0.5"
               >
                 {t('hero.cta1')}
-                <ArrowRight size={16} />
+                <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5" />
               </a>
               <a
                 href="#visit"
-                className="px-5 sm:px-6 py-3 sm:py-3.5 bg-white/10 backdrop-blur-sm border border-cream/30 text-cream text-[13px] sm:text-sm font-semibold rounded-xl hover:bg-white/20 transition-colors no-underline"
+                className="px-5 sm:px-6 py-3 sm:py-3.5 bg-white/[0.08] backdrop-blur-md border border-cream/25 text-cream text-[13px] sm:text-sm font-semibold rounded-xl hover:bg-white/[0.18] hover:border-cream/50 transition-colors no-underline"
               >
                 {t('hero.cta2')}
               </a>
             </div>
 
-            <div className="grid grid-cols-3 gap-3 sm:gap-8 pt-6 sm:pt-8 border-t border-cream/15 max-w-[680px]" data-reveal>
-              {heroFacts.map((n) => (
-                <div key={n}>
+            <div
+              className="grid grid-cols-3 pt-6 sm:pt-8 border-t border-cream/15 max-w-[700px] divide-x divide-cream/10"
+              data-reveal
+            >
+              {heroFacts.map((n, idx) => (
+                <div key={n} className={idx === 0 ? 'pr-3 sm:pr-6' : 'px-3 sm:px-6'}>
                   <div
-                    className="text-[24px] sm:text-[36px] font-normal tracking-tight leading-none text-gold mb-1"
+                    className="text-[26px] sm:text-[40px] font-normal tracking-tight leading-none text-gold mb-1.5"
                     style={{ fontFamily: 'var(--font-display)' }}
                   >
                     {t(`hero.fact${n}.value`)}
                   </div>
-                  <div className="text-[10px] sm:text-[11.5px] text-cream font-semibold uppercase tracking-[0.05em] leading-tight">
+                  <div className="text-[10px] sm:text-[11.5px] text-cream font-semibold uppercase tracking-[0.08em] leading-tight">
                     {t(`hero.fact${n}.label`)}
                   </div>
-                  <div className="text-[9.5px] sm:text-[10.5px] text-cream/55 mt-0.5 leading-tight">
+                  <div className="text-[9.5px] sm:text-[10.5px] text-cream/55 mt-1 leading-tight">
                     {t(`hero.fact${n}.sub`)}
                   </div>
                 </div>
@@ -705,6 +708,28 @@ export function Landing() {
                 'radial-gradient(circle at 78% 22%, rgba(201,169,97,0.22), transparent 45%), radial-gradient(circle at 12% 88%, rgba(139,38,53,0.18), transparent 50%)',
             }}
           />
+          {/* Fine dot-grid film texture */}
+          <div
+            className="absolute inset-0 opacity-[0.18] mix-blend-overlay"
+            style={{
+              backgroundImage:
+                'radial-gradient(rgba(245,239,224,0.55) 1px, transparent 1px)',
+              backgroundSize: '22px 22px',
+            }}
+          />
+          {/* Decorative oversized Roman II */}
+          <span
+            className="absolute select-none text-gold/[0.05] leading-none pointer-events-none"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'clamp(280px, 36vw, 480px)',
+              fontWeight: 300,
+              top: '-0.12em',
+              left: '-0.02em',
+            }}
+          >
+            II
+          </span>
         </div>
 
         <div className="relative max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 lg:py-36 grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10 lg:gap-16 items-end">
@@ -883,8 +908,36 @@ export function Landing() {
       </section>
 
       {/* ── 4 ZONES ──────────────────────────────────────────────────── */}
-      <section id="zones" className="py-16 sm:py-20 lg:py-28" style={{ background: 'var(--color-green-deep)' }}>
-        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
+      <section
+        id="zones"
+        className="relative overflow-hidden py-16 sm:py-20 lg:py-28"
+        style={{ background: 'var(--color-green-deep)' }}
+      >
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          {/* Subtle dot-grid texture */}
+          <div
+            className="absolute inset-0 opacity-[0.14] mix-blend-overlay"
+            style={{
+              backgroundImage:
+                'radial-gradient(rgba(245,239,224,0.55) 1px, transparent 1px)',
+              backgroundSize: '24px 24px',
+            }}
+          />
+          {/* Decorative oversized Roman IV */}
+          <span
+            className="absolute select-none text-gold/[0.05] leading-none"
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'clamp(280px, 36vw, 480px)',
+              fontWeight: 300,
+              bottom: '-0.18em',
+              right: '-0.04em',
+            }}
+          >
+            IV
+          </span>
+        </div>
+        <div className="relative max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-baseline gap-3.5 mb-5 sm:mb-6" data-reveal>
             <span
               className="text-xs font-semibold tracking-[0.08em]"
@@ -1009,88 +1062,122 @@ export function Landing() {
       </section>
 
       {/* ── TESTIMONIALS ─────────────────────────────────────────────── */}
-      <section className="py-20 sm:py-24 lg:py-32" style={{ background: 'var(--color-cream-dark)' }}>
-        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div
-            className="text-[10.5px] uppercase tracking-[0.22em] font-bold text-gold-deep mb-7 sm:mb-9 flex items-center gap-3"
-            style={{ fontFamily: 'var(--font-mono)' }}
-            data-reveal
-          >
-            <span className="w-8 h-px bg-gold-deep" />
-            {t('testi.label')}
-          </div>
+      <section
+        className="relative py-20 sm:py-24 lg:py-32 overflow-hidden"
+        style={{ background: 'var(--color-cream-dark)' }}
+      >
+        {/* Decorative oversized serif quote in the background */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute select-none text-gold-deep/[0.06] leading-none"
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(280px, 38vw, 520px)',
+            top: '-0.18em',
+            right: '-0.08em',
+          }}
+        >
+          “
+        </span>
 
-          <blockquote
-            className="font-normal text-ink leading-[1.06] tracking-[-0.025em] mb-6 sm:mb-7 m-0 relative max-w-[920px]"
-            style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 4.6vw, 56px)' }}
-            data-reveal
-          >
-            <span
-              className="text-gold-deep absolute -left-1 sm:-left-2 -top-3 sm:-top-5 select-none"
-              style={{ fontFamily: 'var(--font-display)', fontSize: '1.4em', lineHeight: 1, opacity: 0.35 }}
-              aria-hidden
-            >
-              “
-            </span>
-            {t(`testi.${testimonials[0].n}.quote`)}
-          </blockquote>
-          <footer
-            className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px] sm:text-[13px] text-ink-soft mb-12 sm:mb-14"
-            data-reveal
-          >
-            <span className="font-semibold text-ink">{testimonials[0].name}</span>
-            <span className="text-ink-mute">
-              {testimonials[0].flag} {t(`testi.${testimonials[0].n}.country`)}
-            </span>
-            <span className="w-1 h-1 rounded-full bg-ink-mute" />
-            <span
-              className="uppercase tracking-[0.14em] text-[10.5px] text-ink-mute inline-flex items-center gap-1.5"
-              style={{ fontFamily: 'var(--font-mono)' }}
-            >
-              {testimonials[0].source}
-              <span className="inline-flex items-center gap-0.5 text-gold">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} size={10} className="fill-current" />
-                ))}
-              </span>
-            </span>
-          </footer>
-
-          <div className="border-t border-border pt-7 sm:pt-9">
+        <div className="relative max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section intro */}
+          <div className="text-center max-w-[760px] mx-auto mb-12 sm:mb-16">
             <div
-              className="text-[10.5px] uppercase tracking-[0.18em] font-bold text-ink-mute mb-5 sm:mb-6"
+              className="inline-flex items-center gap-3 text-[10.5px] uppercase tracking-[0.22em] font-bold text-gold-deep mb-5"
               style={{ fontFamily: 'var(--font-mono)' }}
               data-reveal
             >
-              {t('testi.more')}
+              <span className="w-8 h-px bg-gold-deep" />
+              {t('testi.label')}
+              <span className="w-8 h-px bg-gold-deep" />
             </div>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 sm:gap-x-14 gap-y-6 sm:gap-y-7 list-none m-0 p-0">
-              {testimonials.slice(1).map((tt, i) => (
-                <li key={i} className="grid grid-cols-[28px_1fr] gap-3 sm:gap-5" data-reveal>
-                  <span
-                    className="text-[11px] text-gold-deep font-bold tracking-wider pt-1.5"
-                    style={{ fontFamily: 'var(--font-mono)' }}
-                  >
-                    {String(i + 2).padStart(2, '0')}
-                  </span>
-                  <div>
-                    <p
-                      className="text-[14px] sm:text-[15.5px] text-ink leading-relaxed m-0"
+            <h2
+              className="font-normal text-ink leading-[1.1] tracking-[-0.02em] mb-4 m-0"
+              style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(30px, 4.2vw, 48px)' }}
+              data-reveal
+            >
+              {t('testi.heading')}
+            </h2>
+            <p
+              className="text-[14px] sm:text-[15px] text-ink-soft leading-relaxed max-w-[560px] mx-auto m-0"
+              data-reveal
+            >
+              {t('testi.sub')}
+            </p>
+          </div>
+
+          {/* Card grid */}
+          <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 list-none m-0 p-0">
+            {testimonials.map((tt) => {
+              const initials = tt.name
+                .split(' ')
+                .map((p) => p[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase()
+              return (
+                <li key={tt.n} data-reveal>
+                  <article className="group h-full bg-white border border-border rounded-2xl p-7 sm:p-8 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_-22px_rgba(38,30,18,0.28)] hover:border-gold/40">
+                    {/* Header: stars + source */}
+                    <div className="flex items-center justify-between mb-5">
+                      <div
+                        className="inline-flex items-center gap-0.5 text-gold"
+                        aria-label="5 / 5"
+                      >
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star key={s} size={14} className="fill-current" />
+                        ))}
+                      </div>
+                      <span
+                        className="text-[10px] uppercase tracking-[0.16em] font-bold text-ink-mute"
+                        style={{ fontFamily: 'var(--font-mono)' }}
+                      >
+                        {tt.source}
+                      </span>
+                    </div>
+
+                    {/* Quote */}
+                    <blockquote
+                      className="m-0 mb-7 flex-1 text-[15px] sm:text-[16px] text-ink leading-[1.55] relative"
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      “{t(`testi.${tt.n}.quote`)}”
-                    </p>
-                    <p
-                      className="text-[11px] sm:text-[11.5px] text-ink-mute mt-2 m-0 tracking-wide"
-                      style={{ fontFamily: 'var(--font-mono)' }}
-                    >
-                      — {tt.name} · {tt.flag} {t(`testi.${tt.n}.country`)} · {tt.source}
-                    </p>
-                  </div>
+                      <span className="text-gold-deep mr-1" style={{ opacity: 0.55 }} aria-hidden>
+                        “
+                      </span>
+                      {t(`testi.${tt.n}.quote`)}
+                      <span className="text-gold-deep ml-0.5" style={{ opacity: 0.55 }} aria-hidden>
+                        ”
+                      </span>
+                    </blockquote>
+
+                    {/* Author */}
+                    <footer className="flex items-center gap-3 pt-5 border-t border-border/70 m-0">
+                      <div
+                        className="w-10 h-10 rounded-full bg-cream-dark border border-border flex items-center justify-center text-[12.5px] font-bold text-gold-deep shrink-0"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                        aria-hidden
+                      >
+                        {initials}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[13.5px] font-semibold text-ink leading-tight truncate">
+                          {tt.name}
+                        </div>
+                        <div
+                          className="text-[11.5px] text-ink-mute tracking-wide flex items-center gap-1.5 mt-0.5"
+                          style={{ fontFamily: 'var(--font-mono)' }}
+                        >
+                          <span aria-hidden>{tt.flag}</span>
+                          <span>{t(`testi.${tt.n}.country`)}</span>
+                        </div>
+                      </div>
+                    </footer>
+                  </article>
                 </li>
-              ))}
-            </ul>
-          </div>
+              )
+            })}
+          </ul>
         </div>
       </section>
 

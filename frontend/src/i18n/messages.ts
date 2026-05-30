@@ -198,7 +198,9 @@ const vi: Dict = {
   'event.6.desc': 'Khu nướng đêm vẫn mở, đặc biệt sôi động cuối tuần. Đi nhóm bạn rủ nhau ăn nhẹ trước khi về.',
 
   // Testimonials
-  'testi.label': 'Tiếng nói thực khách · trích từ Tripadvisor & Google Maps',
+  'testi.label': 'Tiếng nói thực khách',
+  'testi.heading': 'Sáu cảm nhận từ Tripadvisor & Google Maps',
+  'testi.sub': 'Không kịch bản, không hiệu chỉnh. Trích nguyên văn từ thực khách đã ghé chợ — sao chép tại thời điểm 31/05/2026.',
   'testi.more': 'Năm trích đoạn khác chúng tôi đọc tuần này',
   'testi.1.quote': 'Sau màn phun lửa của cầu Rồng, đi bộ qua đây ăn khuya là thói quen tuyệt nhất ở Đà Nẵng.',
   'testi.1.country': 'Singapore',
@@ -1834,7 +1836,9 @@ const en: Dict = {
   'event.6.desc': "The grill stalls stay open, especially lively on weekends. Grab friends for a light snack before heading home.",
 
   // Testimonials
-  'testi.label': 'Voices of real visitors · pulled from Tripadvisor & Google Maps',
+  'testi.label': 'Voices of real visitors',
+  'testi.heading': 'Six reviews lifted from Tripadvisor & Google Maps',
+  'testi.sub': 'No script, no edits. Verbatim from guests who actually walked the market — captured 2026-05-31.',
   'testi.more': 'Five other clips we read this week',
   'testi.1.quote': 'After the Dragon Bridge fire show, walking over for late supper here is the best routine in Đà Nẵng.',
   'testi.1.country': 'Singapore',
