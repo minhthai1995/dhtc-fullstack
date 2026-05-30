@@ -5,6 +5,7 @@ import { useMerchants } from '@/features/products/useProducts'
 import { useValidateCoupon } from '@/features/customer/useCoupon'
 import type { CartItemRead, CouponValidateResponse } from '@/types/api'
 import { Minus, Plus, Trash2, ShoppingBag, Lock } from 'lucide-react'
+import { useT } from '@/i18n/useT'
 
 const SUGGESTED_CODES = [
   { code: 'FRESH15', desc: '−15%' },
@@ -18,6 +19,7 @@ export function Cart() {
   const updateItem = useUpdateCartItem()
   const removeItem = useRemoveFromCart()
   const navigate = useNavigate()
+  const { t } = useT()
   const [couponCode, setCouponCode] = useState('')
   const [appliedCode, setAppliedCode] = useState<string | null>(null)
   const [couponResult, setCouponResult] = useState<CouponValidateResponse | null>(null)
@@ -80,7 +82,7 @@ export function Cart() {
           }
         },
         onError: () => {
-          setCouponError('Không thể kiểm tra mã. Vui lòng thử lại.')
+          setCouponError(t('cart.couponErrFail'))
         },
       }
     )
@@ -96,10 +98,12 @@ export function Cart() {
   return (
     <div>
       <h1 className="text-3xl font-medium tracking-tight text-ink mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-        Giỏ hàng của bạn
+        {t('cart.title')}
       </h1>
       <p className="text-ink-mute text-sm mb-7">
-        {items.length} sản phẩm từ {Object.keys(byMerchant).length} gian hàng
+        {t('cart.summary')
+          .replace('{count}', String(items.length))
+          .replace('{merchants}', String(Object.keys(byMerchant).length))}
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-6">
@@ -131,7 +135,7 @@ export function Cart() {
                     to={`/shop/merchants/${mid}`}
                     className="ml-auto text-xs text-green font-semibold no-underline hover:underline"
                   >
-                    Xem gian hàng →
+                    {t('cart.viewShop')}
                   </Link>
                 </div>
 
@@ -156,7 +160,7 @@ export function Cart() {
                             {item.product?.name_vi ?? `Product #${item.product_id}`}
                           </Link>
                           <div className="text-xs text-ink-mute mt-0.5">
-                            {(item.product?.price ?? 0).toLocaleString('vi-VN')}₫ / cái
+                            {(item.product?.price ?? 0).toLocaleString('vi-VN')}₫ {t('cart.unitSuffix')}
                           </div>
                         </div>
                         {/* QTY */}
@@ -202,7 +206,7 @@ export function Cart() {
           {/* Coupon */}
           <div className="bg-white border border-border rounded-2xl p-5">
             <h3 className="font-semibold text-ink mb-3" style={{ fontFamily: 'var(--font-display)' }}>
-              Mã giảm giá
+              {t('cart.couponTitle')}
             </h3>
             <div className="flex gap-2.5">
               <input
@@ -212,7 +216,7 @@ export function Cart() {
                   setCouponCode(e.target.value.toUpperCase())
                   setCouponError(null)
                 }}
-                placeholder="Nhập mã giảm giá..."
+                placeholder={t('cart.couponPlaceholder')}
                 className="flex-1 px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all font-mono uppercase"
                 disabled={!!appliedCode}
               />
@@ -221,7 +225,7 @@ export function Cart() {
                   onClick={removeCode}
                   className="px-4 py-2.5 border border-border rounded-xl text-sm font-semibold text-danger hover:border-danger transition-colors"
                 >
-                  Xoá mã
+                  {t('cart.couponRemove')}
                 </button>
               ) : (
                 <button
@@ -229,7 +233,7 @@ export function Cart() {
                   disabled={validateCoupon.isPending || !couponCode.trim()}
                   className="px-4 py-2.5 border border-border rounded-xl text-sm font-semibold text-ink-mute hover:border-green hover:text-green transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {validateCoupon.isPending ? 'Đang kiểm tra...' : 'Áp dụng'}
+                  {validateCoupon.isPending ? t('cart.couponChecking') : t('cart.couponApply')}
                 </button>
               )}
             </div>
@@ -265,29 +269,29 @@ export function Cart() {
         <div>
           <div className="bg-white border border-border rounded-2xl p-5 lg:sticky lg:top-24">
             <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Tóm tắt đơn hàng
+              {t('cart.summaryTitle')}
             </h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between py-1.5">
-                <span className="text-ink-mute">Tạm tính</span>
+                <span className="text-ink-mute">{t('cart.subtotal')}</span>
                 <span className="font-mono font-semibold">{subtotal.toLocaleString('vi-VN')}₫</span>
               </div>
               <div className="flex justify-between py-1.5">
-                <span className="text-ink-mute">Phí ship DHL Express</span>
+                <span className="text-ink-mute">{t('cart.shipping')}</span>
                 <span className="font-mono font-semibold">{shipping.toLocaleString('vi-VN')}₫</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between py-1.5 text-green">
-                  <span>Mã {appliedCode}</span>
+                  <span>{t('cart.couponLabel').replace('{code}', appliedCode ?? '')}</span>
                   <span className="font-mono font-semibold">−{discount.toLocaleString('vi-VN')}₫</span>
                 </div>
               )}
               <div className="flex justify-between py-1.5">
-                <span className="text-ink-mute">VAT (10%)</span>
+                <span className="text-ink-mute">{t('cart.vat')}</span>
                 <span className="font-mono font-semibold">{vat.toLocaleString('vi-VN')}₫</span>
               </div>
               <div className="flex justify-between py-4 border-t border-dashed border-border mt-2">
-                <span className="text-lg font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>Tổng cộng</span>
+                <span className="text-lg font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>{t('cart.total')}</span>
                 <span className="text-lg font-semibold text-green font-mono" style={{ fontFamily: 'var(--font-display)' }}>
                   {total.toLocaleString('vi-VN')}₫
                 </span>
@@ -299,17 +303,17 @@ export function Cart() {
               className="w-full py-3.5 bg-green text-white rounded-xl font-semibold hover:bg-green-soft transition-colors flex items-center justify-center gap-2 mt-2"
             >
               <ShoppingBag size={16} />
-              Thanh toán bằng VietQR
+              {t('cart.checkout')}
             </button>
 
             <div className="mt-3 p-3 bg-cream rounded-xl text-xs text-ink-soft text-center leading-relaxed">
-              Vietcombank · Hỗ trợ thẻ quốc tế &amp; ví điện tử<br />
-              Giao DHL Express · ETA 4-7 ngày
+              {t('cart.payInfoL1')}<br />
+              {t('cart.payInfoL2')}
             </div>
 
             <div className="flex items-center gap-3 mt-4 pt-4 border-t border-dashed border-border">
               <Lock size={16} className="text-green flex-shrink-0" />
-              <span className="text-xs text-ink-mute">Thanh toán an toàn · SSL · PCI DSS</span>
+              <span className="text-xs text-ink-mute">{t('cart.secure')}</span>
             </div>
           </div>
         </div>

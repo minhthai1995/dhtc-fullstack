@@ -5,13 +5,14 @@ import { useCart, useClearCart } from '@/features/cart/useCart'
 import { useAddresses } from '@/features/customer/useAddress'
 import type { UserAddress } from '@/types/api'
 import { Check, Lock } from 'lucide-react'
+import { useT } from '@/i18n/useT'
 
 type ShippingMethod = 'dhl_express' | 'dhl_economy'
 type PaymentMethod = 'vietqr' | 'card'
 
 const SHIPPING_OPTIONS = [
-  { id: 'dhl_express' as ShippingMethod, name: 'DHL Express Worldwide', desc: '4-7 ngày · Theo dõi real-time · Bảo hiểm', price: 135000, usd: '~$5.40' },
-  { id: 'dhl_economy' as ShippingMethod, name: 'DHL eCommerce', desc: '7-12 ngày · Tiết kiệm hơn', price: 68000, usd: '~$2.72' },
+  { id: 'dhl_express' as ShippingMethod, nameKey: 'checkout.shippingExpressName', descKey: 'checkout.shippingExpressDesc', price: 135000, usd: '~$5.40' },
+  { id: 'dhl_economy' as ShippingMethod, nameKey: 'checkout.shippingEcoName', descKey: 'checkout.shippingEcoDesc', price: 68000, usd: '~$2.72' },
 ]
 
 export function Checkout() {
@@ -20,6 +21,7 @@ export function Checkout() {
   const clearCart = useClearCart()
   const { data: cartItems } = useCart()
   const { data: addresses = [] } = useAddresses()
+  const { t } = useT()
   const [shippingMethod, setShippingMethod] = useState<ShippingMethod>('dhl_express')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('vietqr')
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null)
@@ -89,9 +91,9 @@ export function Checkout() {
   return (
     <div>
       <h1 className="text-3xl font-medium tracking-tight text-ink mb-1" style={{ fontFamily: 'var(--font-display)' }}>
-        Thanh toán
+        {t('checkout.title')}
       </h1>
-      <p className="text-ink-mute text-sm mb-6">Bước 2 trong 3 · Địa chỉ và thanh toán</p>
+      <p className="text-ink-mute text-sm mb-6">{t('checkout.steps')}</p>
 
       {/* Steps */}
       <div className="flex items-center gap-3.5 mb-6 text-xs text-ink-mute overflow-x-auto">
@@ -99,7 +101,7 @@ export function Checkout() {
           <div className="w-6 h-6 rounded-full bg-green flex items-center justify-center">
             <Check size={11} className="text-white" />
           </div>
-          Giỏ hàng
+          {t('checkout.step1')}
         </div>
         <div className="flex-1 h-px bg-green min-w-[20px]" />
         <div className="flex items-center gap-1.5 font-bold text-green">
@@ -109,12 +111,12 @@ export function Checkout() {
           >
             2
           </div>
-          Thanh toán
+          {t('checkout.step2')}
         </div>
         <div className="flex-1 h-px bg-border min-w-[20px]" />
         <div className="flex items-center gap-1.5">
           <div className="w-6 h-6 rounded-full bg-border text-ink-mute flex items-center justify-center text-[11px]">3</div>
-          Hoàn tất
+          {t('checkout.step3')}
         </div>
       </div>
 
@@ -124,14 +126,14 @@ export function Checkout() {
             {/* Shipping address */}
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Địa chỉ giao hàng
+                {t('checkout.addressTitle')}
               </h3>
 
               {/* Saved address picker */}
               {addresses.length > 0 && (
                 <div className="mb-4">
                   <div className="text-[10.5px] font-bold uppercase tracking-widest text-ink-mute mb-2">
-                    Địa chỉ đã lưu
+                    {t('checkout.savedAddresses')}
                   </div>
                   <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1">
                     {addresses.map((addr) => (
@@ -147,11 +149,11 @@ export function Checkout() {
                       >
                         <div className="flex items-start justify-between gap-1 mb-1">
                           <span className="text-[10px] font-bold uppercase tracking-wide text-ink-mute truncate">
-                            {addr.label || `Địa chỉ ${addr.id}`}
+                            {addr.label || t('checkout.addressLabel').replace('{id}', String(addr.id))}
                           </span>
                           {addr.is_default && (
                             <span className="text-[9px] font-bold text-green bg-green/10 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                              Mặc định
+                              {t('checkout.default')}
                             </span>
                           )}
                         </div>
@@ -159,7 +161,7 @@ export function Checkout() {
                         <div className="text-[11px] text-ink-mute font-mono truncate">{addr.phone}</div>
                         <div className="text-[11px] text-ink-mute truncate">{addr.city}</div>
                         {selectedAddressId === addr.id && (
-                          <div className="mt-1.5 text-[10px] font-bold text-green">Đã chọn ✓</div>
+                          <div className="mt-1.5 text-[10px] font-bold text-green">{t('checkout.selected')}</div>
                         )}
                       </button>
                     ))}
@@ -173,7 +175,7 @@ export function Checkout() {
                       }`}
                     >
                       <span className="text-xl text-ink-mute">+</span>
-                      <span className="text-[11px] font-semibold text-ink-mute text-center">Nhập địa chỉ mới</span>
+                      <span className="text-[11px] font-semibold text-ink-mute text-center">{t('checkout.newAddress')}</span>
                     </button>
                   </div>
                 </div>
@@ -187,12 +189,12 @@ export function Checkout() {
                   </div>
                   <div className="text-sm text-ink-soft mt-1">{form.address}</div>
                   <div className="text-sm text-ink-soft">{form.city}, {form.country}</div>
-                  <div className="text-xs font-semibold mt-1.5" style={{ color: 'var(--color-gold-deep)' }}>★ Mặc định</div>
+                  <div className="text-xs font-semibold mt-1.5" style={{ color: 'var(--color-gold-deep)' }}>{t('checkout.defaultStar')}</div>
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Họ tên</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('checkout.name')}</label>
                   <input
                     type="text"
                     value={form.name}
@@ -201,7 +203,7 @@ export function Checkout() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Điện thoại</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('checkout.phone')}</label>
                   <input
                     type="tel"
                     value={form.phone}
@@ -210,7 +212,7 @@ export function Checkout() {
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Địa chỉ</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('checkout.address')}</label>
                   <input
                     type="text"
                     value={form.address}
@@ -219,7 +221,7 @@ export function Checkout() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Thành phố</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('checkout.city')}</label>
                   <input
                     type="text"
                     value={form.city}
@@ -228,7 +230,7 @@ export function Checkout() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Quốc gia</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('checkout.country')}</label>
                   <input
                     type="text"
                     value={form.country}
@@ -242,7 +244,7 @@ export function Checkout() {
             {/* Shipping method */}
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Phương thức vận chuyển
+                {t('checkout.shippingTitle')}
               </h3>
               <div className="space-y-2.5">
                 {SHIPPING_OPTIONS.map((option) => (
@@ -262,8 +264,8 @@ export function Checkout() {
                       className="accent-green"
                     />
                     <div className="flex-1">
-                      <div className="font-semibold text-sm text-ink">{option.name}</div>
-                      <div className="text-xs text-ink-mute mt-0.5">{option.desc}</div>
+                      <div className="font-semibold text-sm text-ink">{t(option.nameKey)}</div>
+                      <div className="text-xs text-ink-mute mt-0.5">{t(option.descKey)}</div>
                     </div>
                     <div className="text-right">
                       <div
@@ -282,7 +284,7 @@ export function Checkout() {
             {/* Payment method */}
             <div className="bg-white border border-border rounded-2xl p-5">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Phương thức thanh toán
+                {t('checkout.paymentTitle')}
               </h3>
               <div className="space-y-2.5">
                 <label
@@ -304,8 +306,8 @@ export function Checkout() {
                     QR
                   </div>
                   <div className="flex-1">
-                    <div className="font-semibold text-sm">VietQR · Vietcombank</div>
-                    <div className="text-xs text-ink-mute">Quét mã QR · Hỗ trợ 30 ngân hàng VN</div>
+                    <div className="font-semibold text-sm">{t('checkout.paymentVietqrTitle')}</div>
+                    <div className="text-xs text-ink-mute">{t('checkout.paymentVietqrDesc')}</div>
                   </div>
                 </label>
                 <label
@@ -327,8 +329,8 @@ export function Checkout() {
                     VISA
                   </div>
                   <div className="flex-1">
-                    <div className="font-semibold text-sm">Visa / Mastercard</div>
-                    <div className="text-xs text-ink-mute">Thẻ quốc tế · Bảo mật 3D Secure</div>
+                    <div className="font-semibold text-sm">{t('checkout.paymentCardTitle')}</div>
+                    <div className="text-xs text-ink-mute">{t('checkout.paymentCardDesc')}</div>
                   </div>
                 </label>
               </div>
@@ -336,12 +338,12 @@ export function Checkout() {
 
             {/* Note */}
             <div className="bg-white border border-border rounded-2xl p-5">
-              <label className="block font-semibold text-ink mb-2">Ghi chú cho gian hàng</label>
+              <label className="block font-semibold text-ink mb-2">{t('checkout.noteLabel')}</label>
               <textarea
                 value={form.note}
                 onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
                 rows={2}
-                placeholder="VD: Đóng gói quà tặng, để ý giờ giao..."
+                placeholder={t('checkout.notePlaceholder')}
                 className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all resize-none"
               />
             </div>
@@ -351,7 +353,7 @@ export function Checkout() {
           <div>
             <div className="bg-white border border-border rounded-2xl p-5 lg:sticky lg:top-24">
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-                Tóm tắt đơn hàng
+                {t('checkout.summaryTitle')}
               </h3>
 
               <div className="space-y-2 mb-4">
@@ -369,15 +371,15 @@ export function Checkout() {
 
               <div className="space-y-1.5 text-sm border-t border-dashed border-border pt-3">
                 <div className="flex justify-between py-1">
-                  <span className="text-ink-mute">Tạm tính</span>
+                  <span className="text-ink-mute">{t('checkout.subtotal')}</span>
                   <span className="font-mono">{subtotal.toLocaleString('vi-VN')}₫</span>
                 </div>
                 <div className="flex justify-between py-1">
-                  <span className="text-ink-mute">Phí ship</span>
+                  <span className="text-ink-mute">{t('checkout.shippingLine')}</span>
                   <span className="font-mono">{selectedShipping.price.toLocaleString('vi-VN')}₫</span>
                 </div>
                 <div className="flex justify-between py-3 border-t border-dashed border-border mt-1">
-                  <span className="font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>Tổng cộng</span>
+                  <span className="font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>{t('checkout.total')}</span>
                   <span className="font-semibold text-green font-mono" style={{ fontFamily: 'var(--font-display)' }}>
                     {total.toLocaleString('vi-VN')}₫
                   </span>
@@ -389,12 +391,12 @@ export function Checkout() {
                 disabled={createOrder.isPending}
                 className="w-full py-3.5 bg-green text-white rounded-xl font-semibold hover:bg-green-soft disabled:opacity-60 transition-colors mt-2"
               >
-                {createOrder.isPending ? 'Đang xử lý...' : 'Xác nhận & Thanh toán'}
+                {createOrder.isPending ? t('checkout.submitting') : t('checkout.submit')}
               </button>
 
               <div className="flex items-center gap-3 mt-4 pt-4 border-t border-dashed border-border">
                 <Lock size={15} className="text-green flex-shrink-0" />
-                <span className="text-xs text-ink-mute">Thanh toán an toàn · SSL · PCI DSS</span>
+                <span className="text-xs text-ink-mute">{t('checkout.secure')}</span>
               </div>
             </div>
           </div>
