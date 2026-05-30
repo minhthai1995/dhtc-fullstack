@@ -332,6 +332,76 @@ const vi: Dict = {
   'footer.linkDelete': 'Hướng dẫn xoá dữ liệu',
   'footer.copyright': '© 2026 Chợ Đêm Sơn Trà · Đà Nẵng · dhtcdanang.com',
   'footer.gpkd': 'GPKD: 0401234567 · Sở KH&ĐT Đà Nẵng cấp',
+
+  // Simple Navbar wrapper (authenticated shell)
+  'navbar.brand': 'DHTC',
+  'navbar.logout': 'Đăng xuất',
+
+  // Home (authenticated dashboard)
+  'home.title': 'Bảng điều khiển',
+  'home.logout': 'Đăng xuất',
+  'home.accountInfo': 'Thông tin tài khoản',
+  'home.fieldId': 'ID',
+  'home.fieldEmail': 'Email',
+  'home.fieldStatus': 'Trạng thái',
+  'home.statusActive': 'Đang hoạt động',
+  'home.statusLocked': 'Bị khoá',
+  'home.placeholder': 'Thêm chức năng vào đây.',
+
+  // 404
+  'notfound.title': 'Trang không tồn tại',
+  'notfound.sub': 'URL này không hợp lệ hoặc đã bị xoá.',
+  'notfound.back': 'Về trang chủ',
+
+  // Customer marketplace layout — nav
+  'cust.nav.home': 'Trang chủ',
+  'cust.nav.shop': 'Mua sắm',
+  'cust.nav.guide': 'Cẩm nang',
+  'cust.nav.contact': 'Liên hệ',
+
+  // Customer marketplace layout — categories
+  'cust.cat.all': 'Tất cả',
+  'cust.cat.coffee': 'Cà phê',
+  'cust.cat.pepper': 'Hồ tiêu',
+  'cust.cat.ginseng': 'Sâm & thảo dược',
+  'cust.cat.driedFruit': 'Trái cây sấy',
+  'cust.cat.honey': 'Mật ong',
+  'cust.cat.fishSauce': 'Nước mắm',
+  'cust.cat.rice': 'Gạo đặc sản',
+
+  // Customer marketplace layout — account menu
+  'cust.acc.account': 'Tài khoản',
+  'cust.acc.orders': 'Đơn hàng',
+  'cust.acc.logout': 'Đăng xuất',
+  'cust.acc.login': 'Đăng nhập',
+
+  // Customer marketplace layout — footer
+  'cust.foot.brand': 'DHTC Đà Nẵng',
+  'cust.foot.tagline':
+    'Nền tảng thương mại nông sản đặc sản Việt Nam, kết nối tiểu thương và khách hàng toàn cầu.',
+  'cust.foot.productsLabel': 'Sản phẩm',
+  'cust.foot.supportLabel': 'Hỗ trợ',
+  'cust.foot.contactLabel': 'Liên hệ',
+  'cust.foot.product1': 'Cà phê Đắk Lắk',
+  'cust.foot.product2': 'Hồ tiêu Gia Lai',
+  'cust.foot.product3': 'Sâm Ngọc Linh',
+  'cust.foot.product4': 'Mật ong rừng',
+  'cust.foot.support1': 'Chính sách giao hàng',
+  'cust.foot.support2': 'Đổi trả hàng',
+  'cust.foot.support3': 'Thanh toán an toàn',
+  'cust.foot.support4': 'Liên hệ DHTC',
+  'cust.foot.location': 'Đà Nẵng, Việt Nam',
+  'cust.foot.copyright': '© 2026 DHTC Đà Nẵng. All rights reserved.',
+
+  // Facebook OAuth return page
+  'fbReturn.errInvalidState': 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng thử lại.',
+  'fbReturn.errCancelled': 'Bạn đã huỷ đăng nhập bằng Facebook.',
+  'fbReturn.errFbDown': 'Không kết nối được Facebook. Vui lòng thử lại sau ít phút.',
+  'fbReturn.errGeneric': 'Đã có lỗi xảy ra. Vui lòng thử lại.',
+  'fbReturn.errWithCode': 'Đăng nhập thất bại ({code}).',
+  'fbReturn.title': 'Đăng nhập không thành công',
+  'fbReturn.backToLogin': 'Quay lại đăng nhập',
+  'fbReturn.completing': 'Đang hoàn tất đăng nhập…',
 }
 
 const en: Dict = {
@@ -659,6 +729,76 @@ const en: Dict = {
   'footer.linkDelete': 'Data deletion guide',
   'footer.copyright': '© 2026 Sơn Trà Night Market · Đà Nẵng · dhtcdanang.com',
   'footer.gpkd': 'Business license: 0401234567 · Đà Nẵng DPI',
+
+  // Simple Navbar wrapper (authenticated shell)
+  'navbar.brand': 'DHTC',
+  'navbar.logout': 'Sign out',
+
+  // Home (authenticated dashboard)
+  'home.title': 'Dashboard',
+  'home.logout': 'Sign out',
+  'home.accountInfo': 'Account information',
+  'home.fieldId': 'ID',
+  'home.fieldEmail': 'Email',
+  'home.fieldStatus': 'Status',
+  'home.statusActive': 'Active',
+  'home.statusLocked': 'Locked',
+  'home.placeholder': 'More features coming soon.',
+
+  // 404
+  'notfound.title': 'Page not found',
+  'notfound.sub': 'This URL is invalid or has been removed.',
+  'notfound.back': 'Back to home',
+
+  // Customer marketplace layout — nav
+  'cust.nav.home': 'Home',
+  'cust.nav.shop': 'Shop',
+  'cust.nav.guide': 'Guide',
+  'cust.nav.contact': 'Contact',
+
+  // Customer marketplace layout — categories
+  'cust.cat.all': 'All',
+  'cust.cat.coffee': 'Coffee',
+  'cust.cat.pepper': 'Pepper',
+  'cust.cat.ginseng': 'Ginseng & herbs',
+  'cust.cat.driedFruit': 'Dried fruits',
+  'cust.cat.honey': 'Honey',
+  'cust.cat.fishSauce': 'Fish sauce',
+  'cust.cat.rice': 'Specialty rice',
+
+  // Customer marketplace layout — account menu
+  'cust.acc.account': 'Account',
+  'cust.acc.orders': 'Orders',
+  'cust.acc.logout': 'Sign out',
+  'cust.acc.login': 'Sign in',
+
+  // Customer marketplace layout — footer
+  'cust.foot.brand': 'DHTC Đà Nẵng',
+  'cust.foot.tagline':
+    'Vietnamese specialty agricultural marketplace, connecting local merchants with global customers.',
+  'cust.foot.productsLabel': 'Products',
+  'cust.foot.supportLabel': 'Support',
+  'cust.foot.contactLabel': 'Contact',
+  'cust.foot.product1': 'Đắk Lắk Coffee',
+  'cust.foot.product2': 'Gia Lai Pepper',
+  'cust.foot.product3': 'Ngọc Linh Ginseng',
+  'cust.foot.product4': 'Wild Forest Honey',
+  'cust.foot.support1': 'Shipping policy',
+  'cust.foot.support2': 'Returns & exchanges',
+  'cust.foot.support3': 'Secure payment',
+  'cust.foot.support4': 'Contact DHTC',
+  'cust.foot.location': 'Đà Nẵng, Vietnam',
+  'cust.foot.copyright': '© 2026 DHTC Đà Nẵng. All rights reserved.',
+
+  // Facebook OAuth return page
+  'fbReturn.errInvalidState': 'Your sign-in session expired or is invalid. Please try again.',
+  'fbReturn.errCancelled': 'You cancelled the Facebook sign-in.',
+  'fbReturn.errFbDown': 'Cannot reach Facebook. Please try again in a few minutes.',
+  'fbReturn.errGeneric': 'Something went wrong. Please try again.',
+  'fbReturn.errWithCode': 'Sign-in failed ({code}).',
+  'fbReturn.title': 'Sign-in failed',
+  'fbReturn.backToLogin': 'Back to sign-in',
+  'fbReturn.completing': 'Completing sign-in…',
 }
 
 export const messages: Record<Lang, Dict> = { vi, en }

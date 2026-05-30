@@ -7,21 +7,32 @@ import { ShoppingCart, Search, User, Menu, X, ChevronDown } from 'lucide-react'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useNotificationSocket } from '@/lib/useNotificationSocket'
 import { useTracking } from '@/features/tracking/useTracking'
+import { useT } from '@/i18n/useT'
 
-const navLinks = [
-  { label: 'Trang chủ', href: '/' },
-  { label: 'Mua sắm', href: '/shop' },
-  { label: 'Cẩm nang', href: '/shop' },
-  { label: 'Liên hệ', href: '/shop' },
-]
+const NAV_LINKS = [
+  { key: 'home', href: '/' },
+  { key: 'shop', href: '/shop' },
+  { key: 'guide', href: '/shop' },
+  { key: 'contact', href: '/shop' },
+] as const
 
-const categories = [
-  'Tất cả', 'Cà phê', 'Hồ tiêu', 'Sâm & thảo dược', 'Trái cây sấy', 'Mật ong', 'Nước mắm', 'Gạo đặc sản'
-]
+const CATEGORY_KEYS = [
+  'all',
+  'coffee',
+  'pepper',
+  'ginseng',
+  'driedFruit',
+  'honey',
+  'fishSauce',
+  'rice',
+] as const
+
+const FOOTER_PRODUCT_KEYS = ['product1', 'product2', 'product3', 'product4'] as const
+const FOOTER_SUPPORT_KEYS = ['support1', 'support2', 'support3', 'support4'] as const
 
 export function CustomerLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [lang, setLang] = useState<'vi' | 'en'>('vi')
+  const { t, lang, setLang } = useT()
   const { data: user } = useCurrentUser()
   const { data: cart } = useCart()
   const logout = useLogout()
@@ -65,9 +76,9 @@ export function CustomerLayout() {
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-0.5 ml-5">
-            {navLinks.map((link) => (
+            {NAV_LINKS.map((link) => (
               <NavLink
-                key={link.href + link.label}
+                key={link.key}
                 to={link.href}
                 className={({ isActive }) =>
                   cn(
@@ -78,7 +89,7 @@ export function CustomerLayout() {
                   )
                 }
               >
-                {link.label}
+                {t(`cust.nav.${link.key}`)}
               </NavLink>
             ))}
           </div>
@@ -141,17 +152,17 @@ export function CustomerLayout() {
                 <div className="absolute right-0 top-full pt-1 hidden group-hover:block">
                   <div className="bg-white border border-border rounded-xl shadow-lg py-1 min-w-[140px]">
                     <Link to="/account" className="block px-4 py-2 text-sm text-ink-soft hover:bg-cream-dark hover:text-ink no-underline">
-                      Tài khoản
+                      {t('cust.acc.account')}
                     </Link>
                     <Link to="/account" className="block px-4 py-2 text-sm text-ink-soft hover:bg-cream-dark hover:text-ink no-underline">
-                      Đơn hàng
+                      {t('cust.acc.orders')}
                     </Link>
                     <hr className="my-1 border-border" />
                     <button
                       onClick={handleLogout}
                       className="w-full text-left px-4 py-2 text-sm text-danger hover:bg-cream-dark"
                     >
-                      Đăng xuất
+                      {t('cust.acc.logout')}
                     </button>
                   </div>
                 </div>
@@ -161,7 +172,7 @@ export function CustomerLayout() {
                 to="/login"
                 className="px-4 py-2 rounded-lg bg-green text-cream text-sm font-semibold hover:bg-green-soft transition-colors no-underline"
               >
-                Đăng nhập
+                {t('cust.acc.login')}
               </Link>
             )}
 
@@ -178,14 +189,14 @@ export function CustomerLayout() {
         {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-white border-t border-border px-4 py-3">
-            {navLinks.map((link) => (
+            {NAV_LINKS.map((link) => (
               <Link
-                key={link.href + link.label}
+                key={link.key}
                 to={link.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className="block py-2.5 text-sm font-medium text-ink-soft hover:text-ink no-underline border-b border-border last:border-0"
               >
-                {link.label}
+                {t(`cust.nav.${link.key}`)}
               </Link>
             ))}
           </div>
@@ -196,17 +207,17 @@ export function CustomerLayout() {
       <div className="border-b border-border bg-white">
         <div className="max-w-[1320px] mx-auto px-7">
           <div className="flex gap-2.5 py-3 overflow-x-auto scrollbar-none">
-            {categories.map((cat) => (
+            {CATEGORY_KEYS.map((catKey) => (
               <button
-                key={cat}
+                key={catKey}
                 className={cn(
                   'px-4 py-2 rounded-full border text-sm font-medium whitespace-nowrap transition-all flex-shrink-0',
-                  cat === 'Tất cả'
+                  catKey === 'all'
                     ? 'border-green bg-green/6 text-green font-semibold'
                     : 'border-border bg-white text-ink-soft hover:border-green hover:text-green'
                 )}
               >
-                {cat}
+                {t(`cust.cat.${catKey}`)}
               </button>
             ))}
           </div>
@@ -227,47 +238,51 @@ export function CustomerLayout() {
                 className="text-cream font-bold text-lg mb-3"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
-                DHTC Đà Nẵng
+                {t('cust.foot.brand')}
               </div>
-              <p className="text-sm text-cream/60 leading-relaxed">
-                Nền tảng thương mại nông sản đặc sản Việt Nam, kết nối tiểu thương và khách hàng toàn cầu.
-              </p>
+              <p className="text-sm text-cream/60 leading-relaxed">{t('cust.foot.tagline')}</p>
             </div>
             <div>
-              <div className="text-cream font-semibold text-sm mb-3 uppercase tracking-wider">Sản phẩm</div>
+              <div className="text-cream font-semibold text-sm mb-3 uppercase tracking-wider">
+                {t('cust.foot.productsLabel')}
+              </div>
               <ul className="space-y-2 text-sm">
-                {['Cà phê Đắk Lắk', 'Hồ tiêu Gia Lai', 'Sâm Ngọc Linh', 'Mật ong rừng'].map((item) => (
-                  <li key={item}>
+                {FOOTER_PRODUCT_KEYS.map((key) => (
+                  <li key={key}>
                     <Link to="/shop" className="text-cream/60 hover:text-cream no-underline transition-colors">
-                      {item}
+                      {t(`cust.foot.${key}`)}
                     </Link>
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <div className="text-cream font-semibold text-sm mb-3 uppercase tracking-wider">Hỗ trợ</div>
+              <div className="text-cream font-semibold text-sm mb-3 uppercase tracking-wider">
+                {t('cust.foot.supportLabel')}
+              </div>
               <ul className="space-y-2 text-sm">
-                {['Chính sách giao hàng', 'Đổi trả hàng', 'Thanh toán an toàn', 'Liên hệ DHTC'].map((item) => (
-                  <li key={item}>
+                {FOOTER_SUPPORT_KEYS.map((key) => (
+                  <li key={key}>
                     <Link to="/" className="text-cream/60 hover:text-cream no-underline transition-colors">
-                      {item}
+                      {t(`cust.foot.${key}`)}
                     </Link>
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <div className="text-cream font-semibold text-sm mb-3 uppercase tracking-wider">Liên hệ</div>
+              <div className="text-cream font-semibold text-sm mb-3 uppercase tracking-wider">
+                {t('cust.foot.contactLabel')}
+              </div>
               <div className="text-sm text-cream/60 space-y-1">
-                <div>Đà Nẵng, Việt Nam</div>
+                <div>{t('cust.foot.location')}</div>
                 <div>info@dhtcdanang.com</div>
                 <div>+84 236 XXX XXXX</div>
               </div>
             </div>
           </div>
           <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row justify-between items-center gap-2 text-xs text-cream/40">
-            <div>© 2026 DHTC Đà Nẵng. All rights reserved.</div>
+            <div>{t('cust.foot.copyright')}</div>
             <div className="font-mono">v2.0 · Platform Mockup</div>
           </div>
         </div>
