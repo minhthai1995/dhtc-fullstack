@@ -5,6 +5,7 @@ import { FacebookLoginButton } from '@/features/auth/FacebookLoginButton'
 import { Spinner } from '@/components/ui/Spinner'
 import { cn } from '@/lib/cn'
 import { ShieldCheck, ShoppingBag } from 'lucide-react'
+import { useT } from '@/i18n/useT'
 
 type Role = 'customer' | 'seller'
 
@@ -16,18 +17,19 @@ export function Register() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
   const register = useRegister()
+  const { t } = useT()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
     if (password !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp.')
+      setError(t('auth.register.errMismatch'))
       return
     }
 
     if (password.length < 8) {
-      setError('Mật khẩu phải có ít nhất 8 ký tự.')
+      setError(t('auth.register.errShort'))
       return
     }
 
@@ -38,7 +40,7 @@ export function Register() {
           navigate('/login')
         },
         onError: () => {
-          setError('Đăng ký thất bại. Email có thể đã được sử dụng.')
+          setError(t('auth.register.errFail'))
         },
       }
     )
@@ -81,9 +83,9 @@ export function Register() {
             </div>
           </div>
           <h1 className="text-2xl font-medium text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-            Tạo tài khoản
+            {t('auth.register.title')}
           </h1>
-          <p className="text-ink-mute text-sm mt-1">Tham gia nền tảng nông sản Việt Nam</p>
+          <p className="text-ink-mute text-sm mt-1">{t('auth.register.subtitle')}</p>
         </div>
 
         <div className="bg-white border border-border rounded-2xl p-8 shadow-sm">
@@ -96,7 +98,9 @@ export function Register() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Role selection */}
             <div>
-              <label className="block text-sm font-semibold text-ink mb-2">Bạn là</label>
+              <label className="block text-sm font-semibold text-ink mb-2">
+                {t('auth.register.roleLabel')}
+              </label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
@@ -118,10 +122,10 @@ export function Register() {
                       role === 'customer' ? 'text-green' : 'text-ink-soft'
                     )}
                   >
-                    Người mua
+                    {t('auth.register.roleCustomer')}
                   </span>
                   <span className="text-[11px] text-ink-mute text-center leading-tight">
-                    Tìm & mua nông sản
+                    {t('auth.register.roleCustomerSub')}
                   </span>
                 </button>
 
@@ -145,17 +149,19 @@ export function Register() {
                       role === 'seller' ? 'text-gold-deep' : 'text-ink-soft'
                     )}
                   >
-                    Tiểu thương
+                    {t('auth.register.roleSeller')}
                   </span>
                   <span className="text-[11px] text-ink-mute text-center leading-tight">
-                    Bán sản phẩm của bạn
+                    {t('auth.register.roleSellerSub')}
                   </span>
                 </button>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-ink mb-1.5">Email</label>
+              <label className="block text-sm font-semibold text-ink mb-1.5">
+                {t('auth.register.emailLabel')}
+              </label>
               <input
                 type="email"
                 value={email}
@@ -167,25 +173,29 @@ export function Register() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-ink mb-1.5">Mật khẩu</label>
+              <label className="block text-sm font-semibold text-ink mb-1.5">
+                {t('auth.register.passwordLabel')}
+              </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="Tối thiểu 8 ký tự"
+                placeholder={t('auth.register.passwordHint')}
                 className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green focus:ring-2 focus:ring-green/10 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-ink mb-1.5">Xác nhận mật khẩu</label>
+              <label className="block text-sm font-semibold text-ink mb-1.5">
+                {t('auth.register.confirmLabel')}
+              </label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                placeholder="Nhập lại mật khẩu"
+                placeholder={t('auth.register.confirmHint')}
                 className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green focus:ring-2 focus:ring-green/10 transition-all"
               />
             </div>
@@ -198,26 +208,26 @@ export function Register() {
               {register.isPending ? (
                 <>
                   <Spinner className="w-4 h-4 border-2 border-white border-t-transparent" />
-                  Đang tạo tài khoản...
+                  {t('auth.register.submitting')}
                 </>
               ) : (
-                'Đăng ký'
+                t('auth.register.submit')
               )}
             </button>
           </form>
 
           <div className="my-5 flex items-center gap-3 text-[11px] uppercase tracking-widest text-ink-mute">
             <div className="flex-1 border-t border-border" />
-            <span>hoặc</span>
+            <span>{t('auth.login.or')}</span>
             <div className="flex-1 border-t border-border" />
           </div>
 
-          <FacebookLoginButton label="Đăng ký bằng Facebook" />
+          <FacebookLoginButton label={t('auth.register.fbButton')} />
 
           <div className="mt-6 text-center text-sm text-ink-mute">
-            Đã có tài khoản?{' '}
+            {t('auth.register.haveAccount')}{' '}
             <Link to="/login" className="text-green font-semibold hover:underline">
-              Đăng nhập
+              {t('auth.register.loginLink')}
             </Link>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useLogin } from '@/features/auth/useAuth'
 import { FacebookLoginButton } from '@/features/auth/FacebookLoginButton'
 import { Spinner } from '@/components/ui/Spinner'
+import { useT } from '@/i18n/useT'
 
 export function Login() {
   const [email, setEmail] = useState('')
@@ -10,6 +11,7 @@ export function Login() {
   const [error, setError] = useState('')
   const navigate = useNavigate()
   const login = useLogin()
+  const { t } = useT()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,7 +24,7 @@ export function Login() {
           navigate('/app')
         },
         onError: () => {
-          setError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.')
+          setError(t('auth.login.errCreds'))
         },
       }
     )
@@ -65,9 +67,9 @@ export function Login() {
             </div>
           </div>
           <h1 className="text-2xl font-medium text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-            Đăng nhập
+            {t('auth.login.title')}
           </h1>
-          <p className="text-ink-mute text-sm mt-1">Chào mừng quay lại</p>
+          <p className="text-ink-mute text-sm mt-1">{t('auth.login.subtitle')}</p>
         </div>
 
         <div className="bg-white border border-border rounded-2xl p-8 shadow-sm">
@@ -79,7 +81,9 @@ export function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-ink mb-1.5">Email</label>
+              <label className="block text-sm font-semibold text-ink mb-1.5">
+                {t('auth.login.emailLabel')}
+              </label>
               <input
                 type="email"
                 value={email}
@@ -91,7 +95,9 @@ export function Login() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-ink mb-1.5">Mật khẩu</label>
+              <label className="block text-sm font-semibold text-ink mb-1.5">
+                {t('auth.login.passwordLabel')}
+              </label>
               <input
                 type="password"
                 value={password}
@@ -110,33 +116,35 @@ export function Login() {
               {login.isPending ? (
                 <>
                   <Spinner className="w-4 h-4 border-2 border-white border-t-transparent" />
-                  Đang đăng nhập...
+                  {t('auth.login.submitting')}
                 </>
               ) : (
-                'Đăng nhập'
+                t('auth.login.submit')
               )}
             </button>
           </form>
 
           <div className="my-5 flex items-center gap-3 text-[11px] uppercase tracking-widest text-ink-mute">
             <div className="flex-1 border-t border-border" />
-            <span>hoặc</span>
+            <span>{t('auth.login.or')}</span>
             <div className="flex-1 border-t border-border" />
           </div>
 
-          <FacebookLoginButton />
+          <FacebookLoginButton label={t('auth.login.fbContinue')} />
 
           <div className="mt-6 text-center text-sm text-ink-mute">
-            Chưa có tài khoản?{' '}
+            {t('auth.login.noAccount')}{' '}
             <Link to="/register" className="text-green font-semibold hover:underline">
-              Đăng ký ngay
+              {t('auth.login.registerLink')}
             </Link>
           </div>
         </div>
 
         <div className="text-center mt-4 text-xs text-ink-mute">
-          Bằng cách đăng nhập, bạn đồng ý với{' '}
-          <span className="text-green cursor-pointer hover:underline">Điều khoản sử dụng</span>
+          {t('auth.login.terms')}{' '}
+          <span className="text-green cursor-pointer hover:underline">
+            {t('auth.login.termsLink')}
+          </span>
         </div>
       </div>
     </div>
