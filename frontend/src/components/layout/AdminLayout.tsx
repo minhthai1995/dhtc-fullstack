@@ -22,39 +22,41 @@ import {
 } from 'lucide-react'
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useNotificationSocket } from '@/lib/useNotificationSocket'
+import { useT } from '@/i18n/useT'
 
 const navGroups = [
   {
-    label: 'Tổng quan',
+    labelKey: 'adminNav.groupOverview',
     items: [
-      { label: 'Dashboard', href: '/admin/dashboard', icon: <LayoutDashboard size={18} /> },
-      { label: 'Báo cáo doanh thu', href: '/admin/reports', icon: <TrendingUp size={18} /> },
+      { labelKey: 'adminNav.dashboard', href: '/admin/dashboard', icon: <LayoutDashboard size={18} /> },
+      { labelKey: 'adminNav.reports', href: '/admin/reports', icon: <TrendingUp size={18} /> },
     ],
   },
   {
-    label: 'Quản lý',
+    labelKey: 'adminNav.groupManage',
     items: [
-      { label: 'Tiểu thương', href: '/admin/merchants', icon: <Users size={18} />, badge: '287' },
-      { label: 'Sản phẩm', href: '/admin/products', icon: <Package size={18} />, badge: '15k' },
-      { label: 'Danh mục', href: '/admin/categories', icon: <Tag size={18} /> },
-      { label: 'Phê duyệt', href: '/admin/approvals', icon: <CheckSquare size={18} />, badge: '8' },
-      { label: 'Đơn hàng', href: '/admin/orders', icon: <ShoppingCart size={18} /> },
-      { label: 'Đổi trả', href: '/admin/returns', icon: <RotateCcw size={18} /> },
-      { label: 'Khách hàng', href: '/admin/customers', icon: <UserCircle2 size={18} /> },
-      { label: 'Rút tiền', href: '/admin/withdrawals', icon: <Wallet size={18} /> },
+      { labelKey: 'adminNav.merchants', href: '/admin/merchants', icon: <Users size={18} />, badge: '287' },
+      { labelKey: 'adminNav.products', href: '/admin/products', icon: <Package size={18} />, badge: '15k' },
+      { labelKey: 'adminNav.categories', href: '/admin/categories', icon: <Tag size={18} /> },
+      { labelKey: 'adminNav.approvals', href: '/admin/approvals', icon: <CheckSquare size={18} />, badge: '8' },
+      { labelKey: 'adminNav.orders', href: '/admin/orders', icon: <ShoppingCart size={18} /> },
+      { labelKey: 'adminNav.returns', href: '/admin/returns', icon: <RotateCcw size={18} /> },
+      { labelKey: 'adminNav.customers', href: '/admin/customers', icon: <UserCircle2 size={18} /> },
+      { labelKey: 'adminNav.withdrawals', href: '/admin/withdrawals', icon: <Wallet size={18} /> },
     ],
   },
   {
-    label: 'Vận hành',
+    labelKey: 'adminNav.groupOps',
     items: [
-      { label: 'CRM Messenger', href: '/admin/crm', icon: <MessageSquare size={18} /> },
-      { label: 'Tích hợp API', href: '/admin/integrations', icon: <Zap size={18} /> },
-      { label: 'Quyền & cài đặt', href: '/admin/settings', icon: <Settings size={18} /> },
+      { labelKey: 'adminNav.crm', href: '/admin/crm', icon: <MessageSquare size={18} /> },
+      { labelKey: 'adminNav.integrations', href: '/admin/integrations', icon: <Zap size={18} /> },
+      { labelKey: 'adminNav.settings', href: '/admin/settings', icon: <Settings size={18} /> },
     ],
   },
 ]
 
 export function AdminLayout() {
+  const { t } = useT()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { data: user } = useCurrentUser()
   const logout = useLogout()
@@ -86,7 +88,7 @@ export function AdminLayout() {
           <div className="font-bold text-white text-sm leading-tight" style={{ fontFamily: 'var(--font-display)' }}>
             DHTC
           </div>
-          <div className="text-white/50 text-[10px] uppercase tracking-widest">Admin Console</div>
+          <div className="text-white/50 text-[10px] uppercase tracking-widest">{t('adminNav.console')}</div>
         </div>
         <button
           className="ml-auto lg:hidden text-white/60 hover:text-white"
@@ -99,9 +101,9 @@ export function AdminLayout() {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-3">
         {navGroups.map((group) => (
-          <div key={group.label} className="mb-1">
+          <div key={group.labelKey} className="mb-1">
             <div className="px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white/35">
-              {group.label}
+              {t(group.labelKey)}
             </div>
             {group.items.map((item) => (
               <NavLink
@@ -118,7 +120,7 @@ export function AdminLayout() {
                 }
               >
                 <span className="flex-shrink-0 opacity-80">{item.icon}</span>
-                <span className="flex-1">{item.label}</span>
+                <span className="flex-1">{t(item.labelKey)}</span>
                 {item.badge && (
                   <span className="text-[10px] bg-white/15 text-white/70 px-1.5 py-0.5 rounded-full font-mono">
                     {item.badge}
@@ -138,12 +140,12 @@ export function AdminLayout() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-white text-xs font-semibold truncate">{user?.email ?? 'Admin'}</div>
-            <div className="text-white/50 text-[10px]">Super Admin · DHTC</div>
+            <div className="text-white/50 text-[10px]">{t('adminNav.role')}</div>
           </div>
           <button
             onClick={handleLogout}
             className="text-white/40 hover:text-white/80 transition-colors"
-            title="Đăng xuất"
+            title={t('adminNav.logout')}
           >
             <LogOut size={15} />
           </button>
@@ -175,7 +177,7 @@ export function AdminLayout() {
             className="text-white font-semibold text-sm"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            DHTC Admin
+            {t('adminNav.brandShort')}
           </span>
           <div className="ml-auto flex items-center gap-2">
             <NotificationBell />

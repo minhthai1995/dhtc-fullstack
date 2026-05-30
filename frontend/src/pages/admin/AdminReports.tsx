@@ -2,11 +2,14 @@ import { useRevenueReport, useAdminDashboardFull, useRevenueByOrigin } from '@/f
 import { PageHeader } from '@/components/ui/PageHeader'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { Download, TrendingUp } from 'lucide-react'
+import { useT } from '@/i18n/useT'
 
 export function AdminReports() {
+  const { t, lang } = useT()
   const { data: report } = useRevenueReport()
   const { data: dashboard } = useAdminDashboardFull()
   const { data: originData = [] } = useRevenueByOrigin()
+  const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
 
   const chartData = report
     ? report.months.map((month, i) => ({
@@ -22,8 +25,10 @@ export function AdminReports() {
   const prevGmv = chartData.at(-2)?.gmv ?? 0
   const growthPct = prevGmv > 0 ? ((lastGmv - prevGmv) / prevGmv * 100).toFixed(1) : null
   const growthLabel = growthPct !== null
-    ? `${Number(growthPct) >= 0 ? '+' : ''}${growthPct}% so tháng trước`
-    : 'Chưa có dữ liệu'
+    ? t('adminReports.growthVsPrev')
+        .replace('{sign}', Number(growthPct) >= 0 ? '+' : '')
+        .replace('{pct}', growthPct)
+    : t('adminReports.noGrowthData')
   const growthType: 'up' | 'down' = growthPct !== null && Number(growthPct) >= 0 ? 'up' : 'down'
 
   // KPI computations
@@ -32,8 +37,8 @@ export function AdminReports() {
   const avgOrder = totalOrders > 0 ? totalGmv / totalOrders : 0
 
   const gmvDisplayValue = lastGmv >= 1_000_000_000
-    ? `₫${(lastGmv / 1_000_000_000).toFixed(2)} tỷ`
-    : `₫${(lastGmv / 1_000_000).toFixed(0)} triệu`
+    ? t('adminReports.gmvBillion').replace('{n}', (lastGmv / 1_000_000_000).toFixed(2))
+    : t('adminReports.gmvMillion').replace('{n}', (lastGmv / 1_000_000).toFixed(0))
 
   // Region data from API
   const maxOriginRevenue = Math.max(...originData.map((o) => o.revenue), 1)
@@ -41,12 +46,12 @@ export function AdminReports() {
   return (
     <div>
       <PageHeader
-        title="Báo cáo doanh thu"
-        subtitle={`Dữ liệu cập nhật đến ${new Date().toLocaleDateString('vi-VN')}`}
+        title={t('adminReports.title')}
+        subtitle={t('adminReports.subtitle').replace('{date}', new Date().toLocaleDateString(localeStr))}
         actions={
           <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-xl text-sm font-semibold text-ink-soft hover:border-green hover:text-green transition-colors">
             <Download size={15} />
-            Xuất báo cáo
+            {t('adminReports.exportReport')}
           </button>
         }
       />
@@ -54,27 +59,31 @@ export function AdminReports() {
       {/* KPI summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <KpiCard
-          label="GMV tháng gần nhất"
+          label={t('adminReports.kpiGmvLastMonth')}
           value={lastGmv > 0 ? gmvDisplayValue : '—'}
           delta={growthLabel}
           deltaType={growthType}
         />
         <KpiCard
-          label="Tổng đơn hàng"
-          value={(dashboard?.total_orders ?? 0).toLocaleString('vi-VN')}
-          delta={dashboard?.orders_yesterday !== undefined ? `${dashboard.orders_yesterday} đơn hôm qua` : '—'}
+          label={t('adminReports.kpiTotalOrders')}
+          value={(dashboard?.total_orders ?? 0).toLocaleString(localeStr)}
+          delta={dashboard?.orders_yesterday !== undefined
+            ? t('adminReports.deltaOrdersYesterday').replace('{n}', String(dashboard.orders_yesterday))
+            : '—'}
           deltaType="up"
         />
         <KpiCard
-          label="Giá trị TB/đơn"
+          label={t('adminReports.kpiAvgOrder')}
           value={avgOrder > 0 ? `₫${(avgOrder / 1_000).toFixed(0)}K` : '—'}
-          delta="Trung bình tất cả đơn"
+          delta={t('adminReports.deltaAvgAll')}
           deltaType="up"
         />
         <KpiCard
-          label="Tiểu thương"
+          label={t('adminReports.kpiMerchants')}
           value={dashboard?.total_merchants ?? '—'}
-          delta={dashboard?.new_merchants_week !== undefined ? `${dashboard.new_merchants_week} mới tuần này` : '—'}
+          delta={dashboard?.new_merchants_week !== undefined
+            ? t('adminReports.deltaNewMerchantsWeek').replace('{n}', String(dashboard.new_merchants_week))
+            : '—'}
           deltaType="up"
         />
       </div>
@@ -84,9 +93,9 @@ export function AdminReports() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-              GMV 12 tháng gần nhất
+              {t('adminReports.chartTitle')}
             </h2>
-            <p className="text-xs text-ink-mute mt-0.5">Đơn vị: triệu VND</p>
+            <p className="text-xs text-ink-mute mt-0.5">{t('adminReports.chartSubtitle')}</p>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-success font-semibold">
             <TrendingUp size={14} />
@@ -119,7 +128,7 @@ export function AdminReports() {
         {/* Revenue by region */}
         <div className="bg-white border border-border rounded-2xl p-5">
           <h2 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Doanh thu theo khu vực
+            {t('adminReports.regionTitle')}
           </h2>
           <div className="space-y-4">
             {originData.length > 0 ? originData.map((r, i) => (
@@ -137,7 +146,7 @@ export function AdminReports() {
                 </span>
               </div>
             )) : (
-              <div className="text-sm text-ink-mute text-center py-4">Chưa có dữ liệu vùng</div>
+              <div className="text-sm text-ink-mute text-center py-4">{t('adminReports.regionEmpty')}</div>
             )}
           </div>
         </div>
@@ -145,15 +154,15 @@ export function AdminReports() {
         {/* Monthly table */}
         <div className="bg-white border border-border rounded-2xl p-5">
           <h2 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Chi tiết theo tháng
+            {t('adminReports.monthlyTitle')}
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left pb-2 text-xs font-bold text-ink-mute uppercase tracking-wider">Tháng</th>
-                  <th className="text-right pb-2 text-xs font-bold text-ink-mute uppercase tracking-wider">GMV</th>
-                  <th className="text-right pb-2 text-xs font-bold text-ink-mute uppercase tracking-wider">Đơn</th>
+                  <th className="text-left pb-2 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminReports.thMonth')}</th>
+                  <th className="text-right pb-2 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminReports.thGmv')}</th>
+                  <th className="text-right pb-2 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminReports.thOrders')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -161,7 +170,7 @@ export function AdminReports() {
                   <tr key={d.month} className="border-b border-border last:border-0">
                     <td className="py-2 text-ink-soft text-xs">{d.month}</td>
                     <td className="py-2 text-right font-mono text-sm text-green font-medium">
-                      {d.gmv.toLocaleString()}M
+                      {d.gmv.toLocaleString(localeStr)}M
                     </td>
                     <td className="py-2 text-right text-xs text-ink-mute font-mono">{d.orders}</td>
                   </tr>

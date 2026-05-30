@@ -5,24 +5,38 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Spinner } from '@/components/ui/Spinner'
 import { ArrowLeft, Calendar, Star } from 'lucide-react'
 import type { MerchantTier, ProductStatus } from '@/types/api'
+import { useT } from '@/i18n/useT'
 
-function tierLabel(tier: string) {
-  if (tier === 'gold') return '★ Gold Tier'
-  if (tier === 'silver') return 'Silver Tier'
-  return 'Bronze Tier'
+const TIER_KEY: Record<string, string> = {
+  gold: 'adminMerchantDetail.tierGold',
+  silver: 'adminMerchantDetail.tierSilver',
+  bronze: 'adminMerchantDetail.tierBronze',
 }
 
-function statusBadge(status: ProductStatus) {
-  if (status === 'active') return <Badge variant="active">Hoạt động</Badge>
-  if (status === 'pending') return <Badge variant="pending">Chờ duyệt</Badge>
-  return <Badge variant="cancelled">Ngừng bán</Badge>
+const PRODUCT_STATUS_KEY: Record<ProductStatus, string> = {
+  active: 'adminMerchantDetail.prodStatusActive',
+  pending: 'adminMerchantDetail.prodStatusPending',
+  inactive: 'adminMerchantDetail.prodStatusSuspended',
+}
+
+const MERCHANT_STATUS_KEY: Record<string, string> = {
+  active: 'adminMerchantDetail.statusActive',
+  pending: 'adminMerchantDetail.statusPending',
+  suspended: 'adminMerchantDetail.statusLocked',
 }
 
 export function AdminMerchantDetail() {
+  const { t, lang } = useT()
   const { id } = useParams<{ id: string }>()
   const merchantId = parseInt(id ?? '0')
   const { data: merchant, isLoading } = useAdminMerchantDetail(merchantId || null)
   const { data: merchantProducts = [], isLoading: productsLoading } = useAdminMerchantProducts(merchant?.id ?? null)
+  const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
+
+  const statusBadge = (status: ProductStatus) => {
+    const variant = status === 'active' ? 'active' : status === 'pending' ? 'pending' : 'cancelled'
+    return <Badge variant={variant}>{t(PRODUCT_STATUS_KEY[status])}</Badge>
+  }
 
   if (isLoading) {
     return (
@@ -33,24 +47,29 @@ export function AdminMerchantDetail() {
   }
 
   if (!merchant) {
-    return <div className="p-8 text-ink-mute text-sm text-center">Chưa có dữ liệu</div>
+    return <div className="p-8 text-ink-mute text-sm text-center">{t('adminMerchantDetail.noData')}</div>
   }
 
   const m = merchant
   const displayName = m.store_name || `Merchant #${m.id}`
   const tierAsMerchantTier = m.tier as MerchantTier
-  const statusLabel =
-    m.status === 'active' ? 'Hoạt động' : m.status === 'pending' ? 'Chờ duyệt' : 'Đã khoá'
+  const registeredDate = new Date(m.created_at).toLocaleDateString(localeStr)
 
   const stats = [
-    { label: 'Tổng sản phẩm', value: `${m.product_count} SKU` },
-    { label: 'Đơn hoàn thành', value: m.order_count.toLocaleString('vi-VN') },
     {
-      label: 'Doanh thu tháng',
+      label: t('adminMerchantDetail.totalProducts'),
+      value: t('adminMerchantDetail.totalProductsValue').replace('{n}', String(m.product_count)),
+    },
+    {
+      label: t('adminMerchantDetail.completedOrders'),
+      value: m.order_count.toLocaleString(localeStr),
+    },
+    {
+      label: t('adminMerchantDetail.monthlyRevenue'),
       value: `${(m.monthly_revenue / 1_000_000).toFixed(1)}M₫`,
     },
     {
-      label: 'Đánh giá TB',
+      label: t('adminMerchantDetail.avgRating'),
       value: m.avg_rating != null ? `${m.avg_rating.toFixed(2)} ★` : '—',
     },
   ]
@@ -63,17 +82,21 @@ export function AdminMerchantDetail() {
           className="inline-flex items-center gap-1.5 text-sm text-ink-mute hover:text-ink no-underline transition-colors"
         >
           <ArrowLeft size={14} />
-          Danh sách tiểu thương
+          {t('adminMerchantDetail.backToList')}
         </Link>
       </div>
 
       <PageHeader
         title={displayName}
-        subtitle={`ID: M${String(m.id).padStart(3, '0')} · Đăng ký ${new Date(m.created_at).toLocaleDateString('vi-VN')}`}
+        subtitle={t('adminMerchantDetail.subtitle')
+          .replace('{id}', String(m.id).padStart(3, '0'))
+          .replace('{date}', registeredDate)}
         actions={
           <div className="flex items-center gap-2">
-            <Badge variant={tierAsMerchantTier}>{tierLabel(m.tier)}</Badge>
-            <Badge variant={m.status as 'active' | 'pending' | 'suspended'}>{statusLabel}</Badge>
+            <Badge variant={tierAsMerchantTier}>{t(TIER_KEY[m.tier] ?? 'adminMerchantDetail.tierBronze')}</Badge>
+            <Badge variant={m.status as 'active' | 'pending' | 'suspended'}>
+              {t(MERCHANT_STATUS_KEY[m.status] ?? 'adminMerchantDetail.statusLocked')}
+            </Badge>
           </div>
         }
       />
@@ -88,17 +111,17 @@ export function AdminMerchantDetail() {
             </div>
             <h3 className="font-semibold text-ink mb-1">{displayName}</h3>
             <p className="text-sm text-ink-mute leading-relaxed mb-4">
-              {m.description ?? 'Chưa có mô tả'}
+              {m.description ?? t('adminMerchantDetail.noDescription')}
             </p>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2 text-ink-soft">
                 <Calendar size={14} className="text-ink-mute flex-shrink-0" />
-                Đăng ký {new Date(m.created_at).toLocaleDateString('vi-VN')}
+                {t('adminMerchantDetail.registered').replace('{date}', registeredDate)}
               </div>
               {m.avg_rating != null && (
                 <div className="flex items-center gap-2 text-ink-soft">
                   <Star size={14} className="text-gold flex-shrink-0" />
-                  Đánh giá {m.avg_rating.toFixed(2)} / 5.0
+                  {t('adminMerchantDetail.ratingLine').replace('{rating}', m.avg_rating.toFixed(2))}
                 </div>
               )}
             </div>
@@ -107,7 +130,7 @@ export function AdminMerchantDetail() {
           {/* Stats */}
           <div className="bg-white border border-border rounded-2xl p-5">
             <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Thống kê
+              {t('adminMerchantDetail.statsTitle')}
             </h3>
             <div className="space-y-3">
               {stats.map((stat) => (
@@ -129,17 +152,17 @@ export function AdminMerchantDetail() {
         <div className="lg:col-span-2">
           <div className="bg-white border border-border rounded-2xl p-5">
             <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-              Sản phẩm
+              {t('adminMerchantDetail.productsTitle')}
             </h3>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[480px]">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left pb-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Sản phẩm</th>
-                    <th className="text-left pb-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Giá</th>
-                    <th className="text-left pb-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Tồn kho</th>
-                    <th className="text-left pb-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Đã bán</th>
-                    <th className="text-left pb-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Trạng thái</th>
+                    <th className="text-left pb-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminMerchantDetail.thProduct')}</th>
+                    <th className="text-left pb-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminMerchantDetail.thPrice')}</th>
+                    <th className="text-left pb-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminMerchantDetail.thStock')}</th>
+                    <th className="text-left pb-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminMerchantDetail.thSold')}</th>
+                    <th className="text-left pb-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminMerchantDetail.thStatus')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -152,7 +175,7 @@ export function AdminMerchantDetail() {
                   ) : merchantProducts.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-8 text-center text-ink-mute text-sm">
-                        Chưa có sản phẩm nào
+                        {t('adminMerchantDetail.emptyProducts')}
                       </td>
                     </tr>
                   ) : (
@@ -163,7 +186,7 @@ export function AdminMerchantDetail() {
                         </td>
                         <td className="py-3 pr-4">
                           <span className="text-sm font-mono text-ink">
-                            {product.price.toLocaleString('vi-VN')}₫
+                            {product.price.toLocaleString(localeStr)}₫
                           </span>
                         </td>
                         <td className="py-3 pr-4">

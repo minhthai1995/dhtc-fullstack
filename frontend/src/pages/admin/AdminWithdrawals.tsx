@@ -2,31 +2,34 @@ import { useAdminWithdrawals, useApproveWithdrawal, useRejectWithdrawal } from '
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Spinner } from '@/components/ui/Spinner'
 import { Badge } from '@/components/ui/Badge'
-
-function statusBadge(status: string) {
-  if (status === 'completed') return <Badge variant="delivered">Đã duyệt</Badge>
-  if (status === 'rejected') return <Badge variant="cancelled">Từ chối</Badge>
-  return <Badge variant="pending">Chờ duyệt</Badge>
-}
+import { useT } from '@/i18n/useT'
 
 export function AdminWithdrawals() {
+  const { t, lang } = useT()
   const { data: withdrawals = [], isLoading } = useAdminWithdrawals()
   const approve = useApproveWithdrawal()
   const reject = useRejectWithdrawal()
 
+  const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
   const pending = withdrawals.filter(w => w.status === 'pending')
+
+  const statusBadge = (status: string) => {
+    if (status === 'completed') return <Badge variant="delivered">{t('adminWithdrawals.statusApproved')}</Badge>
+    if (status === 'rejected') return <Badge variant="cancelled">{t('adminWithdrawals.statusRejected')}</Badge>
+    return <Badge variant="pending">{t('adminWithdrawals.statusPending')}</Badge>
+  }
 
   return (
     <div>
       <PageHeader
-        title="Yêu cầu rút tiền"
-        subtitle={`${pending.length} yêu cầu chờ duyệt`}
+        title={t('adminWithdrawals.title')}
+        subtitle={t('adminWithdrawals.subtitle').replace('{n}', String(pending.length))}
       />
       {isLoading ? (
         <div className="flex justify-center py-12"><Spinner /></div>
       ) : withdrawals.length === 0 ? (
         <div className="bg-white border border-border rounded-2xl p-16 text-center text-ink-mute">
-          Chưa có yêu cầu rút tiền nào
+          {t('adminWithdrawals.empty')}
         </div>
       ) : (
         <div className="bg-white border border-border rounded-2xl overflow-hidden">
@@ -34,12 +37,12 @@ export function AdminWithdrawals() {
             <table className="w-full min-w-[700px]">
               <thead>
                 <tr className="bg-cream-dark border-b border-border">
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Tiểu thương</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Số tiền</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Ghi chú</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Trạng thái</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Ngày</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Thao tác</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminWithdrawals.thMerchant')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminWithdrawals.thAmount')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminWithdrawals.thNote')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminWithdrawals.thStatus')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminWithdrawals.thDate')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminWithdrawals.thActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -47,12 +50,12 @@ export function AdminWithdrawals() {
                   <tr key={w.id} className="border-b border-border last:border-0 hover:bg-cream/50 transition-colors">
                     <td className="px-4 py-3 text-sm font-medium text-ink">{w.merchant_name}</td>
                     <td className="px-4 py-3 text-sm font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>
-                      {w.amount.toLocaleString('vi-VN')}₫
+                      {w.amount.toLocaleString(localeStr)}₫
                     </td>
                     <td className="px-4 py-3 text-xs text-ink-mute max-w-[200px] truncate">{w.note ?? '—'}</td>
                     <td className="px-4 py-3">{statusBadge(w.status)}</td>
                     <td className="px-4 py-3 text-xs text-ink-mute font-mono">
-                      {new Date(w.created_at).toLocaleDateString('vi-VN')}
+                      {new Date(w.created_at).toLocaleDateString(localeStr)}
                     </td>
                     <td className="px-4 py-3">
                       {w.status === 'pending' && (
@@ -62,14 +65,14 @@ export function AdminWithdrawals() {
                             disabled={approve.isPending || reject.isPending}
                             className="text-xs px-2.5 py-1 bg-green/10 text-green font-semibold rounded-lg hover:bg-green/20 transition-colors disabled:opacity-50"
                           >
-                            Duyệt
+                            {t('adminWithdrawals.btnApprove')}
                           </button>
                           <button
                             onClick={() => reject.mutate(w.id)}
                             disabled={approve.isPending || reject.isPending}
                             className="text-xs px-2.5 py-1 bg-danger/10 text-danger font-semibold rounded-lg hover:bg-danger/20 transition-colors disabled:opacity-50"
                           >
-                            Từ chối
+                            {t('adminWithdrawals.btnReject')}
                           </button>
                         </div>
                       )}

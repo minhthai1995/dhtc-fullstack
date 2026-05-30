@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge'
 import { RefreshCw, ExternalLink, CheckCircle, AlertTriangle, XCircle, MessageCircle } from 'lucide-react'
 import { api } from '@/lib/axios'
 import { useToast } from '@/components/ui/Toast'
+import { useT } from '@/i18n/useT'
 
 interface IntegrationCard {
   name: string
@@ -93,43 +94,47 @@ const MOCK_INTEGRATIONS: IntegrationCard[] = [
   },
 ]
 
+const STATUS_BADGE_KEY: Record<'online' | 'degraded' | 'offline', string> = {
+  online: 'adminIntegrations.badgeOnline',
+  degraded: 'adminIntegrations.badgeDegraded',
+  offline: 'adminIntegrations.badgeOffline',
+}
+
+const SETUP_STEP_KEYS = [
+  {
+    step: 1,
+    titleKey: 'adminIntegrations.step1Title',
+    descKey: 'adminIntegrations.step1Desc',
+    needsToken: false,
+  },
+  {
+    step: 2,
+    titleKey: 'adminIntegrations.step2Title',
+    descKey: 'adminIntegrations.step2Desc',
+    needsToken: true,
+  },
+  {
+    step: 3,
+    titleKey: 'adminIntegrations.step3Title',
+    descKey: 'adminIntegrations.step3Desc',
+    needsToken: false,
+  },
+  {
+    step: 4,
+    titleKey: 'adminIntegrations.step4Title',
+    descKey: 'adminIntegrations.step4Desc',
+    needsToken: false,
+  },
+] as const
+
 function statusIcon(status: 'online' | 'degraded' | 'offline') {
   if (status === 'online') return <CheckCircle size={16} className="text-success" />
   if (status === 'degraded') return <AlertTriangle size={16} className="text-warning" />
   return <XCircle size={16} className="text-danger" />
 }
 
-function statusBadge(status: 'online' | 'degraded' | 'offline') {
-  if (status === 'online') return <Badge variant="active">Online</Badge>
-  if (status === 'degraded') return <Badge variant="pending">Degraded</Badge>
-  return <Badge variant="cancelled">Offline</Badge>
-}
-
-const SETUP_STEPS = [
-  {
-    step: 1,
-    title: 'Tạo Facebook App',
-    desc: 'Vào developers.facebook.com → Create App → Business → thêm Messenger product',
-  },
-  {
-    step: 2,
-    title: 'Cấu hình Webhook URL',
-    desc: (verifyToken: string) =>
-      `Callback URL: https://yourdomain.com/api/v1/webhook/facebook\nVerify Token: ${verifyToken}`,
-  },
-  {
-    step: 3,
-    title: 'Cập nhật .env',
-    desc: 'FACEBOOK_PAGE_ACCESS_TOKEN=...\nFACEBOOK_APP_SECRET=...',
-  },
-  {
-    step: 4,
-    title: 'Đăng ký Get Started + Menu',
-    desc: 'Nhấn nút "Setup Messenger Profile" bên dưới để đăng ký tự động',
-  },
-]
-
 export function AdminIntegrations() {
+  const { t } = useT()
   const { data: integrations } = useIntegrations()
   const toast = useToast()
 
@@ -141,7 +146,7 @@ export function AdminIntegrations() {
 
   // Chat test
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    { role: 'bot', text: 'Xin chào! Tôi là AI chatbot của DHTC. Hãy thử nhắn tin bên dưới!' },
+    { role: 'bot', text: t('adminIntegrations.testGreeting') },
   ])
   const [chatInput, setChatInput] = useState('')
   const [isBotTyping, setIsBotTyping] = useState(false)
@@ -167,12 +172,12 @@ export function AdminIntegrations() {
     try {
       const { data } = await api.post('/webhook/facebook/setup')
       if (data.result === 'success') {
-        toast('Messenger Profile đã được cài đặt!', 'success')
+        toast(t('adminIntegrations.setupSuccess'), 'success')
       } else {
-        toast(`Kết quả: ${JSON.stringify(data)}`, 'info')
+        toast(t('adminIntegrations.setupResult').replace('{data}', JSON.stringify(data)), 'info')
       }
     } catch {
-      toast('Lỗi khi cài đặt Messenger Profile', 'error')
+      toast(t('adminIntegrations.setupError'), 'error')
     } finally {
       setIsSettingUp(false)
     }
@@ -193,7 +198,7 @@ export function AdminIntegrations() {
     } catch {
       setChatMessages((prev) => [
         ...prev,
-        { role: 'bot', text: 'Lỗi kết nối chatbot. Vui lòng kiểm tra ANTHROPIC_API_KEY.' },
+        { role: 'bot', text: t('adminIntegrations.testError') },
       ])
     } finally {
       setIsBotTyping(false)
@@ -213,15 +218,20 @@ export function AdminIntegrations() {
 
   const verifyToken = webhookStatus?.verify_token ?? 'dhtc_webhook_2026'
 
+  const statusBadge = (status: 'online' | 'degraded' | 'offline') => {
+    const variant = status === 'online' ? 'active' : status === 'degraded' ? 'pending' : 'cancelled'
+    return <Badge variant={variant}>{t(STATUS_BADGE_KEY[status])}</Badge>
+  }
+
   return (
     <div>
       <PageHeader
-        title="Tích hợp API"
-        subtitle="Giám sát trạng thái các kết nối bên thứ ba"
+        title={t('adminIntegrations.title')}
+        subtitle={t('adminIntegrations.subtitle')}
         actions={
           <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-xl text-sm font-semibold text-ink-soft hover:border-green hover:text-green transition-colors">
             <RefreshCw size={14} />
-            Làm mới
+            {t('adminIntegrations.refresh')}
           </button>
         }
       />
@@ -236,7 +246,7 @@ export function AdminIntegrations() {
             <div className="text-2xl font-medium text-ink" style={{ fontFamily: 'var(--font-display)' }}>
               {onlineCount}
             </div>
-            <div className="text-xs text-ink-mute">Online</div>
+            <div className="text-xs text-ink-mute">{t('adminIntegrations.statusOnline')}</div>
           </div>
         </div>
         <div className="bg-white border border-border rounded-xl p-4 flex items-center gap-3">
@@ -247,7 +257,7 @@ export function AdminIntegrations() {
             <div className="text-2xl font-medium text-ink" style={{ fontFamily: 'var(--font-display)' }}>
               {degradedCount}
             </div>
-            <div className="text-xs text-ink-mute">Suy giảm</div>
+            <div className="text-xs text-ink-mute">{t('adminIntegrations.statusDegraded')}</div>
           </div>
         </div>
         <div className="bg-white border border-border rounded-xl p-4 flex items-center gap-3">
@@ -258,7 +268,7 @@ export function AdminIntegrations() {
             <div className="text-2xl font-medium text-ink" style={{ fontFamily: 'var(--font-display)' }}>
               {offlineCount}
             </div>
-            <div className="text-xs text-ink-mute">Offline</div>
+            <div className="text-xs text-ink-mute">{t('adminIntegrations.statusOffline')}</div>
           </div>
         </div>
       </div>
@@ -278,7 +288,7 @@ export function AdminIntegrations() {
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">Uptime</div>
+                    <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">{t('adminIntegrations.uptime')}</div>
                     <div
                       className="text-sm font-semibold text-ink"
                       style={{ fontFamily: 'var(--font-mono)' }}
@@ -287,7 +297,7 @@ export function AdminIntegrations() {
                     </div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">Latency</div>
+                    <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">{t('adminIntegrations.latency')}</div>
                     <div
                       className="text-sm font-semibold text-ink"
                       style={{ fontFamily: 'var(--font-mono)' }}
@@ -296,7 +306,7 @@ export function AdminIntegrations() {
                     </div>
                   </div>
                   <div>
-                    <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">Version</div>
+                    <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">{t('adminIntegrations.version')}</div>
                     <div
                       className="text-sm font-semibold text-ink"
                       style={{ fontFamily: 'var(--font-mono)' }}
@@ -333,7 +343,7 @@ export function AdminIntegrations() {
               style={{ fontFamily: 'var(--font-mono)' }}
             >
               {statusIcon(int.status)}
-              <span>Kiểm tra lần cuối: {int.lastCheck}</span>
+              <span>{t('adminIntegrations.lastCheck').replace('{date}', int.lastCheck)}</span>
             </div>
           </div>
         ))}
@@ -350,9 +360,9 @@ export function AdminIntegrations() {
               className="font-semibold text-ink"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              Facebook Messenger Chatbot
+              {t('adminIntegrations.fbTitle')}
             </h2>
-            <p className="text-xs text-ink-mute">Kết nối AI chatbot với Fanpage DHTC</p>
+            <p className="text-xs text-ink-mute">{t('adminIntegrations.fbSubtitle')}</p>
           </div>
           <div className="ml-auto flex flex-col items-end gap-1">
             <span
@@ -362,11 +372,11 @@ export function AdminIntegrations() {
                   : 'bg-amber-50 text-amber-600'
               }`}
             >
-              {webhookStatus?.page_token_configured ? '● Facebook OK' : '○ Chưa cấu hình Facebook'}
+              {webhookStatus?.page_token_configured ? t('adminIntegrations.fbOk') : t('adminIntegrations.fbNotConfigured')}
             </span>
             {webhookStatus?.ai_provider && (
               <span className="text-[11px] text-ink-mute px-2">
-                AI: {webhookStatus.ai_provider}
+                {t('adminIntegrations.aiLabel').replace('{provider}', webhookStatus.ai_provider)}
               </span>
             )}
           </div>
@@ -375,39 +385,42 @@ export function AdminIntegrations() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Setup steps */}
           <div>
-            <h3 className="text-sm font-bold text-ink mb-3">Hướng dẫn cài đặt</h3>
+            <h3 className="text-sm font-bold text-ink mb-3">{t('adminIntegrations.setupGuide')}</h3>
             <ol className="space-y-3 text-sm">
-              {SETUP_STEPS.map(({ step, title, desc }) => (
-                <li key={step} className="flex gap-3">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green text-white text-xs font-bold flex items-center justify-center">
-                    {step}
-                  </span>
-                  <div>
-                    <div className="font-semibold text-ink">{title}</div>
-                    <div className="text-ink-mute text-xs whitespace-pre-line mt-0.5">
-                      {typeof desc === 'function' ? desc(verifyToken) : desc}
+              {SETUP_STEP_KEYS.map(({ step, titleKey, descKey, needsToken }) => {
+                const desc = needsToken
+                  ? t(descKey).replace('{token}', verifyToken)
+                  : t(descKey)
+                return (
+                  <li key={step} className="flex gap-3">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-green text-white text-xs font-bold flex items-center justify-center">
+                      {step}
+                    </span>
+                    <div>
+                      <div className="font-semibold text-ink">{t(titleKey)}</div>
+                      <div className="text-ink-mute text-xs whitespace-pre-line mt-0.5">{desc}</div>
                     </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                )
+              })}
             </ol>
             <button
               onClick={handleSetupMessenger}
               disabled={!webhookStatus?.page_token_configured || isSettingUp}
               className="mt-4 w-full py-2.5 px-4 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {isSettingUp ? 'Đang cài đặt...' : 'Setup Messenger Profile'}
+              {isSettingUp ? t('adminIntegrations.setupBtnLoading') : t('adminIntegrations.setupBtn')}
             </button>
             {!webhookStatus?.page_token_configured && (
               <p className="text-xs text-amber-600 mt-2">
-                Cần cấu hình FACEBOOK_PAGE_ACCESS_TOKEN trước
+                {t('adminIntegrations.setupHint')}
               </p>
             )}
           </div>
 
           {/* Live test panel */}
           <div>
-            <h3 className="text-sm font-bold text-ink mb-3">Test Chatbot</h3>
+            <h3 className="text-sm font-bold text-ink mb-3">{t('adminIntegrations.testTitle')}</h3>
             <div className="border border-border rounded-xl overflow-hidden">
               {/* Chat messages */}
               <div className="h-48 overflow-y-auto p-3 space-y-2 bg-cream" ref={chatRef}>
@@ -430,7 +443,7 @@ export function AdminIntegrations() {
                 {isBotTyping && (
                   <div className="flex justify-start">
                     <div className="bg-white border border-border px-3 py-2 rounded-2xl rounded-bl-none text-ink-mute text-xs">
-                      Đang trả lời...
+                      {t('adminIntegrations.testTyping')}
                     </div>
                   </div>
                 )}
@@ -442,7 +455,7 @@ export function AdminIntegrations() {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendTest()}
-                  placeholder="Nhắn tin thử... (vd: tìm cà phê)"
+                  placeholder={t('adminIntegrations.testInputPlaceholder')}
                   className="flex-1 px-3 py-2.5 text-sm bg-white focus:outline-none"
                 />
                 <button
@@ -450,12 +463,12 @@ export function AdminIntegrations() {
                   disabled={!chatInput.trim() || isBotTyping}
                   className="px-4 py-2.5 bg-green text-white text-sm font-semibold hover:bg-green-soft transition-colors disabled:opacity-50"
                 >
-                  Gửi
+                  {t('adminIntegrations.testSend')}
                 </button>
               </div>
             </div>
             <p className="text-xs text-ink-mute mt-2">
-              Test trực tiếp chatbot AI, không cần Facebook credentials
+              {t('adminIntegrations.testHint')}
             </p>
           </div>
         </div>

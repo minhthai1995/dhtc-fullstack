@@ -3,6 +3,7 @@ import { KpiCard } from '@/components/ui/KpiCard'
 import { Badge } from '@/components/ui/Badge'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Link } from 'react-router-dom'
+import { useT } from '@/i18n/useT'
 
 function statusToBadge(status: string) {
   if (status === 'pending') return 'pending'
@@ -13,12 +14,14 @@ function statusToBadge(status: string) {
 }
 
 export function AdminDashboard() {
+  const { t, lang } = useT()
   const { data: dashboard, isLoading } = useAdminDashboardFull()
   const { data: integrations } = useIntegrations()
   const { data: revenueReport } = useRevenueReport()
   const { data: originData = [] } = useRevenueByOrigin()
 
-  // Build chart data from revenue report; fall back to empty array while loading
+  const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
+
   const chartData: { month: string; val: number; projected?: boolean }[] =
     revenueReport
       ? revenueReport.months.map((m, i) => ({
@@ -31,19 +34,18 @@ export function AdminDashboard() {
   const topMerchants = dashboard?.top_merchants ?? []
   const recentOrders = dashboard?.recent_orders ?? []
 
-  // Dynamic date/time label
   const now = new Date()
-  const dateLabel = now.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
-  const timeLabel = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+  const dateLabel = now.toLocaleDateString(localeStr, { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const timeLabel = now.toLocaleTimeString(localeStr, { hour: '2-digit', minute: '2-digit' })
 
-  // GMV growth delta
   const gmvPrev = dashboard?.gmv_prev_month ?? 0
   const gmvCurr = dashboard?.gmv_total ?? 0
   const gmvGrowth = gmvPrev > 0 ? ((gmvCurr - gmvPrev) / gmvPrev * 100).toFixed(1) : null
-  const gmvDelta = gmvGrowth !== null ? `${Number(gmvGrowth) >= 0 ? '+' : ''}${gmvGrowth}% so tháng trước` : 'Tháng đầu tiên'
+  const gmvDelta = gmvGrowth !== null
+    ? t('adminDashboard.gmvGrowthLabel').replace('{n}', `${Number(gmvGrowth) >= 0 ? '+' : ''}${gmvGrowth}`)
+    : t('adminDashboard.gmvFirstMonth')
   const gmvDeltaType: 'up' | 'down' = gmvGrowth !== null && Number(gmvGrowth) >= 0 ? 'up' : 'down'
 
-  // Region chart data from API
   const maxOriginRevenue = Math.max(...originData.map((o) => o.revenue), 1)
   const regionRows = originData.length > 0
     ? originData.slice(0, 5).map((o) => ({
@@ -56,14 +58,14 @@ export function AdminDashboard() {
   return (
     <div>
       <PageHeader
-        title="Dashboard tổng hợp"
-        subtitle={`Cập nhật lúc ${timeLabel} · Hôm nay ${dateLabel}`}
+        title={t('adminDashboard.title')}
+        subtitle={t('adminDashboard.subtitle').replace('{time}', timeLabel).replace('{date}', dateLabel)}
         actions={
           <Link
             to="/admin/reports"
             className="px-4 py-2 text-sm font-semibold text-green border border-green/30 rounded-xl hover:bg-green/5 transition-colors no-underline"
           >
-            Xem báo cáo →
+            {t('adminDashboard.viewReport')}
           </Link>
         }
       />
@@ -71,7 +73,7 @@ export function AdminDashboard() {
       {/* KPI grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <KpiCard
-          label="GMV tổng"
+          label={t('adminDashboard.kpiGmv')}
           value={
             isLoading
               ? '—'
@@ -81,21 +83,29 @@ export function AdminDashboard() {
           deltaType={gmvDeltaType}
         />
         <KpiCard
-          label="Tổng đơn hàng"
-          value={isLoading ? '—' : (dashboard?.total_orders ?? 0).toLocaleString()}
-          delta={dashboard?.orders_yesterday !== undefined ? `${dashboard.orders_yesterday} đơn hôm qua` : 'Đang tải...'}
+          label={t('adminDashboard.kpiOrders')}
+          value={isLoading ? '—' : (dashboard?.total_orders ?? 0).toLocaleString(localeStr)}
+          delta={
+            dashboard?.orders_yesterday !== undefined
+              ? t('adminDashboard.ordersYesterday').replace('{n}', String(dashboard.orders_yesterday))
+              : t('adminDashboard.loading')
+          }
           deltaType="up"
         />
         <KpiCard
-          label="Tiểu thương hoạt động"
+          label={t('adminDashboard.kpiMerchants')}
           value={isLoading ? '—' : `${dashboard?.total_merchants ?? 0}`}
-          delta={dashboard?.new_merchants_week !== undefined ? `${dashboard.new_merchants_week} mới tuần này` : '—'}
+          delta={
+            dashboard?.new_merchants_week !== undefined
+              ? t('adminDashboard.merchantsNew').replace('{n}', String(dashboard.new_merchants_week))
+              : '—'
+          }
           deltaType="up"
         />
         <KpiCard
-          label="Chờ phê duyệt"
+          label={t('adminDashboard.kpiPending')}
           value={isLoading ? '—' : (dashboard?.pending_approvals ?? 0)}
-          delta="Xử lý trước cuối ngày"
+          delta={t('adminDashboard.pendingProcess')}
           deltaType="warn"
         />
       </div>
@@ -106,10 +116,10 @@ export function AdminDashboard() {
         <div className="lg:col-span-2 bg-white border border-border rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-              Doanh thu theo tháng
+              {t('adminDashboard.revenueChart')}
             </h2>
             <Link to="/admin/reports" className="text-xs text-green font-medium hover:underline no-underline">
-              Xem báo cáo →
+              {t('adminDashboard.viewReport')}
             </Link>
           </div>
 
@@ -140,18 +150,18 @@ export function AdminDashboard() {
             </div>
           ) : (
             <div className="h-[140px] flex items-center justify-center text-ink-mute text-sm">
-              {isLoading ? 'Đang tải...' : 'Chưa có dữ liệu'}
+              {isLoading ? t('adminDashboard.loading') : t('adminDashboard.noData')}
             </div>
           )}
 
           <div className="flex gap-4 mt-2.5 text-[11px] text-ink-mute">
             <span>
               <span className="inline-block w-2.5 h-2.5 rounded-[2px] mr-1 align-middle" style={{ background: 'var(--color-green)' }} />
-              Thực tế
+              {t('adminDashboard.actual')}
             </span>
             <span>
               <span className="inline-block w-2.5 h-2.5 rounded-[2px] mr-1 align-middle bg-gold/45" />
-              Dự báo
+              {t('adminDashboard.projected')}
             </span>
           </div>
         </div>
@@ -160,9 +170,9 @@ export function AdminDashboard() {
         <div className="bg-white border border-border rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-              Hôm nay
+              {t('adminDashboard.today')}
             </h2>
-            <Badge variant="processing">Trực tiếp</Badge>
+            <Badge variant="processing">{t('adminDashboard.live')}</Badge>
           </div>
 
           <div className="space-y-3">
@@ -182,7 +192,7 @@ export function AdminDashboard() {
                 </div>
               ))
             ) : (
-              <div className="text-sm text-ink-mute text-center py-4">Chưa có dữ liệu vùng</div>
+              <div className="text-sm text-ink-mute text-center py-4">{t('adminDashboard.noRegion')}</div>
             )}
           </div>
 
@@ -190,23 +200,23 @@ export function AdminDashboard() {
           <div className="mt-4 pt-4 border-t border-border space-y-2">
             <div className="flex items-center justify-between mb-2">
               <div className="text-[11px] font-bold text-ink-mute uppercase tracking-wider">
-                Chờ phê duyệt
+                {t('adminDashboard.pendingApprovals')}
               </div>
               {(dashboard?.pending_approvals ?? 0) > 0 && (
                 <Link to="/admin/approvals" className="text-[10px] text-green font-semibold no-underline hover:underline">
-                  {dashboard?.pending_approvals} mục →
+                  {t('adminDashboard.pendingItems').replace('{n}', String(dashboard?.pending_approvals))}
                 </Link>
               )}
             </div>
             {(dashboard?.pending_approvals ?? 0) === 0 ? (
-              <div className="text-xs text-ink-mute">Không có mục nào chờ phê duyệt</div>
+              <div className="text-xs text-ink-mute">{t('adminDashboard.noPending')}</div>
             ) : (
               <Link
                 to="/admin/approvals"
                 className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl no-underline hover:bg-amber-100 transition-colors"
               >
                 <span className="text-amber-600 font-bold text-sm">{dashboard?.pending_approvals}</span>
-                <span className="text-xs text-amber-700 font-medium">sản phẩm chờ phê duyệt</span>
+                <span className="text-xs text-amber-700 font-medium">{t('adminDashboard.pendingLabel')}</span>
               </Link>
             )}
           </div>
@@ -219,16 +229,16 @@ export function AdminDashboard() {
         <div className="bg-white border border-border rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-              Top tiểu thương
+              {t('adminDashboard.topMerchants')}
             </h2>
             <Link to="/admin/merchants" className="text-xs text-green font-medium no-underline hover:underline">
-              Xem tất cả →
+              {t('adminDashboard.viewAll')}
             </Link>
           </div>
           <div className="space-y-2">
             {topMerchants.length === 0 ? (
               <div className="text-sm text-ink-mute text-center py-4">
-                {isLoading ? 'Đang tải...' : 'Chưa có dữ liệu'}
+                {isLoading ? t('adminDashboard.loading') : t('adminDashboard.noData')}
               </div>
             ) : (
               topMerchants.map((m, idx) => (
@@ -245,7 +255,9 @@ export function AdminDashboard() {
                   </span>
                   <div className="flex-1 min-w-0">
                     <strong className="block text-[12.5px] font-semibold truncate">{m.name}</strong>
-                    <span className="text-[11px] text-ink-mute">{m.orders} đơn</span>
+                    <span className="text-[11px] text-ink-mute">
+                      {t('adminDashboard.ordersCount').replace('{n}', String(m.orders))}
+                    </span>
                   </div>
                   <div className="text-right">
                     <strong
@@ -265,16 +277,16 @@ export function AdminDashboard() {
         <div className="bg-white border border-border rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-              Đơn hàng gần đây
+              {t('adminDashboard.recentOrders')}
             </h2>
             <Link to="/admin/orders" className="text-xs text-green font-medium no-underline hover:underline">
-              Xem tất cả →
+              {t('adminDashboard.viewAll')}
             </Link>
           </div>
           <div className="space-y-2">
             {recentOrders.length === 0 ? (
               <div className="text-sm text-ink-mute text-center py-4">
-                {isLoading ? 'Đang tải...' : 'Chưa có đơn hàng'}
+                {isLoading ? t('adminDashboard.loading') : t('adminDashboard.noOrders')}
               </div>
             ) : (
               recentOrders.map((order) => (
@@ -304,10 +316,10 @@ export function AdminDashboard() {
         <div className="bg-white border border-border rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
-              Tích hợp API
+              {t('adminDashboard.integrationsTitle')}
             </h2>
             <Link to="/admin/integrations" className="text-xs text-green font-medium no-underline hover:underline">
-              Chi tiết →
+              {t('adminDashboard.viewDetails')}
             </Link>
           </div>
           {integrations ? (

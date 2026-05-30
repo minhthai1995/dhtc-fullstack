@@ -12,6 +12,7 @@ import type {
   CustomerRow, DemographicBucket, IntentBucket, TrendPoint, ConversationSummary,
   BehaviorBucket, TopPage, BehaviorFunnelStage, SessionSummary,
 } from "@/features/admin/admin.api"
+import { useT } from "@/i18n/useT"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmtMoney = (n: number) => {
@@ -20,44 +21,55 @@ const fmtMoney = (n: number) => {
   return `₫${n.toFixed(0)}`
 }
 
-const fmtDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
+const fmtDate = (iso: string, localeStr: string) =>
+  new Date(iso).toLocaleDateString(localeStr, { day: "2-digit", month: "2-digit", year: "numeric" })
 
-const fmtTime = (iso: string) =>
-  new Date(iso).toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+const fmtTime = (iso: string, localeStr: string) =>
+  new Date(iso).toLocaleString(localeStr, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
 
-const fmtRelative = (iso: string | null) => {
+const fmtRelative = (
+  iso: string | null,
+  t: (k: string) => string,
+  localeStr: string,
+) => {
   if (!iso) return "—"
   const diff = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diff / 60_000)
-  if (mins < 1) return "vừa xong"
-  if (mins < 60) return `${mins} phút trước`
+  if (mins < 1) return t("adminCRM.timeJustNow")
+  if (mins < 60) return t("adminCRM.timeMinAgo").replace("{n}", String(mins))
   const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours} giờ trước`
+  if (hours < 24) return t("adminCRM.timeHourAgo").replace("{n}", String(hours))
   const days = Math.floor(hours / 24)
-  if (days < 30) return `${days} ngày trước`
-  return fmtDate(iso)
+  if (days < 30) return t("adminCRM.timeDayAgo").replace("{n}", String(days))
+  return fmtDate(iso, localeStr)
 }
 
 const display: React.CSSProperties = { fontFamily: "var(--font-display)" }
 const mono: React.CSSProperties = { fontFamily: "var(--font-mono)" }
 
-const SEGMENT_OPTS = [
-  { key: "all",       label: "Tất cả" },
-  { key: "new",       label: "Khách mới" },
-  { key: "returning", label: "Quay lại" },
-  { key: "at_risk",   label: "Nguy cơ" },
-  { key: "no_order",  label: "Chưa mua" },
+const SEGMENT_OPT_KEYS: { key: string; labelKey: string }[] = [
+  { key: "all",       labelKey: "adminCRM.segAll" },
+  { key: "new",       labelKey: "adminCRM.segNew" },
+  { key: "returning", labelKey: "adminCRM.segReturning" },
+  { key: "at_risk",   labelKey: "adminCRM.segAtRisk" },
+  { key: "no_order",  labelKey: "adminCRM.segNoOrder" },
 ]
 
-function segBadge(seg: string): { variant: "active"|"processing"|"pending"|"default"; label: string } {
-  const map: Record<string, "active"|"processing"|"pending"|"default"> = {
-    new: "active", returning: "processing", at_risk: "pending", no_order: "default",
+const SEG_BADGE_VARIANT: Record<string, "active"|"processing"|"pending"|"default"> = {
+  new: "active", returning: "processing", at_risk: "pending", no_order: "default",
+}
+const SEG_BADGE_KEY: Record<string, string> = {
+  new: "adminCRM.segBadgeNew",
+  returning: "adminCRM.segBadgeReturning",
+  at_risk: "adminCRM.segBadgeAtRisk",
+  no_order: "adminCRM.segBadgeNoOrder",
+}
+
+function segBadgeMeta(seg: string): { variant: "active"|"processing"|"pending"|"default"; labelKey: string } {
+  return {
+    variant: SEG_BADGE_VARIANT[seg] ?? "default",
+    labelKey: SEG_BADGE_KEY[seg] ?? "",
   }
-  const labels: Record<string, string> = {
-    new: "Mới", returning: "Quay lại", at_risk: "Nguy cơ", no_order: "Chưa mua",
-  }
-  return { variant: map[seg] ?? "default", label: labels[seg] ?? seg }
 }
 
 // ── Reusable atoms ────────────────────────────────────────────────────────────
@@ -82,27 +94,31 @@ function ThinBar({ label, pct, value }: { label: string; pct: number; value: str
 }
 
 function SourceBadge({ variant }: { variant: "messenger" | "web" | "lead" }) {
+  const { t } = useT()
   const map = {
-    messenger: { label: "Messenger", bg: "bg-green/10",       fg: "text-green" },
-    web:       { label: "Web",       bg: "bg-cream-dark",     fg: "text-ink-soft" },
-    lead:      { label: "Lead",      bg: "bg-cream-dark/60",  fg: "text-ink-mute" },
+    messenger: { labelKey: "adminCRM.sourceMessenger", bg: "bg-green/10",       fg: "text-green" },
+    web:       { labelKey: "adminCRM.sourceWeb",       bg: "bg-cream-dark",     fg: "text-ink-soft" },
+    lead:      { labelKey: "adminCRM.sourceLead",      bg: "bg-cream-dark/60",  fg: "text-ink-mute" },
   }
   const s = map[variant]
   return (
     <span className={`inline-flex items-center text-[10px] font-semibold uppercase tracking-[.06em] px-2 py-0.5 rounded-full ${s.bg} ${s.fg}`}>
-      {s.label}
+      {t(s.labelKey)}
     </span>
   )
 }
 
 function CountryFlag({ code }: { code: "VN" | "OTHER" | null }) {
-  if (code === "VN") return <span className="inline-flex items-center gap-1 text-[12px]"><span aria-hidden>🇻🇳</span><span className="text-ink-soft">VN</span></span>
-  if (code === "OTHER") return <span className="inline-flex items-center gap-1 text-[12px]"><span aria-hidden>🌍</span><span className="text-ink-soft">Khác</span></span>
+  const { t } = useT()
+  if (code === "VN") return <span className="inline-flex items-center gap-1 text-[12px]"><span aria-hidden>🇻🇳</span><span className="text-ink-soft">{t("adminCRM.countryVN")}</span></span>
+  if (code === "OTHER") return <span className="inline-flex items-center gap-1 text-[12px]"><span aria-hidden>🌍</span><span className="text-ink-soft">{t("adminCRM.countryOther")}</span></span>
   return <span className="text-ink-mute text-[12px]">—</span>
 }
 
 function MiniBarChart({ data, highlightLast = true }: { data: TrendPoint[]; highlightLast?: boolean }) {
-  if (data.length === 0) return <div className="text-[11px] text-ink-mute italic">Chưa có dữ liệu</div>
+  const { t, lang } = useT()
+  const localeStr = lang === "vi" ? "vi-VN" : "en-US"
+  if (data.length === 0) return <div className="text-[11px] text-ink-mute italic">{t("adminCRM.convNoTrendData")}</div>
   const max = Math.max(...data.map((d) => d.count), 1)
   return (
     <div className="flex items-end gap-1.5 h-20">
@@ -118,7 +134,7 @@ function MiniBarChart({ data, highlightLast = true }: { data: TrendPoint[]; high
               />
             </div>
             <div className="text-[9px] text-ink-mute" style={mono}>
-              {new Date(d.date).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" })}
+              {new Date(d.date).toLocaleDateString(localeStr, { day: "2-digit", month: "2-digit" })}
             </div>
             <div className="text-[10px] text-ink-soft font-semibold" style={mono}>{d.count}</div>
           </div>
@@ -169,6 +185,7 @@ const INTENT_ICON: Record<string, string> = {
 
 // ── Tab: Tổng quan ────────────────────────────────────────────────────────────
 function OverviewTab() {
+  const { t } = useT()
   const { data: stats, isLoading } = useCRMStats()
   const { data: funnel = [] } = useCRMFunnel()
   const { data: segments } = useCRMSegments()
@@ -177,10 +194,10 @@ function OverviewTab() {
 
   const segRows = segments
     ? [
-        { label: "Khách mới",  count: segments.new_customers },
-        { label: "Quay lại",   count: segments.returning     },
-        { label: "Nguy cơ",    count: segments.at_risk       },
-        { label: "Chưa mua",   count: segments.no_order      },
+        { labelKey: "adminCRM.segNew",       count: segments.new_customers },
+        { labelKey: "adminCRM.segReturning", count: segments.returning     },
+        { labelKey: "adminCRM.segAtRisk",    count: segments.at_risk       },
+        { labelKey: "adminCRM.segNoOrder",   count: segments.no_order      },
       ]
     : []
   const maxSeg = Math.max(...segRows.map((s) => s.count), 1)
@@ -189,31 +206,31 @@ function OverviewTab() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          label="Liên hệ Messenger"
+          label={t("adminCRM.kpiMessengerContacts")}
           value={isLoading ? "—" : (stats?.messenger_contacts ?? 0)}
-          delta="Unique users"
+          delta={t("adminCRM.kpiDeltaUniqueUsers")}
           deltaType="up"
         />
         <KpiCard
-          label="Khách đăng ký"
+          label={t("adminCRM.kpiRegistered")}
           value={isLoading ? "—" : (stats?.total_customers ?? 0)}
-          delta={stats ? `+${stats.new_this_month} tháng này` : "—"}
+          delta={stats ? t("adminCRM.kpiDeltaNewMonth").replace("{n}", String(stats.new_this_month)) : "—"}
           deltaType="up"
         />
         <KpiCard
-          label="Tỉ lệ quay lại"
+          label={t("adminCRM.kpiReturnRate")}
           value={
             stats && stats.buyers > 0
               ? `${((stats.repeat_buyers / stats.buyers) * 100).toFixed(0)}%`
               : "—"
           }
-          delta={`${stats?.repeat_buyers ?? 0} khách 2+ đơn`}
+          delta={t("adminCRM.kpiDeltaRepeatBuyers").replace("{n}", String(stats?.repeat_buyers ?? 0))}
           deltaType="up"
         />
         <KpiCard
-          label="AOV đơn đã giao"
+          label={t("adminCRM.kpiAOV")}
           value={stats ? fmtMoney(stats.avg_order_value) : "—"}
-          delta={`${stats?.buyers ?? 0} khách đã mua`}
+          delta={t("adminCRM.kpiDeltaBuyers").replace("{n}", String(stats?.buyers ?? 0))}
           deltaType="up"
         />
       </div>
@@ -221,7 +238,7 @@ function OverviewTab() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="bg-white border border-border rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-ink text-sm" style={display}>Phễu khách hàng</h2>
+            <h2 className="font-semibold text-ink text-sm" style={display}>{t("adminCRM.funnelTitle")}</h2>
           </div>
           <div className="space-y-2.5">
             {funnel.map((stage, i) => {
@@ -243,24 +260,24 @@ function OverviewTab() {
                 </div>
               )
             })}
-            {funnel.length === 0 && <EmptyState label="Chưa có dữ liệu phễu" />}
+            {funnel.length === 0 && <EmptyState label={t("adminCRM.emptyFunnel")} />}
           </div>
         </div>
 
         <div className="bg-white border border-border rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold text-ink text-sm" style={display}>Phân khúc khách hàng</h2>
+            <h2 className="font-semibold text-ink text-sm" style={display}>{t("adminCRM.segmentsTitle")}</h2>
           </div>
           <div className="space-y-3">
             {segRows.map((s) => (
               <ThinBar
-                key={s.label}
-                label={s.label}
+                key={s.labelKey}
+                label={t(s.labelKey)}
                 pct={(s.count / maxSeg) * 100}
                 value={s.count.toLocaleString()}
               />
             ))}
-            {segRows.length === 0 && <EmptyState label="Chưa có dữ liệu phân khúc" />}
+            {segRows.length === 0 && <EmptyState label={t("adminCRM.emptySegments")} />}
           </div>
         </div>
       </div>
@@ -272,12 +289,13 @@ function OverviewTab() {
 function DemographicsCard({ title, items, emptyHint }: {
   title: string; items: DemographicBucket[]; emptyHint?: string
 }) {
+  const { t } = useT()
   const total = items.reduce((sum, it) => sum + it.count, 0)
   return (
     <div className="bg-white border border-border rounded-2xl p-5">
       <SectionLabel>{title}</SectionLabel>
       {items.length === 0 ? (
-        <EmptyState label="Chưa có dữ liệu tracking" hint={emptyHint} />
+        <EmptyState label={t("adminCRM.demoEmptyTracking")} hint={emptyHint} />
       ) : (
         <div className="space-y-3">
           {items.map((it) => (
@@ -295,14 +313,16 @@ function DemographicsCard({ title, items, emptyHint }: {
 }
 
 function CustomersTab() {
+  const { t, lang } = useT()
+  const localeStr = lang === "vi" ? "vi-VN" : "en-US"
   const [segment, setSegment] = useState("all")
   const [q, setQ] = useState("")
   const [debouncedQ, setDebouncedQ] = useState("")
   const [selectedId, setSelectedId] = useState<number | null>(null)
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedQ(q), 300)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setDebouncedQ(q), 300)
+    return () => clearTimeout(timer)
   }, [q])
 
   const params = {
@@ -317,12 +337,12 @@ function CustomersTab() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <DemographicsCard title="Theo nguồn" items={demographics?.by_source ?? []} />
-        <DemographicsCard title="Theo quốc gia" items={demographics?.by_country ?? []} />
+        <DemographicsCard title={t("adminCRM.demoBySource")} items={demographics?.by_source ?? []} />
+        <DemographicsCard title={t("adminCRM.demoByCountry")} items={demographics?.by_country ?? []} />
         <DemographicsCard
-          title="Theo thiết bị"
+          title={t("adminCRM.demoByDevice")}
           items={demographics?.by_device ?? []}
-          emptyHint="Cần page tracking (P2)"
+          emptyHint={t("adminCRM.demoHintDevice")}
         />
       </div>
 
@@ -336,12 +356,12 @@ function CustomersTab() {
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Tìm email, tên…"
+                placeholder={t("adminCRM.customerSearchPlaceholder")}
                 className="flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-mute"
               />
             </div>
             <div className="flex gap-1.5 flex-wrap">
-              {SEGMENT_OPTS.map((s) => (
+              {SEGMENT_OPT_KEYS.map((s) => (
                 <button
                   key={s.key}
                   onClick={() => setSegment(s.key)}
@@ -351,7 +371,7 @@ function CustomersTab() {
                       : "bg-transparent text-ink-soft border-border hover:border-green/40 hover:text-ink"
                   }`}
                 >
-                  {s.label}
+                  {t(s.labelKey)}
                 </button>
               ))}
             </div>
@@ -359,25 +379,25 @@ function CustomersTab() {
 
           <div className="flex-1 overflow-auto">
             {isLoading ? (
-              <div className="p-8 text-center text-ink-mute text-sm">Đang tải...</div>
+              <div className="p-8 text-center text-ink-mute text-sm">{t("adminCRM.loading")}</div>
             ) : customers.length === 0 ? (
-              <div className="p-8 text-center text-ink-mute text-sm">Không có khách hàng</div>
+              <div className="p-8 text-center text-ink-mute text-sm">{t("adminCRM.emptyCustomers")}</div>
             ) : (
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-cream-dark/80 backdrop-blur border-b border-border">
                   <tr>
-                    <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute">Khách hàng</th>
-                    <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute hidden sm:table-cell">Nguồn</th>
-                    <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute hidden md:table-cell">Quốc gia</th>
-                    <th className="text-right px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute">Đơn</th>
-                    <th className="text-right px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute hidden md:table-cell">Chi tiêu</th>
-                    <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute hidden lg:table-cell">Lần cuối</th>
-                    <th className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute">Phân khúc</th>
+                    <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute">{t("adminCRM.thCustomer")}</th>
+                    <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute hidden sm:table-cell">{t("adminCRM.thSource")}</th>
+                    <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute hidden md:table-cell">{t("adminCRM.thCountry")}</th>
+                    <th className="text-right px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute">{t("adminCRM.thOrders")}</th>
+                    <th className="text-right px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute hidden md:table-cell">{t("adminCRM.thSpend")}</th>
+                    <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute hidden lg:table-cell">{t("adminCRM.thLastSeen")}</th>
+                    <th className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute">{t("adminCRM.thSegment")}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {customers.map((c: CustomerRow) => {
-                    const { variant, label } = segBadge(c.segment)
+                    const { variant, labelKey } = segBadgeMeta(c.segment)
                     const initials = (c.full_name || c.email).slice(0, 1).toUpperCase()
                     const sourceVariant: "messenger" | "web" | "lead" =
                       c.order_count > 0 ? "web" : "lead"
@@ -420,10 +440,10 @@ function CustomersTab() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-[11px] text-ink-mute hidden lg:table-cell">
-                          {fmtRelative(c.last_order_date)}
+                          {fmtRelative(c.last_order_date, t, localeStr)}
                         </td>
                         <td className="px-4 py-3">
-                          <Badge variant={variant}>{label}</Badge>
+                          <Badge variant={variant}>{labelKey ? t(labelKey) : c.segment}</Badge>
                         </td>
                       </tr>
                     )
@@ -434,83 +454,86 @@ function CustomersTab() {
           </div>
 
           <div className="px-4 py-2 border-t border-border">
-            <span className="text-[11px] text-ink-mute" style={mono}>{customers.length} khách hàng</span>
+            <span className="text-[11px] text-ink-mute" style={mono}>{t("adminCRM.customerCount").replace("{n}", String(customers.length))}</span>
           </div>
         </div>
 
-        {selectedId && detail && (
-          <div className="w-full lg:w-72 flex-shrink-0 bg-white border border-border rounded-2xl overflow-y-auto">
-            <div className="p-5 border-b border-border">
-              <div className="flex items-start justify-between gap-2 mb-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold text-white flex-shrink-0"
-                    style={{ background: "var(--color-green)" }}
-                  >
-                    {(detail.full_name || detail.email).slice(0, 1).toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-[13px] text-ink leading-tight">{detail.full_name || "Khách hàng"}</div>
-                    <div className="text-[10.5px] text-ink-mute mt-0.5">{detail.email}</div>
-                    {detail.phone && <div className="text-[10.5px] text-ink-mute" style={mono}>{detail.phone}</div>}
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSelectedId(null)}
-                  className="text-ink-mute hover:text-ink text-lg leading-none flex-shrink-0 mt-0.5"
-                >×</button>
-              </div>
-              <Badge variant={segBadge(detail.segment).variant}>{segBadge(detail.segment).label}</Badge>
-            </div>
-
-            <div className="p-4 border-b border-border">
-              <SectionLabel>Tổng quan</SectionLabel>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-cream rounded-xl p-3 text-center">
-                  <div className="text-[22px] font-semibold text-ink leading-tight" style={display}>{detail.order_count}</div>
-                  <div className="text-[10px] text-ink-mute mt-0.5">Tổng đơn</div>
-                </div>
-                <div className="bg-cream rounded-xl p-3 text-center">
-                  <div className="text-[18px] font-semibold text-green leading-tight" style={display}>{fmtMoney(detail.total_spent)}</div>
-                  <div className="text-[10px] text-ink-mute mt-0.5">Chi tiêu</div>
-                </div>
-              </div>
-              <div className="mt-2 bg-cream rounded-xl p-2.5 text-center">
-                <div className="text-[10px] text-ink-mute">Ngày đăng ký</div>
-                <div className="text-[12px] font-medium text-ink mt-0.5">{fmtDate(detail.created_at)}</div>
-              </div>
-            </div>
-
-            <div className="p-4">
-              <SectionLabel>Lịch sử đơn hàng</SectionLabel>
-              {detail.orders.length === 0 ? (
-                <p className="text-[12px] text-ink-mute italic">Chưa có đơn hàng</p>
-              ) : (
-                <div className="space-y-2.5">
-                  {detail.orders.map((o) => (
-                    <div key={o.id} className="flex items-center justify-between py-2 border-b border-border/60 last:border-0">
-                      <div>
-                        <div className="text-[12px] font-semibold text-ink" style={mono}>#{o.id}</div>
-                        <div className="text-[10.5px] text-ink-mute">{fmtDate(o.created_at)}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-[13px] text-green font-medium mb-0.5" style={display}>{fmtMoney(o.total_amount)}</div>
-                        <Badge
-                          variant={
-                            o.status === "delivered" ? "delivered"
-                            : o.status === "cancelled" ? "cancelled"
-                            : o.status === "shipped" ? "shipped"
-                            : "pending"
-                          }
-                        >{o.status}</Badge>
-                      </div>
+        {selectedId && detail && (() => {
+          const meta = segBadgeMeta(detail.segment)
+          return (
+            <div className="w-full lg:w-72 flex-shrink-0 bg-white border border-border rounded-2xl overflow-y-auto">
+              <div className="p-5 border-b border-border">
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-bold text-white flex-shrink-0"
+                      style={{ background: "var(--color-green)" }}
+                    >
+                      {(detail.full_name || detail.email).slice(0, 1).toUpperCase()}
                     </div>
-                  ))}
+                    <div>
+                      <div className="font-semibold text-[13px] text-ink leading-tight">{detail.full_name || t("adminCRM.detailFallbackName")}</div>
+                      <div className="text-[10.5px] text-ink-mute mt-0.5">{detail.email}</div>
+                      {detail.phone && <div className="text-[10.5px] text-ink-mute" style={mono}>{detail.phone}</div>}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedId(null)}
+                    className="text-ink-mute hover:text-ink text-lg leading-none flex-shrink-0 mt-0.5"
+                  >×</button>
                 </div>
-              )}
+                <Badge variant={meta.variant}>{meta.labelKey ? t(meta.labelKey) : detail.segment}</Badge>
+              </div>
+
+              <div className="p-4 border-b border-border">
+                <SectionLabel>{t("adminCRM.detailOverview")}</SectionLabel>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-cream rounded-xl p-3 text-center">
+                    <div className="text-[22px] font-semibold text-ink leading-tight" style={display}>{detail.order_count}</div>
+                    <div className="text-[10px] text-ink-mute mt-0.5">{t("adminCRM.detailTotalOrders")}</div>
+                  </div>
+                  <div className="bg-cream rounded-xl p-3 text-center">
+                    <div className="text-[18px] font-semibold text-green leading-tight" style={display}>{fmtMoney(detail.total_spent)}</div>
+                    <div className="text-[10px] text-ink-mute mt-0.5">{t("adminCRM.detailSpend")}</div>
+                  </div>
+                </div>
+                <div className="mt-2 bg-cream rounded-xl p-2.5 text-center">
+                  <div className="text-[10px] text-ink-mute">{t("adminCRM.detailRegisteredDate")}</div>
+                  <div className="text-[12px] font-medium text-ink mt-0.5">{fmtDate(detail.created_at, localeStr)}</div>
+                </div>
+              </div>
+
+              <div className="p-4">
+                <SectionLabel>{t("adminCRM.detailOrderHistory")}</SectionLabel>
+                {detail.orders.length === 0 ? (
+                  <p className="text-[12px] text-ink-mute italic">{t("adminCRM.detailNoOrders")}</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {detail.orders.map((o) => (
+                      <div key={o.id} className="flex items-center justify-between py-2 border-b border-border/60 last:border-0">
+                        <div>
+                          <div className="text-[12px] font-semibold text-ink" style={mono}>#{o.id}</div>
+                          <div className="text-[10.5px] text-ink-mute">{fmtDate(o.created_at, localeStr)}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[13px] text-green font-medium mb-0.5" style={display}>{fmtMoney(o.total_amount)}</div>
+                          <Badge
+                            variant={
+                              o.status === "delivered" ? "delivered"
+                              : o.status === "cancelled" ? "cancelled"
+                              : o.status === "shipped" ? "shipped"
+                              : "pending"
+                            }
+                          >{o.status}</Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        )}
+          )
+        })()}
       </div>
     </div>
   )
@@ -518,6 +541,8 @@ function CustomersTab() {
 
 // ── Tab: Hội thoại ────────────────────────────────────────────────────────────
 function ConversationsTab() {
+  const { t, lang } = useT()
+  const localeStr = lang === "vi" ? "vi-VN" : "en-US"
   const [openSession, setOpenSession] = useState<string | null>(null)
   const { data: overview } = useCRMConversationOverview()
   const { data: conversations = [], isLoading } = useCRMConversations()
@@ -530,38 +555,38 @@ function ConversationsTab() {
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard
-          label="Hội thoại hôm nay"
+          label={t("adminCRM.convKpiToday")}
           value={overview ? overview.stats.total_today : "—"}
-          delta="unique users"
+          delta={t("adminCRM.convKpiDeltaUniqueUsers")}
           deltaType="up"
         />
         <KpiCard
-          label="Tin nhắn hôm nay"
+          label={t("adminCRM.convKpiMessagesToday")}
           value={overview ? overview.stats.total_messages_today : "—"}
-          delta="inbound + outbound"
+          delta={t("adminCRM.convKpiDeltaInOut")}
           deltaType="up"
         />
         <KpiCard
-          label="Thời gian phản hồi"
+          label={t("adminCRM.convKpiResponseTime")}
           value="—"
-          delta="Chưa đo được"
+          delta={t("adminCRM.convKpiNotMeasured")}
           deltaType="up"
         />
         <KpiCard
-          label="Tỉ lệ chuyển đổi"
+          label={t("adminCRM.convKpiConversion")}
           value="—"
-          delta="Chưa đo được"
+          delta={t("adminCRM.convKpiNotMeasured")}
           deltaType="up"
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="bg-white border border-border rounded-2xl p-5">
-          <SectionLabel>Phân loại ý định (30 ngày)</SectionLabel>
+          <SectionLabel>{t("adminCRM.convIntentTitle")}</SectionLabel>
           {!overview ? (
-            <EmptyState label="Đang tải..." />
+            <EmptyState label={t("adminCRM.loading")} />
           ) : overview.intent_breakdown.every((i) => i.count === 0) ? (
-            <EmptyState label="Chưa có tin nhắn để phân loại" />
+            <EmptyState label={t("adminCRM.convNoMessages")} />
           ) : (
             <div className="space-y-3">
               {overview.intent_breakdown.map((it: IntentBucket) => (
@@ -579,20 +604,20 @@ function ConversationsTab() {
         </div>
 
         <div className="bg-white border border-border rounded-2xl p-5">
-          <SectionLabel>Tin nhắn 7 ngày qua</SectionLabel>
+          <SectionLabel>{t("adminCRM.convTrendTitle")}</SectionLabel>
           {overview ? (
             <MiniBarChart data={overview.trend_7d} highlightLast />
           ) : (
-            <EmptyState label="Đang tải..." />
+            <EmptyState label={t("adminCRM.loading")} />
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="bg-white border border-border rounded-2xl p-5">
-          <SectionLabel>Phễu hội thoại</SectionLabel>
+          <SectionLabel>{t("adminCRM.convFunnelTitle")}</SectionLabel>
           {funnel.length === 0 ? (
-            <EmptyState label="Chưa có dữ liệu" />
+            <EmptyState label={t("adminCRM.convNoTrendData")} />
           ) : (
             <div className="space-y-2.5">
               {(() => {
@@ -621,35 +646,35 @@ function ConversationsTab() {
         </div>
 
         <div className="bg-white border border-border rounded-2xl p-5">
-          <SectionLabel>Phân kênh</SectionLabel>
+          <SectionLabel>{t("adminCRM.convChannelTitle")}</SectionLabel>
           <ThinBar
-            label="Messenger"
+            label={t("adminCRM.convChannelMessenger")}
             pct={100}
             value={`${channelTotal === 1 && conversations.length === 0 ? 0 : conversations.length}`}
           />
-          <p className="text-[10.5px] text-ink-mute italic mt-3">Web chat chưa kích hoạt</p>
+          <p className="text-[10.5px] text-ink-mute italic mt-3">{t("adminCRM.convChannelHint")}</p>
         </div>
       </div>
 
       <div className="bg-white border border-border rounded-2xl overflow-hidden">
         <div className="px-5 py-3.5 border-b border-border flex items-center justify-between">
-          <h2 className="font-semibold text-ink text-sm" style={display}>Hội thoại gần đây</h2>
-          <span className="text-[11px] text-ink-mute" style={mono}>{conversations.length} cuộc</span>
+          <h2 className="font-semibold text-ink text-sm" style={display}>{t("adminCRM.convRecentTitle")}</h2>
+          <span className="text-[11px] text-ink-mute" style={mono}>{t("adminCRM.convCountUnit").replace("{n}", String(conversations.length))}</span>
         </div>
         {isLoading ? (
-          <div className="p-8 text-center text-ink-mute text-sm">Đang tải...</div>
+          <div className="p-8 text-center text-ink-mute text-sm">{t("adminCRM.loading")}</div>
         ) : conversations.length === 0 ? (
-          <EmptyState label="Chưa có hội thoại nào" hint="Tin nhắn Messenger sẽ xuất hiện ở đây" />
+          <EmptyState label={t("adminCRM.convEmpty")} hint={t("adminCRM.convEmptyHint")} />
         ) : (
           <div className="overflow-auto">
             <table className="w-full text-sm">
               <thead className="bg-cream-dark/80 border-b border-border">
                 <tr>
-                  <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute">Khách</th>
-                  <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute hidden sm:table-cell">Kênh</th>
-                  <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute">Tin cuối</th>
-                  <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute hidden md:table-cell">Thời gian</th>
-                  <th className="text-right px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute">Tin nhắn</th>
+                  <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute">{t("adminCRM.convThCustomer")}</th>
+                  <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute hidden sm:table-cell">{t("adminCRM.convThChannel")}</th>
+                  <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute">{t("adminCRM.convThLastMessage")}</th>
+                  <th className="text-left px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute hidden md:table-cell">{t("adminCRM.convThTime")}</th>
+                  <th className="text-right px-4 py-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-ink-mute">{t("adminCRM.convThMessages")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -672,7 +697,7 @@ function ConversationsTab() {
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell"><SourceBadge variant="messenger" /></td>
                     <td className="px-4 py-3 text-[12px] text-ink-soft truncate max-w-[280px]">{c.last_message || "—"}</td>
-                    <td className="px-4 py-3 text-[11px] text-ink-mute hidden md:table-cell" style={mono}>{fmtTime(c.last_activity)}</td>
+                    <td className="px-4 py-3 text-[11px] text-ink-mute hidden md:table-cell" style={mono}>{fmtTime(c.last_activity, localeStr)}</td>
                     <td className="px-4 py-3 text-right text-[12px] font-semibold text-ink" style={mono}>{c.message_count}</td>
                   </tr>
                 ))}
@@ -700,6 +725,8 @@ function ConversationDetailDrawer({ sessionId, conversations, onSelect, onClose 
   onSelect: (sid: string) => void
   onClose: () => void
 }) {
+  const { t, lang } = useT()
+  const localeStr = lang === "vi" ? "vi-VN" : "en-US"
   const { data: messages = [], isLoading: loadingMsgs } = useCRMConversationMessages(sessionId)
   const { data: profile } = useCRMConversationProfile(sessionId)
   const selected = conversations.find((c) => c.session_id === sessionId)
@@ -713,7 +740,7 @@ function ConversationDetailDrawer({ sessionId, conversations, onSelect, onClose 
         {/* Left — inbox */}
         <div className="w-[270px] flex-shrink-0 bg-white border-r border-border flex flex-col hidden md:flex">
           <div className="px-4 py-3.5 border-b border-border flex items-center justify-between">
-            <span className="text-[12.5px] font-semibold text-ink" style={display}>Inbox</span>
+            <span className="text-[12.5px] font-semibold text-ink" style={display}>{t("adminCRM.drawerInbox")}</span>
             <span className="text-[10.5px] text-ink-mute" style={mono}>{conversations.length}</span>
           </div>
           <div className="flex-1 overflow-y-auto">
@@ -735,7 +762,7 @@ function ConversationDetailDrawer({ sessionId, conversations, onSelect, onClose 
                   <div className="flex items-center justify-between gap-1 mb-0.5">
                     <span className="text-[12px] font-semibold text-ink truncate">…{c.fb_user_id.slice(-8)}</span>
                     <span className="text-[9.5px] text-ink-mute whitespace-nowrap flex-shrink-0" style={mono}>
-                      {fmtTime(c.last_activity)}
+                      {fmtTime(c.last_activity, localeStr)}
                     </span>
                   </div>
                   <p className="text-[11px] text-ink-mute truncate">{c.last_message || "—"}</p>
@@ -749,16 +776,16 @@ function ConversationDetailDrawer({ sessionId, conversations, onSelect, onClose 
         <div className="flex-1 flex flex-col min-w-0">
           <div className="px-5 py-3.5 border-b border-border bg-white flex items-center justify-between">
             <div className="min-w-0">
-              <div className="text-[12.5px] font-semibold text-ink truncate">User {selected?.fb_user_id ?? sessionId}</div>
-              <div className="text-[10.5px] text-ink-mute truncate" style={mono}>Session: {sessionId}</div>
+              <div className="text-[12.5px] font-semibold text-ink truncate">{t("adminCRM.drawerUserPrefix").replace("{id}", selected?.fb_user_id ?? sessionId)}</div>
+              <div className="text-[10.5px] text-ink-mute truncate" style={mono}>{t("adminCRM.drawerSession").replace("{sid}", sessionId)}</div>
             </div>
             <button onClick={onClose} className="text-ink-mute hover:text-ink text-xl leading-none flex-shrink-0">×</button>
           </div>
           <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-cream/30">
             {loadingMsgs ? (
-              <div className="text-center text-ink-mute text-[12px] mt-10">Đang tải...</div>
+              <div className="text-center text-ink-mute text-[12px] mt-10">{t("adminCRM.drawerLoadingMsgs")}</div>
             ) : messages.length === 0 ? (
-              <EmptyState label="Hội thoại chưa có tin nhắn" />
+              <EmptyState label={t("adminCRM.drawerEmptyMessages")} />
             ) : (
               messages.map((m) => (
                 <div key={m.id} className={`flex ${m.direction === "outbound" ? "justify-end" : "justify-start"}`}>
@@ -772,7 +799,7 @@ function ConversationDetailDrawer({ sessionId, conversations, onSelect, onClose 
                   >
                     {m.content}
                     <div className={`text-[9.5px] mt-1 ${m.direction === "outbound" ? "text-white/60" : "text-ink-mute"}`} style={mono}>
-                      {new Date(m.created_at).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(m.created_at).toLocaleString(localeStr, { hour: "2-digit", minute: "2-digit" })}
                     </div>
                   </div>
                 </div>
@@ -791,7 +818,7 @@ function ConversationDetailDrawer({ sessionId, conversations, onSelect, onClose 
               {(selected?.fb_user_id || "??").slice(-2).toUpperCase()}
             </div>
             <div className="font-semibold text-[13px] text-ink mt-2">
-              {profile?.linked_user?.full_name || `User …${(selected?.fb_user_id || "").slice(-6)}`}
+              {profile?.linked_user?.full_name || t("adminCRM.drawerUserShort").replace("{id}", (selected?.fb_user_id || "").slice(-6))}
             </div>
             {profile?.linked_user?.phone && (
               <div className="text-[10.5px] text-ink-mute mt-1" style={mono}>{profile.linked_user.phone}</div>
@@ -801,36 +828,36 @@ function ConversationDetailDrawer({ sessionId, conversations, onSelect, onClose 
             )}
             <div className="mt-2 flex items-center justify-center gap-2">
               <SourceBadge variant="messenger" />
-              {profile?.linked_user && <Badge variant="active">Đã liên kết</Badge>}
+              {profile?.linked_user && <Badge variant="active">{t("adminCRM.drawerLinked")}</Badge>}
             </div>
           </div>
 
           <div className="p-4 border-b border-border">
-            <SectionLabel>Hoạt động</SectionLabel>
+            <SectionLabel>{t("adminCRM.drawerActivity")}</SectionLabel>
             <div className="grid grid-cols-2 gap-2.5">
               <div className="bg-cream rounded-xl p-2.5 text-center">
                 <div className="text-[16px] font-semibold text-ink leading-tight" style={display}>{profile?.message_count ?? "—"}</div>
-                <div className="text-[10px] text-ink-mute mt-0.5">Tin nhắn</div>
+                <div className="text-[10px] text-ink-mute mt-0.5">{t("adminCRM.drawerMessages")}</div>
               </div>
               <div className="bg-cream rounded-xl p-2.5 text-center">
                 <div className="text-[16px] font-semibold text-ink leading-tight" style={display}>
                   {profile?.linked_user?.order_count ?? "—"}
                 </div>
-                <div className="text-[10px] text-ink-mute mt-0.5">Đơn</div>
+                <div className="text-[10px] text-ink-mute mt-0.5">{t("adminCRM.drawerOrders")}</div>
               </div>
             </div>
             {profile && (
               <div className="mt-2 bg-cream rounded-xl p-2.5">
-                <div className="flex items-center justify-between text-[10.5px] text-ink-mute"><span>Lần đầu</span><span style={mono}>{fmtTime(profile.first_seen)}</span></div>
-                <div className="flex items-center justify-between text-[10.5px] text-ink-mute mt-0.5"><span>Gần nhất</span><span style={mono}>{fmtTime(profile.last_seen)}</span></div>
+                <div className="flex items-center justify-between text-[10.5px] text-ink-mute"><span>{t("adminCRM.drawerFirstSeen")}</span><span style={mono}>{fmtTime(profile.first_seen, localeStr)}</span></div>
+                <div className="flex items-center justify-between text-[10.5px] text-ink-mute mt-0.5"><span>{t("adminCRM.drawerLastSeen")}</span><span style={mono}>{fmtTime(profile.last_seen, localeStr)}</span></div>
               </div>
             )}
           </div>
 
           <div className="p-4">
-            <SectionLabel>Ý định gần đây</SectionLabel>
+            <SectionLabel>{t("adminCRM.drawerIntentTitle")}</SectionLabel>
             {!profile || profile.intent_history.length === 0 ? (
-              <p className="text-[11px] text-ink-mute italic">Chưa phát hiện ý định rõ ràng</p>
+              <p className="text-[11px] text-ink-mute italic">{t("adminCRM.drawerNoIntent")}</p>
             ) : (
               <div className="space-y-2">
                 {profile.intent_history.map((it) => (
@@ -852,17 +879,23 @@ function ConversationDetailDrawer({ sessionId, conversations, onSelect, onClose 
 }
 
 // ── Tab: Hành vi ──────────────────────────────────────────────────────────────
-const DEVICE_LABELS: Record<string, string> = {
-  mobile: "Mobile", desktop: "Desktop", tablet: "Tablet", unknown: "Khác",
+const DEVICE_LABEL_KEYS: Record<string, string> = {
+  mobile: "adminCRM.deviceMobile",
+  desktop: "adminCRM.deviceDesktop",
+  tablet: "adminCRM.deviceTablet",
+  unknown: "adminCRM.deviceUnknown",
 }
-const SOURCE_LABELS: Record<string, string> = {
-  direct: "Direct", google: "Google", facebook: "Facebook", other: "Khác",
+const SOURCE_LABEL_KEYS: Record<string, string> = {
+  direct: "adminCRM.srcDirect",
+  google: "adminCRM.srcGoogle",
+  facebook: "adminCRM.srcFacebook",
+  other: "adminCRM.srcOther",
 }
-const FUNNEL_LABELS: Record<BehaviorFunnelStage["key"], string> = {
-  view_product: "Xem sản phẩm",
-  add_to_cart:  "Vào giỏ hàng",
-  checkout:     "Tới checkout",
-  complete:     "Hoàn tất đặt",
+const FUNNEL_LABEL_KEYS: Record<BehaviorFunnelStage["key"], string> = {
+  view_product: "adminCRM.bfunnelView",
+  add_to_cart:  "adminCRM.bfunnelCart",
+  checkout:     "adminCRM.bfunnelCheckout",
+  complete:     "adminCRM.bfunnelComplete",
 }
 
 function bucketTotal(buckets: BehaviorBucket[]): number {
@@ -870,6 +903,8 @@ function bucketTotal(buckets: BehaviorBucket[]): number {
 }
 
 function BehaviorTab() {
+  const { t, lang } = useT()
+  const localeStr = lang === "vi" ? "vi-VN" : "en-US"
   const { data: overview, isLoading, isError } = useBehaviorOverview()
   const { data: sessions = [] } = useBehaviorSessions({ limit: 20 })
   const hourlyData = useMemo(
@@ -880,14 +915,14 @@ function BehaviorTab() {
   if (isLoading) {
     return (
       <div className="space-y-5">
-        <EmptyState label="Đang tải dữ liệu hành vi..." />
+        <EmptyState label={t("adminCRM.behLoading")} />
       </div>
     )
   }
   if (isError || !overview) {
     return (
       <div className="space-y-5">
-        <EmptyState label="Không tải được dữ liệu hành vi" hint="Thử lại sau hoặc kiểm tra backend" />
+        <EmptyState label={t("adminCRM.behError")} hint={t("adminCRM.behErrorHint")} />
       </div>
     )
   }
@@ -908,23 +943,23 @@ function BehaviorTab() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label="Phiên hôm nay"  value={String(stats.total_sessions)} delta="Hôm nay"   deltaType="up" />
-        <KpiCard label="Pageviews"      value={String(totalPageviews)}       delta="Hôm nay"   deltaType="up" />
-        <KpiCard label="Bounce rate"    value={bounceLabel}                  delta={`${pagesPerSession} pages/session`} deltaType="up" />
-        <KpiCard label="Avg session"    value={avgDuration}                  delta="Trung bình hôm nay" deltaType="up" />
+        <KpiCard label={t("adminCRM.behKpiSessions")} value={String(stats.total_sessions)} delta={t("adminCRM.behKpiToday")} deltaType="up" />
+        <KpiCard label={t("adminCRM.behKpiPageviews")} value={String(totalPageviews)} delta={t("adminCRM.behKpiToday")} deltaType="up" />
+        <KpiCard label={t("adminCRM.behKpiBounce")} value={bounceLabel} delta={t("adminCRM.behKpiPagesPerSession").replace("{n}", pagesPerSession)} deltaType="up" />
+        <KpiCard label={t("adminCRM.behKpiAvgSession")} value={avgDuration} delta={t("adminCRM.behKpiAvgHint")} deltaType="up" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="bg-white border border-border rounded-2xl p-5">
-          <SectionLabel>Thiết bị</SectionLabel>
+          <SectionLabel>{t("adminCRM.behDevice")}</SectionLabel>
           {by_device.length === 0 ? (
-            <EmptyState label="Chưa có pageview hôm nay" />
+            <EmptyState label={t("adminCRM.behEmptyPageviews")} />
           ) : (
             <div className="space-y-2.5">
               {by_device.map((b) => (
                 <ThinBar
                   key={b.key}
-                  label={DEVICE_LABELS[b.key] ?? b.key}
+                  label={DEVICE_LABEL_KEYS[b.key] ? t(DEVICE_LABEL_KEYS[b.key]) : b.key}
                   pct={(b.count / deviceTotal) * 100}
                   value={String(b.count)}
                 />
@@ -933,15 +968,15 @@ function BehaviorTab() {
           )}
         </div>
         <div className="bg-white border border-border rounded-2xl p-5">
-          <SectionLabel>Nguồn truy cập</SectionLabel>
+          <SectionLabel>{t("adminCRM.behSource")}</SectionLabel>
           {by_source.length === 0 ? (
-            <EmptyState label="Chưa có pageview hôm nay" />
+            <EmptyState label={t("adminCRM.behEmptyPageviews")} />
           ) : (
             <div className="space-y-2.5">
               {by_source.map((b) => (
                 <ThinBar
                   key={b.key}
-                  label={SOURCE_LABELS[b.key] ?? b.key}
+                  label={SOURCE_LABEL_KEYS[b.key] ? t(SOURCE_LABEL_KEYS[b.key]) : b.key}
                   pct={(b.count / sourceTotal) * 100}
                   value={String(b.count)}
                 />
@@ -950,9 +985,9 @@ function BehaviorTab() {
           )}
         </div>
         <div className="bg-white border border-border rounded-2xl p-5">
-          <SectionLabel>Top pages</SectionLabel>
+          <SectionLabel>{t("adminCRM.behTopPages")}</SectionLabel>
           {top_pages.length === 0 ? (
-            <EmptyState label="Chưa có pageview hôm nay" />
+            <EmptyState label={t("adminCRM.behEmptyPageviews")} />
           ) : (
             <div className="space-y-2.5">
               {top_pages.slice(0, 8).map((p: TopPage) => (
@@ -970,14 +1005,14 @@ function BehaviorTab() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="bg-white border border-border rounded-2xl p-5">
-          <SectionLabel>Phễu hành vi</SectionLabel>
+          <SectionLabel>{t("adminCRM.behFunnel")}</SectionLabel>
           <div className="space-y-2.5">
             {funnel.map((stage) => {
               const pct = (stage.count / funnelMax) * 100
               return (
                 <div key={stage.key} className="space-y-1">
                   <div className="flex items-center justify-between text-[12px]">
-                    <span className="font-medium text-ink">{FUNNEL_LABELS[stage.key]}</span>
+                    <span className="font-medium text-ink">{t(FUNNEL_LABEL_KEYS[stage.key])}</span>
                     <span className="font-semibold text-ink" style={display}>{stage.count}</span>
                   </div>
                   <div className="h-1.5 bg-cream-dark rounded-full overflow-hidden">
@@ -990,26 +1025,26 @@ function BehaviorTab() {
         </div>
 
         <div className="bg-white border border-border rounded-2xl p-5">
-          <SectionLabel>Phiên theo giờ (24h)</SectionLabel>
+          <SectionLabel>{t("adminCRM.behHourly")}</SectionLabel>
           <HourlyBarChart data={hourlyData} />
         </div>
       </div>
 
       <div className="bg-white border border-border rounded-2xl p-5">
-        <SectionLabel>Phiên gần đây</SectionLabel>
+        <SectionLabel>{t("adminCRM.behSessionsTitle")}</SectionLabel>
         {sessions.length === 0 ? (
-          <EmptyState label="Chưa có session nào hôm nay" />
+          <EmptyState label={t("adminCRM.behNoSessions")} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[12.5px]">
               <thead>
                 <tr className="text-left text-[10px] uppercase tracking-[.06em] text-ink-mute border-b border-border">
-                  <th className="py-2.5 pr-3">Session</th>
-                  <th className="py-2.5 pr-3">Visitor</th>
-                  <th className="py-2.5 pr-3">User</th>
-                  <th className="py-2.5 pr-3 text-right">Pages</th>
-                  <th className="py-2.5 pr-3 text-right">Duration</th>
-                  <th className="py-2.5 text-right">Last seen</th>
+                  <th className="py-2.5 pr-3">{t("adminCRM.behThSession")}</th>
+                  <th className="py-2.5 pr-3">{t("adminCRM.behThVisitor")}</th>
+                  <th className="py-2.5 pr-3">{t("adminCRM.behThUser")}</th>
+                  <th className="py-2.5 pr-3 text-right">{t("adminCRM.behThPages")}</th>
+                  <th className="py-2.5 pr-3 text-right">{t("adminCRM.behThDuration")}</th>
+                  <th className="py-2.5 text-right">{t("adminCRM.behThLastSeen")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -1020,7 +1055,7 @@ function BehaviorTab() {
                     <td className="py-2 pr-3 text-ink-soft">{s.user_id ?? "—"}</td>
                     <td className="py-2 pr-3 text-right" style={mono}>{s.page_count}</td>
                     <td className="py-2 pr-3 text-right" style={mono}>{s.duration_sec}s</td>
-                    <td className="py-2 text-right text-ink-soft">{fmtRelative(s.last_seen)}</td>
+                    <td className="py-2 text-right text-ink-soft">{fmtRelative(s.last_seen, t, localeStr)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1033,35 +1068,36 @@ function BehaviorTab() {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-const TABS = [
-  { key: "overview",      label: "Tổng quan" },
-  { key: "customers",     label: "Khách hàng" },
-  { key: "conversations", label: "Hội thoại" },
-  { key: "behavior",      label: "Hành vi" },
+const TAB_KEYS = [
+  { key: "overview",      labelKey: "adminCRM.tabOverview" },
+  { key: "customers",     labelKey: "adminCRM.tabCustomers" },
+  { key: "conversations", labelKey: "adminCRM.tabConversations" },
+  { key: "behavior",      labelKey: "adminCRM.tabBehavior" },
 ]
 
 export default function AdminCRM() {
+  const { t } = useT()
   const [tab, setTab] = useState("overview")
 
   return (
     <div>
       <PageHeader
-        title="CRM — Phễu khách hàng"
-        subtitle="Theo dõi vòng đời: Messenger → Đăng ký → Mua hàng → Trung thành"
+        title={t("adminCRM.title")}
+        subtitle={t("adminCRM.subtitle")}
       />
 
       <div className="flex gap-1 mb-5 border-b border-border overflow-x-auto">
-        {TABS.map((t) => (
+        {TAB_KEYS.map((it) => (
           <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
+            key={it.key}
+            onClick={() => setTab(it.key)}
             className={`px-4 py-2.5 text-[12.5px] font-medium transition-all border-b-2 -mb-px whitespace-nowrap ${
-              tab === t.key
+              tab === it.key
                 ? "border-green text-green"
                 : "border-transparent text-ink-mute hover:text-ink"
             }`}
           >
-            {t.label}
+            {t(it.labelKey)}
           </button>
         ))}
       </div>

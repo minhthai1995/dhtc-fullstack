@@ -4,6 +4,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { useAdminCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/features/admin/useCategories'
 import type { CategoryCreate, CategoryWithCount } from '@/features/admin/categories.api'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { useT } from '@/i18n/useT'
 
 const EMPTY_FORM: CategoryCreate = {
   name_vi: '',
@@ -23,6 +24,7 @@ interface CategoryFormModalProps {
 }
 
 function CategoryFormModal({ title, initial, onSubmit, onClose, isPending }: CategoryFormModalProps) {
+  const { t } = useT()
   const [form, setForm] = useState<CategoryCreate>(initial)
 
   function set<K extends keyof CategoryCreate>(key: K, value: CategoryCreate[K]) {
@@ -35,43 +37,43 @@ function CategoryFormModal({ title, initial, onSubmit, onClose, isPending }: Cat
         <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>{title}</h3>
         <div className="space-y-3">
           <div>
-            <label className="text-[10.5px] font-bold uppercase tracking-wider text-ink-mute block mb-1">Tên (VI)</label>
+            <label className="text-[10.5px] font-bold uppercase tracking-wider text-ink-mute block mb-1">{t('adminCategories.modalNameVi')}</label>
             <input
               value={form.name_vi}
               onChange={(e) => set('name_vi', e.target.value)}
               className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-green"
-              placeholder="Tên tiếng Việt"
+              placeholder={t('adminCategories.placeholderNameVi')}
             />
           </div>
           <div>
-            <label className="text-[10.5px] font-bold uppercase tracking-wider text-ink-mute block mb-1">Tên (EN)</label>
+            <label className="text-[10.5px] font-bold uppercase tracking-wider text-ink-mute block mb-1">{t('adminCategories.modalNameEn')}</label>
             <input
               value={form.name_en}
               onChange={(e) => set('name_en', e.target.value)}
               className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-green"
-              placeholder="Name in English"
+              placeholder={t('adminCategories.placeholderNameEn')}
             />
           </div>
           <div>
-            <label className="text-[10.5px] font-bold uppercase tracking-wider text-ink-mute block mb-1">Slug</label>
+            <label className="text-[10.5px] font-bold uppercase tracking-wider text-ink-mute block mb-1">{t('adminCategories.modalSlug')}</label>
             <input
               value={form.slug}
               onChange={(e) => set('slug', e.target.value)}
               className="w-full border border-border rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:border-green"
-              placeholder="ten-danh-muc"
+              placeholder={t('adminCategories.placeholderSlug')}
             />
           </div>
           <div>
-            <label className="text-[10.5px] font-bold uppercase tracking-wider text-ink-mute block mb-1">Icon URL</label>
+            <label className="text-[10.5px] font-bold uppercase tracking-wider text-ink-mute block mb-1">{t('adminCategories.modalIconUrl')}</label>
             <input
               value={form.icon_url ?? ''}
               onChange={(e) => set('icon_url', e.target.value || null)}
               className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-green"
-              placeholder="https://..."
+              placeholder={t('adminCategories.placeholderIcon')}
             />
           </div>
           <div>
-            <label className="text-[10.5px] font-bold uppercase tracking-wider text-ink-mute block mb-1">Thứ tự hiển thị</label>
+            <label className="text-[10.5px] font-bold uppercase tracking-wider text-ink-mute block mb-1">{t('adminCategories.modalSortOrder')}</label>
             <input
               type="number"
               value={form.sort_order ?? 0}
@@ -85,14 +87,14 @@ function CategoryFormModal({ title, initial, onSubmit, onClose, isPending }: Cat
             onClick={onClose}
             className="px-4 py-2 border border-border rounded-xl text-sm font-semibold text-ink-soft hover:border-green transition-colors"
           >
-            Hủy
+            {t('adminCategories.modalCancel')}
           </button>
           <button
             onClick={() => onSubmit(form)}
             disabled={isPending || !form.name_vi.trim() || !form.slug.trim()}
             className="px-4 py-2 bg-green text-white rounded-xl text-sm font-semibold disabled:opacity-50"
           >
-            {isPending ? 'Đang lưu...' : 'Lưu'}
+            {isPending ? t('adminCategories.modalSaving') : t('adminCategories.modalSave')}
           </button>
         </div>
       </div>
@@ -101,6 +103,7 @@ function CategoryFormModal({ title, initial, onSubmit, onClose, isPending }: Cat
 }
 
 export function AdminCategories() {
+  const { t } = useT()
   const { data: categories = [], isLoading } = useAdminCategories()
   const createCat = useCreateCategory()
   const updateCat = useUpdateCategory()
@@ -129,14 +132,14 @@ export function AdminCategories() {
   return (
     <div>
       <PageHeader
-        title="Danh mục sản phẩm"
-        subtitle={`${categories.length} danh mục`}
+        title={t('adminCategories.title')}
+        subtitle={t('adminCategories.subtitle').replace('{n}', String(categories.length))}
         actions={
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-1.5 px-4 py-2 bg-green text-white text-sm font-semibold rounded-xl hover:bg-green/90 transition-colors"
           >
-            <Plus size={15} /> Thêm danh mục
+            <Plus size={15} /> {t('adminCategories.add')}
           </button>
         }
       />
@@ -145,21 +148,21 @@ export function AdminCategories() {
         <div className="flex justify-center py-12"><Spinner /></div>
       ) : categories.length === 0 ? (
         <div className="bg-white border border-border rounded-2xl p-12 text-center text-ink-mute text-sm">
-          Chưa có danh mục nào
+          {t('adminCategories.empty')}
         </div>
       ) : (
         <div className="bg-white border border-border rounded-2xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-cream">
-                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">ID</th>
-                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">Tên (VI)</th>
-                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">Tên (EN)</th>
-                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">Slug</th>
-                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">Icon</th>
-                <th className="text-center px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">Thứ tự</th>
-                <th className="text-center px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">SP</th>
-                <th className="text-center px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">Thao tác</th>
+                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminCategories.thId')}</th>
+                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminCategories.thNameVi')}</th>
+                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminCategories.thNameEn')}</th>
+                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminCategories.thSlug')}</th>
+                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminCategories.thIcon')}</th>
+                <th className="text-center px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminCategories.thSortOrder')}</th>
+                <th className="text-center px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminCategories.thProductCount')}</th>
+                <th className="text-center px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminCategories.thActions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -188,14 +191,14 @@ export function AdminCategories() {
                       <button
                         onClick={() => setEditTarget(cat)}
                         className="p-1.5 text-ink-mute hover:text-green transition-colors rounded-lg hover:bg-green/10"
-                        title="Chỉnh sửa"
+                        title={t('adminCategories.editTooltip')}
                       >
                         <Pencil size={14} />
                       </button>
                       <button
                         onClick={() => setDeleteConfirm(cat.id)}
                         className="p-1.5 text-ink-mute hover:text-danger transition-colors rounded-lg hover:bg-danger/10"
-                        title="Xóa"
+                        title={t('adminCategories.deleteTooltip')}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -210,7 +213,7 @@ export function AdminCategories() {
 
       {showCreate && (
         <CategoryFormModal
-          title="Thêm danh mục mới"
+          title={t('adminCategories.modalCreate')}
           initial={EMPTY_FORM}
           onSubmit={handleCreate}
           onClose={() => setShowCreate(false)}
@@ -220,7 +223,7 @@ export function AdminCategories() {
 
       {editTarget && (
         <CategoryFormModal
-          title="Chỉnh sửa danh mục"
+          title={t('adminCategories.modalEdit')}
           initial={{
             name_vi: editTarget.name_vi,
             name_en: editTarget.name_en,
@@ -238,23 +241,23 @@ export function AdminCategories() {
       {deleteConfirm !== null && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl">
-            <h3 className="font-semibold text-ink mb-2">Xác nhận xóa</h3>
+            <h3 className="font-semibold text-ink mb-2">{t('adminCategories.deleteTitle')}</h3>
             <p className="text-sm text-ink-mute mb-5">
-              Bạn có chắc muốn xóa danh mục này? Hành động này không thể hoàn tác.
+              {t('adminCategories.deleteBody')}
             </p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setDeleteConfirm(null)}
                 className="px-4 py-2 border border-border rounded-xl text-sm font-semibold text-ink-soft hover:border-green transition-colors"
               >
-                Hủy
+                {t('adminCategories.modalCancel')}
               </button>
               <button
                 onClick={() => handleDelete(deleteConfirm)}
                 disabled={deleteCat.isPending}
                 className="px-4 py-2 bg-danger text-white rounded-xl text-sm font-semibold disabled:opacity-50"
               >
-                {deleteCat.isPending ? 'Đang xóa...' : 'Xóa'}
+                {deleteCat.isPending ? t('adminCategories.deleteSubmitting') : t('adminCategories.deleteSubmit')}
               </button>
             </div>
           </div>

@@ -4,13 +4,14 @@ import { Spinner } from '@/components/ui/Spinner'
 import { Badge } from '@/components/ui/Badge'
 import { useAdminReturns } from '@/features/returns/useReturns'
 import type { ReturnRequestRead } from '@/features/returns/returns.api'
+import { useT } from '@/i18n/useT'
 
 type FilterStatus = 'all' | 'pending' | 'approved' | 'rejected'
 
-const STATUS_LABEL: Record<string, string> = {
-  pending: 'Chờ xử lý',
-  approved: 'Đã chấp nhận',
-  rejected: 'Đã từ chối',
+const STATUS_KEY: Record<string, string> = {
+  pending: 'adminReturns.statusPending',
+  approved: 'adminReturns.statusApproved',
+  rejected: 'adminReturns.statusRejected',
 }
 
 const STATUS_BADGE: Record<string, 'pending' | 'active' | 'cancelled'> = {
@@ -19,16 +20,18 @@ const STATUS_BADGE: Record<string, 'pending' | 'active' | 'cancelled'> = {
   rejected: 'cancelled',
 }
 
-const FILTER_OPTIONS: { key: FilterStatus; label: string }[] = [
-  { key: 'all', label: 'Tất cả' },
-  { key: 'pending', label: 'Chờ xử lý' },
-  { key: 'approved', label: 'Đã chấp nhận' },
-  { key: 'rejected', label: 'Đã từ chối' },
+const FILTER_OPTIONS: { key: FilterStatus; labelKey: string }[] = [
+  { key: 'all', labelKey: 'adminReturns.filterAll' },
+  { key: 'pending', labelKey: 'adminReturns.filterPending' },
+  { key: 'approved', labelKey: 'adminReturns.filterApproved' },
+  { key: 'rejected', labelKey: 'adminReturns.filterRejected' },
 ]
 
 export function AdminReturns() {
+  const { t, lang } = useT()
   const { data: returns = [], isLoading } = useAdminReturns()
   const [filter, setFilter] = useState<FilterStatus>('all')
+  const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
 
   const filtered: ReturnRequestRead[] = filter === 'all'
     ? returns
@@ -36,7 +39,12 @@ export function AdminReturns() {
 
   return (
     <div>
-      <PageHeader title="Yêu cầu đổi trả" subtitle={`${filtered.length} / ${returns.length} yêu cầu`} />
+      <PageHeader
+        title={t('adminReturns.title')}
+        subtitle={t('adminReturns.subtitle')
+          .replace('{filtered}', String(filtered.length))
+          .replace('{total}', String(returns.length))}
+      />
 
       {/* Filter tabs */}
       <div className="flex gap-2 mb-5 flex-wrap">
@@ -50,7 +58,7 @@ export function AdminReturns() {
                 : 'bg-white border border-border text-ink-soft hover:border-green hover:text-green'
             }`}
           >
-            {opt.label}
+            {t(opt.labelKey)}
           </button>
         ))}
       </div>
@@ -59,20 +67,20 @@ export function AdminReturns() {
         <div className="flex justify-center py-12"><Spinner /></div>
       ) : filtered.length === 0 ? (
         <div className="bg-white border border-border rounded-2xl p-12 text-center text-ink-mute text-sm">
-          Không có yêu cầu đổi trả nào
+          {t('adminReturns.empty')}
         </div>
       ) : (
         <div className="bg-white border border-border rounded-2xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-cream">
-                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">ID</th>
-                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">Đơn hàng</th>
-                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">KH ID</th>
-                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">Lý do</th>
-                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">Trạng thái</th>
-                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">Ghi chú NB</th>
-                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">Ngày tạo</th>
+                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminReturns.thId')}</th>
+                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminReturns.thOrder')}</th>
+                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminReturns.thCustomerId')}</th>
+                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminReturns.thReason')}</th>
+                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminReturns.thStatus')}</th>
+                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminReturns.thSellerNote')}</th>
+                <th className="text-left px-4 py-3 text-[10.5px] font-bold uppercase tracking-widest text-ink-mute">{t('adminReturns.thCreatedAt')}</th>
               </tr>
             </thead>
             <tbody>
@@ -90,7 +98,7 @@ export function AdminReturns() {
                     <span className="line-clamp-2" title={r.reason}>{r.reason}</span>
                   </td>
                   <td className="px-4 py-3">
-                    <Badge variant={STATUS_BADGE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+                    <Badge variant={STATUS_BADGE[r.status]}>{t(STATUS_KEY[r.status])}</Badge>
                   </td>
                   <td className="px-4 py-3 text-xs text-ink-mute max-w-[150px]">
                     {r.seller_note ? (
@@ -100,7 +108,7 @@ export function AdminReturns() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-[11px] font-mono text-ink-mute whitespace-nowrap">
-                    {new Date(r.created_at).toLocaleString('vi-VN')}
+                    {new Date(r.created_at).toLocaleString(localeStr)}
                   </td>
                 </tr>
               ))}

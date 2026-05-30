@@ -6,16 +6,25 @@ import { Spinner } from '@/components/ui/Spinner'
 import { Pagination } from '@/components/ui/Pagination'
 import { Search, Package, CheckSquare } from 'lucide-react'
 import type { ProductStatus } from '@/types/api'
+import { useT } from '@/i18n/useT'
 
-function statusBadge(status: ProductStatus) {
-  if (status === 'active') return <Badge variant="active">Hoạt động</Badge>
-  if (status === 'pending') return <Badge variant="pending">Chờ duyệt</Badge>
-  return <Badge variant="cancelled">Ngừng bán</Badge>
+const STATUS_KEY: Record<ProductStatus, string> = {
+  active: 'adminProducts.statusActive',
+  pending: 'adminProducts.statusPending',
+  inactive: 'adminProducts.statusInactive',
+}
+
+const FILTER_KEY: Record<'all' | ProductStatus, string> = {
+  all: 'adminProducts.filterAll',
+  active: 'adminProducts.filterActive',
+  pending: 'adminProducts.filterPending',
+  inactive: 'adminProducts.filterInactive',
 }
 
 const PAGE_SIZE = 20
 
 export function AdminProducts() {
+  const { t, lang } = useT()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | ProductStatus>('all')
   const [page, setPage] = useState(1)
@@ -23,6 +32,7 @@ export function AdminProducts() {
   const { data: products, isLoading } = useAdminProducts()
   const approveProduct = useApproveProduct()
   const bulkApprove = useBulkApproveProducts()
+  const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
 
   useEffect(() => { setPage(1) }, [search])
   useEffect(() => { setPage(1); setSelected(new Set()) }, [filter])
@@ -70,11 +80,18 @@ export function AdminProducts() {
     })
   }
 
+  const statusBadge = (status: ProductStatus) => {
+    const variant = status === 'active' ? 'active' : status === 'pending' ? 'pending' : 'cancelled'
+    return <Badge variant={variant}>{t(STATUS_KEY[status])}</Badge>
+  }
+
   return (
     <div>
       <PageHeader
-        title="Quản lý sản phẩm"
-        subtitle={`${source.length} sản phẩm · ${source.filter((p) => p.status === 'pending').length} chờ phê duyệt`}
+        title={t('adminProducts.title')}
+        subtitle={t('adminProducts.subtitle')
+          .replace('{n}', String(source.length))
+          .replace('{pending}', String(source.filter((p) => p.status === 'pending').length))}
       />
 
       <div className="flex flex-wrap items-center gap-3 mb-5">
@@ -82,7 +99,7 @@ export function AdminProducts() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-mute" />
           <input
             type="text"
-            placeholder="Tìm sản phẩm..."
+            placeholder={t('adminProducts.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-8 pr-4 py-2 border border-border rounded-xl text-sm bg-white focus:outline-none focus:border-green transition-all"
@@ -99,7 +116,7 @@ export function AdminProducts() {
                   : 'bg-white border border-border text-ink-soft hover:border-green hover:text-green'
               }`}
             >
-              {f === 'all' ? 'Tất cả' : f === 'active' ? 'Hoạt động' : f === 'pending' ? 'Chờ duyệt' : 'Ngừng bán'}
+              {t(FILTER_KEY[f])}
             </button>
           ))}
         </div>
@@ -110,7 +127,7 @@ export function AdminProducts() {
             className="ml-auto flex items-center gap-2 px-4 py-2 bg-green text-white text-sm font-semibold rounded-xl hover:bg-green-soft transition-colors disabled:opacity-50"
           >
             <CheckSquare size={14} />
-            Duyệt {selected.size} sản phẩm
+            {t('adminProducts.bulkApprove').replace('{n}', String(selected.size))}
           </button>
         )}
       </div>
@@ -132,24 +149,24 @@ export function AdminProducts() {
                         checked={allPagePendingSelected}
                         onChange={toggleSelectAll}
                         className="w-4 h-4 accent-green cursor-pointer"
-                        title="Chọn tất cả sản phẩm chờ duyệt trên trang này"
+                        title={t('adminProducts.selectAllTitle')}
                       />
                     )}
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Sản phẩm</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Xuất xứ</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Giá</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Tồn kho</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Đã bán</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Trạng thái</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Thao tác</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminProducts.thProduct')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminProducts.thOrigin')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminProducts.thPrice')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminProducts.thStock')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminProducts.thSold')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminProducts.thStatus')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminProducts.thActions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="text-center py-12 text-ink-mute text-sm">
-                      Không tìm thấy sản phẩm
+                      {t('adminProducts.empty')}
                     </td>
                   </tr>
                 ) : (
@@ -186,7 +203,7 @@ export function AdminProducts() {
                       </td>
                       <td className="px-4 py-3 text-sm text-ink-soft">{p.origin ?? '—'}</td>
                       <td className="px-4 py-3 text-sm text-green font-medium" style={{ fontFamily: 'var(--font-display)' }}>
-                        {p.price.toLocaleString('vi-VN')}₫
+                        {p.price.toLocaleString(localeStr)}₫
                       </td>
                       <td className="px-4 py-3 text-sm text-ink-soft font-mono">{p.stock}</td>
                       <td className="px-4 py-3 text-sm text-ink-soft font-mono">{p.sold_count}</td>
@@ -198,7 +215,7 @@ export function AdminProducts() {
                             disabled={approveProduct.isPending}
                             className="text-xs px-2.5 py-1 bg-green/10 text-green font-semibold rounded-lg hover:bg-green/20 transition-colors disabled:opacity-50"
                           >
-                            Phê duyệt
+                            {t('adminProducts.btnApprove')}
                           </button>
                         )}
                       </td>

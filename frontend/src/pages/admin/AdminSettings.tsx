@@ -3,12 +3,22 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Save } from 'lucide-react'
 import { useSettings, useSaveSettings } from '@/features/admin/useSettings'
 import { useToast } from '@/components/ui/Toast'
+import { useT } from '@/i18n/useT'
 
 function getVal(configs: { key: string; value: string }[], key: string, fallback: string): string {
   return configs.find((c) => c.key === key)?.value ?? fallback
 }
 
+const SECURITY_KEYS: { labelKey: string; enabled: boolean }[] = [
+  { labelKey: 'adminSettings.sec2fa', enabled: true },
+  { labelKey: 'adminSettings.secAuditLog', enabled: true },
+  { labelKey: 'adminSettings.secLoginLimit', enabled: true },
+  { labelKey: 'adminSettings.secLoginEmail', enabled: false },
+  { labelKey: 'adminSettings.secAutoLock', enabled: false },
+]
+
 export function AdminSettings() {
+  const { t } = useT()
   const { data: configs = [], isLoading } = useSettings()
   const save = useSaveSettings()
   const toast = useToast()
@@ -26,23 +36,23 @@ export function AdminSettings() {
 
   const handleSave = async () => {
     const items = [
-      { key: 'platform_name', value: platformName, description: 'Tên nền tảng' },
-      { key: 'fee_rate', value: feeRate, description: 'Phí sàn (%)' },
-      { key: 'min_withdrawal', value: minWithdrawal, description: 'Rút tiền tối thiểu (VND)' },
+      { key: 'platform_name', value: platformName, description: t('adminSettings.descPlatformName') },
+      { key: 'fee_rate', value: feeRate, description: t('adminSettings.descFeeRate') },
+      { key: 'min_withdrawal', value: minWithdrawal, description: t('adminSettings.descMinWithdrawal') },
     ]
     try {
       await save.mutateAsync(items)
-      toast('Đã lưu cài đặt thành công', 'success')
+      toast(t('adminSettings.saveSuccess'), 'success')
     } catch {
-      toast('Lưu cài đặt thất bại', 'error')
+      toast(t('adminSettings.saveFailed'), 'error')
     }
   }
 
   return (
     <div>
       <PageHeader
-        title="Quyền & Cài đặt"
-        subtitle="Cấu hình hệ thống và quản lý người dùng"
+        title={t('adminSettings.title')}
+        subtitle={t('adminSettings.subtitle')}
         actions={
           <button
             onClick={handleSave}
@@ -50,7 +60,7 @@ export function AdminSettings() {
             className="flex items-center gap-2 px-4 py-2 bg-green text-white rounded-xl text-sm font-semibold hover:bg-green-soft transition-colors disabled:opacity-60"
           >
             <Save size={15} />
-            {save.isPending ? 'Đang lưu...' : 'Lưu thay đổi'}
+            {save.isPending ? t('adminSettings.saving') : t('adminSettings.saveChanges')}
           </button>
         }
       />
@@ -59,14 +69,14 @@ export function AdminSettings() {
         {/* Platform settings */}
         <div className="bg-white border border-border rounded-2xl p-5">
           <h2 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Cấu hình nền tảng
+            {t('adminSettings.platformConfig')}
           </h2>
           {isLoading ? (
-            <div className="text-sm text-ink-mute">Đang tải...</div>
+            <div className="text-sm text-ink-mute">{t('adminSettings.loading')}</div>
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">Tên nền tảng</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">{t('adminSettings.platformName')}</label>
                 <input
                   type="text"
                   value={platformName}
@@ -75,7 +85,7 @@ export function AdminSettings() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">Phí sàn (%)</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">{t('adminSettings.feeRate')}</label>
                 <input
                   type="number"
                   value={feeRate}
@@ -87,7 +97,7 @@ export function AdminSettings() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">Rút tiền tối thiểu (VND)</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">{t('adminSettings.minWithdrawal')}</label>
                 <input
                   type="number"
                   value={minWithdrawal}
@@ -98,10 +108,10 @@ export function AdminSettings() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">Ngôn ngữ mặc định</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">{t('adminSettings.defaultLang')}</label>
                 <select className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all">
-                  <option value="vi">Tiếng Việt</option>
-                  <option value="en">English</option>
+                  <option value="vi">{t('adminSettings.langVi')}</option>
+                  <option value="en">{t('adminSettings.langEn')}</option>
                 </select>
               </div>
             </div>
@@ -111,18 +121,12 @@ export function AdminSettings() {
         {/* Security settings */}
         <div className="bg-white border border-border rounded-2xl p-5">
           <h2 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
-            Bảo mật
+            {t('adminSettings.security')}
           </h2>
           <div className="space-y-3">
-            {[
-              { label: 'Xác thực 2 bước (2FA)', enabled: true },
-              { label: 'Ghi log hoạt động admin', enabled: true },
-              { label: 'Giới hạn đăng nhập thất bại', enabled: true },
-              { label: 'Thông báo đăng nhập qua email', enabled: false },
-              { label: 'Tự động khoá tài khoản không hoạt động', enabled: false },
-            ].map((setting) => (
-              <div key={setting.label} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                <span className="text-sm text-ink">{setting.label}</span>
+            {SECURITY_KEYS.map((setting) => (
+              <div key={setting.labelKey} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                <span className="text-sm text-ink">{t(setting.labelKey)}</span>
                 <div className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${setting.enabled ? 'bg-green' : 'bg-border'}`}>
                   <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${setting.enabled ? 'left-[22px]' : 'left-0.5'}`} />
                 </div>

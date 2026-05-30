@@ -7,22 +7,33 @@ import { Spinner } from '@/components/ui/Spinner'
 import { Pagination } from '@/components/ui/Pagination'
 import { Search, ChevronRight } from 'lucide-react'
 import type { MerchantStatus, MerchantTier } from '@/types/api'
+import { useT } from '@/i18n/useT'
 
-function tierBadge(tier: MerchantTier) {
-  if (tier === 'gold') return <Badge variant="gold">★ Gold</Badge>
-  if (tier === 'silver') return <Badge variant="silver">Silver</Badge>
-  return <Badge variant="bronze">Bronze</Badge>
+const TIER_KEY: Record<MerchantTier, string> = {
+  gold: 'adminMerchants.tierGold',
+  silver: 'adminMerchants.tierSilver',
+  bronze: 'adminMerchants.tierBronze',
 }
 
-function statusBadge(status: MerchantStatus) {
-  if (status === 'active') return <Badge variant="active">Hoạt động</Badge>
-  if (status === 'pending') return <Badge variant="pending">Chờ duyệt</Badge>
-  return <Badge variant="suspended">Đã khoá</Badge>
+const STATUS_KEY: Record<MerchantStatus, string> = {
+  active: 'adminMerchants.statusActive',
+  pending: 'adminMerchants.statusPending',
+  suspended: 'adminMerchants.statusSuspended',
+  verified: 'adminMerchants.statusVerified',
+}
+
+const FILTER_KEY: Record<'all' | MerchantStatus, string> = {
+  all: 'adminMerchants.filterAll',
+  active: 'adminMerchants.filterActive',
+  pending: 'adminMerchants.filterPending',
+  suspended: 'adminMerchants.filterSuspended',
+  verified: 'adminMerchants.filterVerified',
 }
 
 const PAGE_SIZE = 20
 
 export function AdminMerchants() {
+  const { t } = useT()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | MerchantStatus>('all')
   const [page, setPage] = useState(1)
@@ -43,16 +54,28 @@ export function AdminMerchants() {
 
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
+  const tierBadge = (tier: MerchantTier) => (
+    <Badge variant={tier}>{t(TIER_KEY[tier])}</Badge>
+  )
+
+  const statusBadge = (status: MerchantStatus) => (
+    <Badge variant={status}>{t(STATUS_KEY[status])}</Badge>
+  )
+
   return (
     <div>
       <PageHeader
-        title="Quản lý tiểu thương"
-        subtitle={`${source.length} tiểu thương đã đăng ký`}
+        title={t('adminMerchants.title')}
+        subtitle={t('adminMerchants.subtitle').replace('{n}', String(source.length))}
         actions={
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider">
-            <span className="text-ink-mute">Tổng:</span>
-            <span className="text-green">{source.filter((m) => m.status === 'active').length} hoạt động</span>
-            <span className="text-warning">{source.filter((m) => m.status === 'pending').length} chờ duyệt</span>
+            <span className="text-ink-mute">{t('adminMerchants.summaryTotal')}</span>
+            <span className="text-green">
+              {t('adminMerchants.summaryActive').replace('{n}', String(source.filter((m) => m.status === 'active').length))}
+            </span>
+            <span className="text-warning">
+              {t('adminMerchants.summaryPending').replace('{n}', String(source.filter((m) => m.status === 'pending').length))}
+            </span>
           </div>
         }
       />
@@ -63,7 +86,7 @@ export function AdminMerchants() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-mute" />
           <input
             type="text"
-            placeholder="Tìm tiểu thương..."
+            placeholder={t('adminMerchants.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-8 pr-4 py-2 border border-border rounded-xl text-sm bg-white focus:outline-none focus:border-green transition-all"
@@ -80,7 +103,7 @@ export function AdminMerchants() {
                   : 'bg-white border border-border text-ink-soft hover:border-green hover:text-green'
               }`}
             >
-              {f === 'all' ? 'Tất cả' : f === 'active' ? 'Hoạt động' : f === 'pending' ? 'Chờ duyệt' : 'Đã khoá'}
+              {t(FILTER_KEY[f])}
             </button>
           ))}
         </div>
@@ -96,18 +119,18 @@ export function AdminMerchants() {
             <table className="w-full min-w-[700px]">
               <thead>
                 <tr className="bg-cream-dark border-b border-border">
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Tên gian hàng</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Khu vực</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Hạng</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Trạng thái</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Thao tác</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminMerchants.thStoreName')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminMerchants.thRegion')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminMerchants.thTier')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminMerchants.thStatus')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminMerchants.thActions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="text-center py-12 text-ink-mute text-sm">
-                      Không tìm thấy tiểu thương
+                      {t('adminMerchants.empty')}
                     </td>
                   </tr>
                 ) : (
@@ -133,7 +156,7 @@ export function AdminMerchants() {
                             to={`/admin/merchants/${m.id}`}
                             className="text-xs text-green font-medium hover:underline no-underline flex items-center gap-1"
                           >
-                            Chi tiết <ChevronRight size={12} />
+                            {t('adminMerchants.viewDetails')} <ChevronRight size={12} />
                           </Link>
                           {m.status === 'pending' && (
                             <button
@@ -141,7 +164,7 @@ export function AdminMerchants() {
                               disabled={approve.isPending}
                               className="text-xs px-2.5 py-1 bg-green/10 text-green font-semibold rounded-lg hover:bg-green/20 transition-colors disabled:opacity-50"
                             >
-                              Phê duyệt
+                              {t('adminMerchants.btnApprove')}
                             </button>
                           )}
                           {m.status === 'active' && (
@@ -150,7 +173,7 @@ export function AdminMerchants() {
                               disabled={suspend.isPending}
                               className="text-xs px-2.5 py-1 bg-red-50 text-danger font-semibold rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
                             >
-                              Khoá
+                              {t('adminMerchants.btnSuspend')}
                             </button>
                           )}
                         </div>

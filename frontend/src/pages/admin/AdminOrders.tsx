@@ -6,6 +6,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { Pagination } from '@/components/ui/Pagination'
 import { Search, Download } from 'lucide-react'
 import type { OrderStatus } from '@/types/api'
+import { useT } from '@/i18n/useT'
 
 async function downloadCsv(path: string, filename: string) {
   const token = sessionStorage.getItem('access_token')
@@ -22,22 +23,29 @@ async function downloadCsv(path: string, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-function statusBadge(status: OrderStatus) {
-  const map: Record<OrderStatus, string> = {
-    pending: 'pending',
-    processing: 'processing',
-    shipped: 'shipped',
-    delivered: 'delivered',
-    cancelled: 'cancelled',
-  }
-  const labels: Record<OrderStatus, string> = {
-    pending: 'Chờ xử lý',
-    processing: 'Đang xử lý',
-    shipped: 'Đang giao',
-    delivered: 'Đã giao',
-    cancelled: 'Đã huỷ',
-  }
-  return <Badge variant={map[status] as Parameters<typeof Badge>[0]['variant']}>{labels[status]}</Badge>
+const STATUS_VARIANT: Record<OrderStatus, string> = {
+  pending: 'pending',
+  processing: 'processing',
+  shipped: 'shipped',
+  delivered: 'delivered',
+  cancelled: 'cancelled',
+}
+
+const STATUS_KEY: Record<OrderStatus, string> = {
+  pending: 'adminOrders.statusPending',
+  processing: 'adminOrders.statusProcessing',
+  shipped: 'adminOrders.statusShipped',
+  delivered: 'adminOrders.statusDelivered',
+  cancelled: 'adminOrders.statusCancelled',
+}
+
+const FILTER_KEY: Record<'all' | OrderStatus, string> = {
+  all: 'adminOrders.filterAll',
+  pending: 'adminOrders.filterPending',
+  processing: 'adminOrders.filterProcessing',
+  shipped: 'adminOrders.filterShipped',
+  delivered: 'adminOrders.filterDelivered',
+  cancelled: 'adminOrders.filterCancelled',
 }
 
 const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
@@ -48,22 +56,16 @@ const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
   cancelled: [],
 }
 
-const STATUS_LABELS: Record<OrderStatus, string> = {
-  pending: 'Chờ xử lý',
-  processing: 'Đang xử lý',
-  shipped: 'Đang giao',
-  delivered: 'Đã giao',
-  cancelled: 'Đã huỷ',
-}
-
 const PAGE_SIZE = 20
 
 export function AdminOrders() {
+  const { t, lang } = useT()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | OrderStatus>('all')
   const [page, setPage] = useState(1)
   const { data: orders, isLoading } = useAdminOrders()
   const updateStatus = useAdminUpdateOrderStatus()
+  const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
 
   useEffect(() => { setPage(1) }, [search])
   useEffect(() => { setPage(1) }, [filter])
@@ -80,18 +82,24 @@ export function AdminOrders() {
 
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
+  const statusBadge = (status: OrderStatus) => (
+    <Badge variant={STATUS_VARIANT[status] as Parameters<typeof Badge>[0]['variant']}>
+      {t(STATUS_KEY[status])}
+    </Badge>
+  )
+
   return (
     <div>
       <PageHeader
-        title="Quản lý đơn hàng"
-        subtitle={`${source.length} đơn hàng`}
+        title={t('adminOrders.title')}
+        subtitle={t('adminOrders.subtitle').replace('{n}', String(source.length))}
         actions={
           <button
             onClick={() => downloadCsv('/admin/orders/export', 'orders.csv')}
             className="flex items-center gap-2 px-4 py-2 bg-white border border-border text-ink-soft rounded-xl text-sm font-semibold hover:border-green hover:text-green transition-colors"
           >
             <Download size={15} />
-            Xuất CSV
+            {t('adminOrders.exportCsv')}
           </button>
         }
       />
@@ -101,7 +109,7 @@ export function AdminOrders() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-mute" />
           <input
             type="text"
-            placeholder="Tìm đơn hàng..."
+            placeholder={t('adminOrders.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-8 pr-4 py-2 border border-border rounded-xl text-sm bg-white focus:outline-none focus:border-green transition-all"
@@ -118,7 +126,7 @@ export function AdminOrders() {
                   : 'bg-white border border-border text-ink-soft hover:border-green hover:text-green'
               }`}
             >
-              {f === 'all' ? 'Tất cả' : f === 'pending' ? 'Chờ' : f === 'processing' ? 'Xử lý' : f === 'shipped' ? 'Giao' : f === 'delivered' ? 'Xong' : 'Huỷ'}
+              {t(FILTER_KEY[f])}
             </button>
           ))}
         </div>
@@ -134,21 +142,21 @@ export function AdminOrders() {
             <table className="w-full min-w-[900px]">
               <thead>
                 <tr className="bg-cream-dark border-b border-border">
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Mã đơn</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Khách hàng</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Quốc gia</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Giá trị</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Tracking</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Trạng thái</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Cập nhật</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">Ngày đặt</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminOrders.thOrderId')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminOrders.thCustomer')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminOrders.thCountry')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminOrders.thValue')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminOrders.thTracking')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminOrders.thStatus')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminOrders.thUpdate')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminOrders.thCreatedAt')}</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="text-center py-12 text-ink-mute text-sm">
-                      Không tìm thấy đơn hàng
+                      {t('adminOrders.empty')}
                     </td>
                   </tr>
                 ) : (
@@ -185,9 +193,9 @@ export function AdminOrders() {
                               disabled={updateStatus.isPending}
                               className="px-2 py-1.5 border border-border rounded-xl text-xs text-ink-soft bg-white focus:outline-none focus:border-green disabled:opacity-50 cursor-pointer"
                             >
-                              <option value="" disabled>Chuyển sang...</option>
+                              <option value="" disabled>{t('adminOrders.transitionPlaceholder')}</option>
                               {nextStatuses.map((s) => (
-                                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                                <option key={s} value={s}>{t(STATUS_KEY[s])}</option>
                               ))}
                             </select>
                           ) : (
@@ -195,7 +203,7 @@ export function AdminOrders() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-xs text-ink-mute font-mono">
-                          {new Date(o.created_at).toLocaleDateString('vi-VN')}
+                          {new Date(o.created_at).toLocaleDateString(localeStr)}
                         </td>
                       </tr>
                     )
