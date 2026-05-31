@@ -28,6 +28,7 @@ const vi: Dict = {
   'nav.menuClose': 'Đóng menu',
   'nav.langSwitch': 'EN',
   'nav.brandSub': 'Đà Nẵng · since 2018',
+  'nav.brandName': 'Chợ Đêm Sơn Trà',
 
   // Hero
   'hero.pill1': 'Wonders Night Market · Since 2018',
@@ -128,9 +129,11 @@ const vi: Dict = {
   'gallery.section': 'II · KHÔNG GIAN',
   'gallery.title': 'Một đêm ở Sơn Trà',
   'gallery.frame': 'Frame',
-  'gallery.1': 'Toàn cảnh chợ đêm về khuya',
-  'gallery.2': 'Ánh đèn chợ đêm',
-  'gallery.3': 'Khoảnh khắc một đêm',
+  'gallery.1': 'Phố lồng đèn lung linh sắc màu',
+  'gallery.2': 'Tô bún chả nóng hổi vừa thổi vừa ăn',
+  'gallery.3': 'Bếp than đỏ lửa, người đầu bếp tận tâm',
+  'gallery.4': 'Đà Nẵng về đêm bên dòng sông Hàn',
+  'gallery.5': 'Xe bánh mì rong giữa lòng phố cổ',
 
   // Dishes (editorial cards)
   'dishes.section': 'III · ẨM THỰC',
@@ -372,6 +375,8 @@ const vi: Dict = {
   'footer.linkDelete': 'Hướng dẫn xoá dữ liệu',
   'footer.copyright': '© 2026 Chợ Đêm Sơn Trà · Đà Nẵng · dhtcdanang.com',
   'footer.gpkd': 'GPKD: 0401234567 · Sở KH&ĐT Đà Nẵng cấp',
+  'footer.fbLabel': 'Wonders Night Market',
+  'footer.address': 'Lý Nam Đế × Mai Hắc Đế, An Hải Tây, Sơn Trà, Đà Nẵng',
 
   // Simple Navbar wrapper (authenticated shell)
   'navbar.brand': 'DHTC',
@@ -395,43 +400,32 @@ const vi: Dict = {
 
   // Customer marketplace layout — nav
   'cust.nav.home': 'Trang chủ',
-  'cust.nav.shop': 'Mua sắm',
-  'cust.nav.guide': 'Cẩm nang',
-  'cust.nav.contact': 'Liên hệ',
-
-  // Customer marketplace layout — categories
-  'cust.cat.all': 'Tất cả',
-  'cust.cat.coffee': 'Cà phê',
-  'cust.cat.pepper': 'Hồ tiêu',
-  'cust.cat.ginseng': 'Sâm & thảo dược',
-  'cust.cat.driedFruit': 'Trái cây sấy',
-  'cust.cat.honey': 'Mật ong',
-  'cust.cat.fishSauce': 'Nước mắm',
-  'cust.cat.rice': 'Gạo đặc sản',
+  'cust.nav.story': 'Câu chuyện chợ',
+  'cust.nav.visit': 'Ghé chợ',
+  'cust.nav.messenger': 'Nhắn tin',
 
   // Customer marketplace layout — account menu
   'cust.acc.account': 'Tài khoản',
-  'cust.acc.orders': 'Đơn hàng',
   'cust.acc.logout': 'Đăng xuất',
   'cust.acc.login': 'Đăng nhập',
 
   // Customer marketplace layout — footer
-  'cust.foot.brand': 'DHTC Đà Nẵng',
+  'cust.foot.brand': 'Chợ đêm Sơn Trà',
   'cust.foot.tagline':
-    'Nền tảng thương mại nông sản đặc sản Việt Nam, kết nối tiểu thương và khách hàng toàn cầu.',
-  'cust.foot.productsLabel': 'Sản phẩm',
-  'cust.foot.supportLabel': 'Hỗ trợ',
+    'Không gian ẩm thực & văn hoá ven biển Đà Nẵng. Ghé chợ, trò chuyện cùng tiểu thương, và mua trực tiếp tại quầy.',
+  'cust.foot.visitLabel': 'Ghé chợ',
+  'cust.foot.hoursLabel': 'Giờ mở cửa',
+  'cust.foot.hoursValue': '17:00 — 23:00 mỗi ngày',
+  'cust.foot.addressLabel': 'Địa chỉ',
+  'cust.foot.address': 'Đường Mai Hắc Đế, An Hải Tây, Sơn Trà, Đà Nẵng',
   'cust.foot.contactLabel': 'Liên hệ',
-  'cust.foot.product1': 'Cà phê Đắk Lắk',
-  'cust.foot.product2': 'Hồ tiêu Gia Lai',
-  'cust.foot.product3': 'Sâm Ngọc Linh',
-  'cust.foot.product4': 'Mật ong rừng',
-  'cust.foot.support1': 'Chính sách giao hàng',
-  'cust.foot.support2': 'Đổi trả hàng',
-  'cust.foot.support3': 'Thanh toán an toàn',
-  'cust.foot.support4': 'Liên hệ DHTC',
-  'cust.foot.location': 'Đà Nẵng, Việt Nam',
-  'cust.foot.copyright': '© 2026 DHTC Đà Nẵng. All rights reserved.',
+  'cust.foot.messengerCTA': 'Nhắn tin Messenger',
+  'cust.foot.fanpageCTA': 'Fanpage Facebook',
+  'cust.foot.legalLabel': 'Pháp lý',
+  'cust.foot.privacyLink': 'Chính sách riêng tư',
+  'cust.foot.termsLink': 'Điều khoản sử dụng',
+  'cust.foot.dataDeleteLink': 'Yêu cầu xoá dữ liệu',
+  'cust.foot.copyright': '© 2026 Chợ đêm Sơn Trà — Đà Nẵng.',
 
   // Facebook OAuth return page
   'fbReturn.errInvalidState': 'Phiên đăng nhập đã hết hạn hoặc không hợp lệ. Vui lòng thử lại.',
@@ -1689,6 +1683,7 @@ const en: Dict = {
   'nav.menuClose': 'Close menu',
   'nav.langSwitch': 'VI',
   'nav.brandSub': 'Đà Nẵng · since 2018',
+  'nav.brandName': 'Son Tra Night Market',
 
   // Hero
   'hero.pill1': 'Wonders Night Market · Since 2018',
@@ -1789,9 +1784,11 @@ const en: Dict = {
   'gallery.section': 'II · ATMOSPHERE',
   'gallery.title': 'One night in Sơn Trà',
   'gallery.frame': 'Frame',
-  'gallery.1': 'The market at full swing, late night',
-  'gallery.2': 'Lantern light on the stalls',
-  'gallery.3': 'A moment from one evening',
+  'gallery.1': 'Lantern-lit alley, warm and alive',
+  'gallery.2': 'A steaming bowl of bún chả, just-grilled',
+  'gallery.3': 'Charcoal grill, a vendor at her craft',
+  'gallery.4': 'Đà Nẵng skyline mirrored in the Han River',
+  'gallery.5': 'A bánh mì cart weaving through the old quarter',
 
   // Dishes
   'dishes.section': 'III · FLAVORS',
@@ -2033,6 +2030,8 @@ const en: Dict = {
   'footer.linkDelete': 'Data deletion guide',
   'footer.copyright': '© 2026 Sơn Trà Night Market · Đà Nẵng · dhtcdanang.com',
   'footer.gpkd': 'Business license: 0401234567 · Đà Nẵng DPI',
+  'footer.fbLabel': 'Wonders Night Market',
+  'footer.address': 'Lý Nam Đế × Mai Hắc Đế, An Hải Tây, Sơn Trà, Đà Nẵng, Vietnam',
 
   // Simple Navbar wrapper (authenticated shell)
   'navbar.brand': 'DHTC',
@@ -2056,43 +2055,32 @@ const en: Dict = {
 
   // Customer marketplace layout — nav
   'cust.nav.home': 'Home',
-  'cust.nav.shop': 'Shop',
-  'cust.nav.guide': 'Guide',
-  'cust.nav.contact': 'Contact',
-
-  // Customer marketplace layout — categories
-  'cust.cat.all': 'All',
-  'cust.cat.coffee': 'Coffee',
-  'cust.cat.pepper': 'Pepper',
-  'cust.cat.ginseng': 'Ginseng & herbs',
-  'cust.cat.driedFruit': 'Dried fruits',
-  'cust.cat.honey': 'Honey',
-  'cust.cat.fishSauce': 'Fish sauce',
-  'cust.cat.rice': 'Specialty rice',
+  'cust.nav.story': 'Our story',
+  'cust.nav.visit': 'Visit us',
+  'cust.nav.messenger': 'Message',
 
   // Customer marketplace layout — account menu
   'cust.acc.account': 'Account',
-  'cust.acc.orders': 'Orders',
   'cust.acc.logout': 'Sign out',
   'cust.acc.login': 'Sign in',
 
   // Customer marketplace layout — footer
-  'cust.foot.brand': 'DHTC Đà Nẵng',
+  'cust.foot.brand': 'Son Tra Night Market',
   'cust.foot.tagline':
-    'Vietnamese specialty agricultural marketplace, connecting local merchants with global customers.',
-  'cust.foot.productsLabel': 'Products',
-  'cust.foot.supportLabel': 'Support',
+    'A seaside food & culture market in Đà Nẵng. Visit us, chat with vendors, and buy straight from the stall.',
+  'cust.foot.visitLabel': 'Visit us',
+  'cust.foot.hoursLabel': 'Opening hours',
+  'cust.foot.hoursValue': '17:00 — 23:00 daily',
+  'cust.foot.addressLabel': 'Address',
+  'cust.foot.address': 'Mai Hắc Đế St., An Hải Tây, Sơn Trà, Đà Nẵng',
   'cust.foot.contactLabel': 'Contact',
-  'cust.foot.product1': 'Đắk Lắk Coffee',
-  'cust.foot.product2': 'Gia Lai Pepper',
-  'cust.foot.product3': 'Ngọc Linh Ginseng',
-  'cust.foot.product4': 'Wild Forest Honey',
-  'cust.foot.support1': 'Shipping policy',
-  'cust.foot.support2': 'Returns & exchanges',
-  'cust.foot.support3': 'Secure payment',
-  'cust.foot.support4': 'Contact DHTC',
-  'cust.foot.location': 'Đà Nẵng, Vietnam',
-  'cust.foot.copyright': '© 2026 DHTC Đà Nẵng. All rights reserved.',
+  'cust.foot.messengerCTA': 'Chat on Messenger',
+  'cust.foot.fanpageCTA': 'Facebook fanpage',
+  'cust.foot.legalLabel': 'Legal',
+  'cust.foot.privacyLink': 'Privacy policy',
+  'cust.foot.termsLink': 'Terms of use',
+  'cust.foot.dataDeleteLink': 'Data deletion request',
+  'cust.foot.copyright': '© 2026 Son Tra Night Market — Đà Nẵng.',
 
   // Facebook OAuth return page
   'fbReturn.errInvalidState': 'Your sign-in session expired or is invalid. Please try again.',
@@ -3332,14 +3320,13 @@ const en: Dict = {
 export const messages: Record<Lang, Dict> = { vi, en }
 
 export function pickInitialLang(): Lang {
-  if (typeof window === 'undefined') return 'vi'
+  if (typeof window === 'undefined') return 'en'
   try {
     const saved = window.localStorage.getItem('dhtc_lang') as Lang | null
     if (saved === 'vi' || saved === 'en') return saved
   } catch {
     // ignore SSR / private mode
   }
-  const nav = window.navigator?.language?.toLowerCase() || ''
-  // Vietnamese visitors stay in VI by default; everyone else gets EN.
-  return nav.startsWith('vi') ? 'vi' : 'en'
+  // English-first by default. Visitors can switch to VI via the LangSwitcher and the choice is persisted.
+  return 'en'
 }

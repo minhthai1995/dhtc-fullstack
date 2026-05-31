@@ -48,20 +48,23 @@ import { LangSwitcher } from '@/components/LangSwitcher'
 
 const LOGO = '/img/market/cropped-Logo_Food-01-e1693969421521.png'
 
-/* Authentic Chợ Đêm Sơn Trà photos, self-hosted from the legacy WordPress site
- * into /public/img/market. These are low-res interim shots and will be swapped
- * for the owner's high-res originals — see frontend/PHOTOS-NEEDED.md. */
-const IMG_LIGHTS = '/img/market/anhsang1.jpg' // heart-light installation at night
-const IMG_ENTRANCE = '/img/market/091704-cho-dem-son-tra.jpg' // main entrance arch
-const IMG_OPENING = '/img/market/1-1552259562.jpg' // 2018 opening day
+const IMG_HERO_BRIDGE = '/img/market/hero-dragon-bridge-night.jpg'
+const IMG_HERO_SKYLINE = '/img/market/hero-danang-skyline.jpg'
+const IMG_HERO_RIVER = '/img/market/hero-danang-bridge-river.jpg'
+const IMG_STORY = '/img/market/story-lantern-market.jpg'
+const IMG_GALLERY_NOODLE = '/img/market/gallery-1-noodle-bowl.jpg'
+const IMG_GALLERY_LANTERN = '/img/market/gallery-2-lantern-stalls.jpg'
+const IMG_GALLERY_GRILL = '/img/market/gallery-3-grill-vendor.jpg'
+const IMG_GALLERY_RIVER = '/img/market/gallery-4-danang-river.jpg'
+const IMG_GALLERY_STALL = '/img/market/gallery-5-food-stall.jpg'
 
 const HERO_SLIDES = [
-  { src: IMG_LIGHTS, altKey: 'hero.slide1.alt' },
-  { src: IMG_ENTRANCE, altKey: 'hero.slide2.alt' },
-  { src: IMG_OPENING, altKey: 'hero.slide3.alt' },
+  { src: IMG_HERO_BRIDGE, altKey: 'hero.slide1.alt' },
+  { src: IMG_HERO_SKYLINE, altKey: 'hero.slide2.alt' },
+  { src: IMG_HERO_RIVER, altKey: 'hero.slide3.alt' },
 ]
 
-const STORY_IMG = IMG_OPENING
+const STORY_IMG = IMG_STORY
 
 // ─── Static structural data (text comes from i18n) ─────────────────────────
 
@@ -83,27 +86,29 @@ const statsMeta = [
 ] as const
 
 const gallery = [
-  { src: IMG_ENTRANCE, key: 'gallery.1', span: 'col-span-2 md:col-span-2 md:row-span-2', w: 771, h: 516 },
-  { src: IMG_LIGHTS, key: 'gallery.2', span: 'md:col-span-2', w: 700, h: 394 },
-  { src: IMG_OPENING, key: 'gallery.3', span: 'md:col-span-2', w: 1024, h: 492 },
+  { src: IMG_GALLERY_LANTERN, key: 'gallery.1', span: 'col-span-2 md:col-span-2 md:row-span-2', w: 1600, h: 2400 },
+  { src: IMG_GALLERY_NOODLE, key: 'gallery.2', span: 'md:col-span-2', w: 1600, h: 1067 },
+  { src: IMG_GALLERY_GRILL, key: 'gallery.3', span: 'md:col-span-2', w: 1600, h: 1068 },
+  { src: IMG_GALLERY_RIVER, key: 'gallery.4', span: 'md:col-span-2', w: 1600, h: 1067 },
+  { src: IMG_GALLERY_STALL, key: 'gallery.5', span: 'md:col-span-2', w: 1600, h: 2400 },
 ]
 
 const dishMeta = [
-  { n: 1, Icon: Flame },
-  { n: 2, Icon: Soup },
-  { n: 3, Icon: Egg },
-  { n: 4, Icon: Cookie },
-  { n: 5, Icon: Shell },
-  { n: 6, Icon: Fish },
-  { n: 7, Icon: IceCream },
-  { n: 8, Icon: Gift },
+  { n: 1, Icon: Flame,    img: '/img/market/dish-1-banh-trang-nuong.jpg' },
+  { n: 2, Icon: Soup,     img: '/img/market/dish-2-mi-quang.jpg' },
+  { n: 3, Icon: Egg,      img: '/img/market/dish-3-banh-xeo.jpg' },
+  { n: 4, Icon: Cookie,   img: '/img/market/dish-4-banh-beo.jpg' },
+  { n: 5, Icon: Shell,    img: '/img/market/dish-5-oc.jpg' },
+  { n: 6, Icon: Fish,     img: '/img/market/dish-6-hai-san-nuong.jpg' },
+  { n: 7, Icon: IceCream, img: '/img/market/dish-7-kem-bo.jpg' },
+  { n: 8, Icon: Gift,     img: '/img/market/dish-8-hai-san-kho.jpg' },
 ] as const
 
 const zonesMeta = [
-  { code: 'A', Icon: Utensils },
-  { code: 'B', Icon: Gift },
-  { code: 'C', Icon: Briefcase },
-  { code: 'D', Icon: Shirt },
+  { code: 'A', Icon: Utensils,  img: IMG_GALLERY_GRILL,   tint: 'rgba(201,107,32,0.55)'  },
+  { code: 'B', Icon: Gift,      img: IMG_GALLERY_LANTERN, tint: 'rgba(139,38,53,0.55)'   },
+  { code: 'C', Icon: Briefcase, img: IMG_GALLERY_STALL,   tint: 'rgba(45,106,79,0.55)'   },
+  { code: 'D', Icon: Shirt,     img: IMG_GALLERY_RIVER,   tint: 'rgba(38,30,18,0.55)'    },
 ] as const
 
 const eventsMeta = [
@@ -116,12 +121,12 @@ const eventsMeta = [
 ] as const
 
 const testimonials = [
-  { n: 1, name: 'Erico T.',    flag: '🇸🇬', source: 'Tripadvisor' },
-  { n: 2, name: 'Silvia C.',   flag: '🇮🇹', source: 'Tripadvisor' },
-  { n: 3, name: 'Pek Jenny',   flag: '🇸🇬', source: 'Tripadvisor' },
-  { n: 4, name: 'Minh Hoàng',  flag: '🇻🇳', source: 'Google Maps' },
-  { n: 5, name: 'Trần Thu Hà', flag: '🇻🇳', source: 'Google Maps' },
-  { n: 6, name: 'Sarah K.',    flag: '🇦🇺', source: 'Tripadvisor' },
+  { n: 1, name: 'Erico T.',    flag: '🇸🇬', source: 'Tripadvisor', img: IMG_GALLERY_GRILL,   tint: 'rgba(139,38,53,0.45)'  },
+  { n: 2, name: 'Silvia C.',   flag: '🇮🇹', source: 'Tripadvisor', img: IMG_GALLERY_LANTERN, tint: 'rgba(201,107,32,0.40)' },
+  { n: 3, name: 'Pek Jenny',   flag: '🇸🇬', source: 'Tripadvisor', img: '/img/market/dish-2-mi-quang.jpg', tint: 'rgba(45,106,79,0.45)' },
+  { n: 4, name: 'Minh Hoàng',  flag: '🇻🇳', source: 'Google Maps', img: IMG_GALLERY_RIVER,   tint: 'rgba(38,30,18,0.55)'   },
+  { n: 5, name: 'Trần Thu Hà', flag: '🇻🇳', source: 'Google Maps', img: IMG_GALLERY_STALL,   tint: 'rgba(201,169,97,0.35)' },
+  { n: 6, name: 'Sarah K.',    flag: '🇦🇺', source: 'Tripadvisor', img: IMG_GALLERY_NOODLE,  tint: 'rgba(45,106,79,0.40)'  },
 ] as const
 
 const tipsMeta = [1, 2, 3, 4, 5, 6] as const
@@ -380,7 +385,7 @@ export function Landing() {
           <Link to="/" className="flex items-center gap-2.5 sm:gap-3 no-underline text-ink shrink-0">
             <img
               src={LOGO}
-              alt="Chợ Đêm Sơn Trà"
+              alt={t('nav.brandName')}
               width={44}
               height={44}
               className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl object-contain bg-white p-1 border border-border"
@@ -391,7 +396,7 @@ export function Landing() {
                 className="block text-[14px] sm:text-[15px] font-semibold tracking-tight leading-tight"
                 style={{ fontFamily: 'var(--font-display)' }}
               >
-                Chợ Đêm Sơn Trà
+                {t('nav.brandName')}
               </strong>
               <span className="text-[9px] sm:text-[9.5px] text-ink-mute uppercase tracking-[0.15em] sm:tracking-[0.18em] font-semibold">
                 {t('nav.brandSub')}
@@ -415,7 +420,7 @@ export function Landing() {
           <div className="flex items-center gap-2">
             <LangSwitcher className="hidden sm:inline-flex" />
             <a
-              href="https://m.me/NightMarketSonTraDaNangVietNam"
+              href="https://m.me/sontra.night.market.danang"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden sm:inline-flex px-3.5 sm:px-4 py-2 border border-ink/15 hover:border-ink text-ink text-[13px] font-semibold rounded-xl transition-colors no-underline items-center gap-1.5"
@@ -429,7 +434,7 @@ export function Landing() {
               aria-label={mobileOpen ? t('nav.menuClose') : t('nav.menuOpen')}
               aria-expanded={mobileOpen}
               onClick={() => setMobileOpen((o) => !o)}
-              className="lg:hidden w-10 h-10 inline-flex items-center justify-center rounded-xl border border-border bg-white text-ink hover:bg-cream transition-colors"
+              className="lg:hidden w-11 h-11 sm:w-10 sm:h-10 inline-flex items-center justify-center rounded-xl border border-border bg-white text-ink hover:bg-cream transition-colors"
             >
               {mobileOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -456,7 +461,7 @@ export function Landing() {
               </li>
               <li className="col-span-2 pt-1">
                 <a
-                  href="https://m.me/NightMarketSonTraDaNangVietNam"
+                  href="https://m.me/sontra.night.market.danang"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setMobileOpen(false)}
@@ -528,7 +533,7 @@ export function Landing() {
               className="font-normal text-cream leading-[1.02] sm:leading-[0.98] tracking-[-0.025em] mb-5 sm:mb-6"
               style={{
                 fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(38px, 7.5vw, 96px)',
+                fontSize: 'clamp(32px, 7.5vw, 96px)',
               }}
               data-reveal
             >
@@ -562,7 +567,7 @@ export function Landing() {
             </div>
 
             <div
-              className="grid grid-cols-3 pt-6 sm:pt-8 border-t border-cream/15 max-w-[700px] divide-x divide-cream/10"
+              className="grid grid-cols-3 pt-5 sm:pt-8 border-t border-cream/15 max-w-full sm:max-w-[700px] divide-x divide-cream/10"
               data-reveal
             >
               {heroFacts.map((n, idx) => (
@@ -753,7 +758,7 @@ export function Landing() {
                 loading="lazy"
                 decoding="async"
               />
-              <div className="absolute -bottom-6 -right-2 sm:-right-6 bg-white border border-border rounded-2xl px-4 sm:px-5 py-3 sm:py-4 shadow-[0_20px_40px_-16px_rgba(0,0,0,0.15)] max-w-[240px]">
+              <div className="absolute -bottom-4 -right-1 sm:-bottom-6 sm:-right-6 bg-white border border-border rounded-2xl px-3.5 sm:px-5 py-3 sm:py-4 shadow-[0_20px_40px_-16px_rgba(0,0,0,0.15)] max-w-[210px] sm:max-w-[240px]">
                 <div
                   className="text-[10px] uppercase tracking-[0.18em] font-bold text-gold-deep mb-1.5"
                   style={{ fontFamily: 'var(--font-mono)' }}
@@ -968,49 +973,61 @@ export function Landing() {
             {dishMeta.map((d) => (
               <li
                 key={d.n}
-                className="bg-white border border-border rounded-2xl p-5 sm:p-6 flex flex-col gap-4 group hover:border-gold/60 hover:shadow-[0_18px_36px_-22px_rgba(15,25,20,0.25)] transition-all"
+                className="bg-white border border-border rounded-2xl overflow-hidden flex flex-col group hover:border-gold/60 hover:shadow-[0_18px_36px_-22px_rgba(15,25,20,0.25)] transition-all"
                 data-reveal
               >
-                <div className="flex items-start justify-between">
+                <div className="relative aspect-[4/3] overflow-hidden bg-cream-dark">
+                  <img
+                    src={d.img}
+                    alt={t(`dish.${d.n}.name`)}
+                    width={1200}
+                    height={900}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.06]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent pointer-events-none" />
                   <span
-                    className="text-[36px] sm:text-[44px] font-normal text-gold-deep tabular-nums leading-none"
+                    className="absolute top-3 left-3 inline-flex items-center justify-center min-w-[36px] h-9 px-2 rounded-lg bg-white/95 backdrop-blur text-green-deep text-[15px] font-semibold tabular-nums"
                     style={{ fontFamily: 'var(--font-display)' }}
                     aria-hidden
                   >
                     {String(d.n).padStart(2, '0')}
                   </span>
-                  <span className="inline-flex items-center justify-center w-11 h-11 rounded-xl bg-cream-dark text-green-deep group-hover:bg-gold/15 group-hover:text-gold-deep transition-colors">
-                    <d.Icon size={20} strokeWidth={1.5} />
+                  <span className="absolute top-3 right-3 inline-flex items-center justify-center w-9 h-9 rounded-lg bg-white/95 backdrop-blur text-green-deep group-hover:text-gold-deep transition-colors">
+                    <d.Icon size={18} strokeWidth={1.5} />
                   </span>
                 </div>
-                <h3
-                  className="text-[18px] sm:text-[20px] font-medium tracking-tight leading-tight m-0"
-                  style={{ fontFamily: 'var(--font-display)' }}
-                >
-                  {t(`dish.${d.n}.name`)}
-                </h3>
-                <p className="text-[13px] text-ink-soft leading-relaxed m-0 flex-1">{t(`dish.${d.n}.desc`)}</p>
-                <div className="pt-3 border-t border-border flex items-baseline justify-between gap-3">
-                  <div>
-                    <div
-                      className="text-[10px] uppercase tracking-[0.14em] text-ink-mute font-semibold"
-                      style={{ fontFamily: 'var(--font-mono)' }}
-                    >
-                      {t('dishes.priceLabel')}
-                    </div>
-                    <div
-                      className="text-[16px] sm:text-[17px] font-semibold text-green-deep tabular-nums"
-                      style={{ fontFamily: 'var(--font-mono)' }}
-                    >
-                      {t(`dish.${d.n}.price`)}đ
-                    </div>
-                  </div>
-                  <span
-                    className="text-[10.5px] uppercase tracking-[0.12em] text-gold-deep font-semibold text-right"
-                    style={{ fontFamily: 'var(--font-mono)' }}
+                <div className="p-5 sm:p-5 flex flex-col gap-3 flex-1">
+                  <h3
+                    className="text-[17px] sm:text-[18px] font-medium tracking-tight leading-tight m-0"
+                    style={{ fontFamily: 'var(--font-display)' }}
                   >
-                    {t(`dish.${d.n}.tag`)}
-                  </span>
+                    {t(`dish.${d.n}.name`)}
+                  </h3>
+                  <p className="text-[13px] text-ink-soft leading-relaxed m-0 flex-1">{t(`dish.${d.n}.desc`)}</p>
+                  <div className="pt-3 border-t border-border flex items-baseline justify-between gap-3">
+                    <div>
+                      <div
+                        className="text-[10px] uppercase tracking-[0.14em] text-ink-mute font-semibold"
+                        style={{ fontFamily: 'var(--font-mono)' }}
+                      >
+                        {t('dishes.priceLabel')}
+                      </div>
+                      <div
+                        className="text-[16px] sm:text-[17px] font-semibold text-green-deep tabular-nums"
+                        style={{ fontFamily: 'var(--font-mono)' }}
+                      >
+                        {t(`dish.${d.n}.price`)}đ
+                      </div>
+                    </div>
+                    <span
+                      className="text-[10.5px] uppercase tracking-[0.12em] text-gold-deep font-semibold text-right"
+                      style={{ fontFamily: 'var(--font-mono)' }}
+                    >
+                      {t(`dish.${d.n}.tag`)}
+                    </span>
+                  </div>
                 </div>
               </li>
             ))}
@@ -1081,24 +1098,44 @@ export function Landing() {
                 style={{ background: 'rgba(245,239,224,0.04)' }}
                 data-reveal
               >
-                <div
-                  className="relative aspect-[4/3] overflow-hidden"
-                  style={{ background: 'linear-gradient(135deg, var(--color-green) 0%, var(--color-green-deep) 100%)' }}
-                >
+                <div className="relative aspect-[4/3] overflow-hidden bg-green-deep">
+                  <img
+                    src={z.img}
+                    alt={t(`zone.${z.code}.name`)}
+                    width={1600}
+                    height={1200}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+                  />
+                  {/* Tinted overlay per zone for variety + readability */}
+                  <div
+                    className="absolute inset-0 mix-blend-multiply"
+                    style={{ background: z.tint }}
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="absolute inset-0"
+                    style={{
+                      background:
+                        'linear-gradient(180deg, rgba(10,18,14,0.05) 0%, rgba(10,18,14,0.30) 60%, rgba(10,18,14,0.85) 100%)',
+                    }}
+                    aria-hidden="true"
+                  />
                   <span
-                    className="absolute -right-3 -bottom-6 text-cream/10 font-normal leading-none select-none pointer-events-none transition-transform duration-500 group-hover:scale-105"
+                    className="absolute -right-3 -bottom-8 text-cream/15 font-normal leading-none select-none pointer-events-none transition-transform duration-500 group-hover:scale-105"
                     style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(120px, 16vw, 180px)' }}
                     aria-hidden="true"
                   >
                     {z.code}
                   </span>
                   <div
-                    className="absolute top-3 left-3 w-10 h-10 rounded-xl bg-gold flex items-center justify-center text-ink font-bold text-base"
+                    className="absolute top-3 left-3 w-10 h-10 rounded-xl bg-gold flex items-center justify-center text-ink font-bold text-base shadow-[0_8px_20px_-8px_rgba(0,0,0,0.5)]"
                     style={{ fontFamily: 'var(--font-display)' }}
                   >
                     {z.code}
                   </div>
-                  <div className="absolute top-3 right-3 w-9 h-9 rounded-lg bg-cream/95 flex items-center justify-center text-green">
+                  <div className="absolute top-3 right-3 w-9 h-9 rounded-lg bg-cream/95 flex items-center justify-center text-green shadow-[0_8px_20px_-8px_rgba(0,0,0,0.4)]">
                     <z.Icon size={22} />
                   </div>
                 </div>
@@ -1126,7 +1163,7 @@ export function Landing() {
 
           <div className="mt-8 sm:mt-10 text-center">
             <a
-              href="https://www.facebook.com/NightMarketSonTraDaNangVietNam/"
+              href="https://www.facebook.com/sontra.night.market.danang/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 sm:px-6 py-3 bg-gold text-ink text-[13px] sm:text-sm font-semibold rounded-xl hover:bg-cream transition-colors no-underline"
@@ -1237,41 +1274,68 @@ export function Landing() {
                 .toUpperCase()
               return (
                 <li key={tt.n} data-reveal>
-                  <article className="group h-full bg-white border border-border rounded-2xl p-7 sm:p-8 flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_-22px_rgba(38,30,18,0.28)] hover:border-gold/40">
-                    {/* Header: stars + source */}
-                    <div className="flex items-center justify-between mb-5">
+                  <article className="group h-full bg-white border border-border rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_-22px_rgba(38,30,18,0.28)] hover:border-gold/40">
+                    {/* Scene strip — mood photo per testimonial */}
+                    <div className="relative h-24 sm:h-28 overflow-hidden bg-ink">
+                      <img
+                        src={tt.img}
+                        alt=""
+                        width={1600}
+                        height={400}
+                        loading="lazy"
+                        decoding="async"
+                        aria-hidden="true"
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.06]"
+                      />
                       <div
-                        className="inline-flex items-center gap-0.5 text-gold"
-                        aria-label="5 / 5"
-                      >
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <Star key={s} size={14} className="fill-current" />
-                        ))}
+                        className="absolute inset-0 mix-blend-multiply"
+                        style={{ background: tt.tint }}
+                        aria-hidden="true"
+                      />
+                      <div
+                        className="absolute inset-0"
+                        style={{
+                          background:
+                            'linear-gradient(180deg, rgba(10,18,14,0.10) 0%, rgba(10,18,14,0.55) 100%)',
+                        }}
+                        aria-hidden="true"
+                      />
+                      {/* Stars + source ride the scene strip */}
+                      <div className="absolute inset-x-4 sm:inset-x-5 bottom-3 flex items-end justify-between">
+                        <div
+                          className="inline-flex items-center gap-0.5 text-gold drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]"
+                          aria-label="5 / 5"
+                        >
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star key={s} size={13} className="fill-current" />
+                          ))}
+                        </div>
+                        <span
+                          className="text-[9.5px] uppercase tracking-[0.18em] font-bold text-cream/95 bg-ink/55 backdrop-blur-sm px-2 py-1 rounded-md"
+                          style={{ fontFamily: 'var(--font-mono)' }}
+                        >
+                          {tt.source}
+                        </span>
                       </div>
-                      <span
-                        className="text-[10px] uppercase tracking-[0.16em] font-bold text-ink-mute"
-                        style={{ fontFamily: 'var(--font-mono)' }}
-                      >
-                        {tt.source}
-                      </span>
                     </div>
 
-                    {/* Quote */}
-                    <blockquote
-                      className="m-0 mb-7 flex-1 text-[15px] sm:text-[16px] text-ink leading-[1.55] relative"
-                      style={{ fontFamily: 'var(--font-display)' }}
-                    >
-                      <span className="text-gold-deep mr-1" style={{ opacity: 0.55 }} aria-hidden>
-                        “
-                      </span>
-                      {t(`testi.${tt.n}.quote`)}
-                      <span className="text-gold-deep ml-0.5" style={{ opacity: 0.55 }} aria-hidden>
-                        ”
-                      </span>
-                    </blockquote>
+                    {/* Body */}
+                    <div className="p-6 sm:p-7 flex flex-col flex-1">
+                      <blockquote
+                        className="m-0 mb-6 flex-1 text-[15px] sm:text-[16px] text-ink leading-[1.55] relative"
+                        style={{ fontFamily: 'var(--font-display)' }}
+                      >
+                        <span className="text-gold-deep mr-1" style={{ opacity: 0.55 }} aria-hidden>
+                          “
+                        </span>
+                        {t(`testi.${tt.n}.quote`)}
+                        <span className="text-gold-deep ml-0.5" style={{ opacity: 0.55 }} aria-hidden>
+                          ”
+                        </span>
+                      </blockquote>
 
-                    {/* Author */}
-                    <footer className="flex items-center gap-3 pt-5 border-t border-border/70 m-0">
+                      {/* Author */}
+                      <footer className="flex items-center gap-3 pt-4 border-t border-border/70 m-0">
                       <div
                         className="w-10 h-10 rounded-full bg-cream-dark border border-border flex items-center justify-center text-[12.5px] font-bold text-gold-deep shrink-0"
                         style={{ fontFamily: 'var(--font-display)' }}
@@ -1291,7 +1355,8 @@ export function Landing() {
                           <span>{t(`testi.${tt.n}.country`)}</span>
                         </div>
                       </div>
-                    </footer>
+                      </footer>
+                    </div>
                   </article>
                 </li>
               )
@@ -1321,7 +1386,7 @@ export function Landing() {
               {tipsMeta.map((n) => (
                 <li
                   key={n}
-                  className="grid grid-cols-[44px_1fr] sm:grid-cols-[68px_1fr] gap-4 sm:gap-6 py-6 sm:py-7"
+                  className="grid grid-cols-[40px_1fr] sm:grid-cols-[68px_1fr] gap-3.5 sm:gap-6 py-5 sm:py-7"
                   data-reveal
                 >
                   <span
@@ -1518,7 +1583,7 @@ export function Landing() {
             </p>
             <div className="flex flex-wrap gap-3">
               <a
-                href="https://www.facebook.com/NightMarketSonTraDaNangVietNam/"
+                href="https://www.facebook.com/sontra.night.market.danang/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-5 sm:px-6 py-3 sm:py-3.5 bg-gold text-ink text-[13px] sm:text-sm font-semibold rounded-xl hover:bg-cream transition-colors no-underline inline-flex items-center gap-2"
@@ -1716,7 +1781,7 @@ export function Landing() {
               <div className="flex items-center gap-3 mb-4">
                 <img
                   src={LOGO}
-                  alt="Chợ Đêm Sơn Trà"
+                  alt={t('nav.brandName')}
                   width={40}
                   height={40}
                   className="w-10 h-10 rounded-lg object-contain bg-white p-1 border border-cream/15"
@@ -1726,19 +1791,19 @@ export function Landing() {
                   className="text-[16px] sm:text-[17px] font-semibold"
                   style={{ fontFamily: 'var(--font-display)' }}
                 >
-                  Chợ Đêm Sơn Trà
+                  {t('nav.brandName')}
                 </strong>
               </div>
               <p className="text-[12.5px] sm:text-[13px] text-cream/60 leading-relaxed mb-4 sm:mb-5">
                 {t('footer.brandDesc')}
               </p>
               <a
-                href="https://www.facebook.com/NightMarketSonTraDaNangVietNam/"
+                href="https://www.facebook.com/sontra.night.market.danang/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-3.5 py-2 bg-cream/10 hover:bg-cream/15 rounded-lg text-[12.5px] font-semibold no-underline text-cream transition-colors"
               >
-                <Facebook size={14} /> Wonders Night Market
+                <Facebook size={14} /> {t('footer.fbLabel')}
               </a>
             </div>
 
@@ -1803,7 +1868,7 @@ export function Landing() {
                 </li>
                 <li className="flex items-start gap-2">
                   <MapPin size={13} className="mt-1 text-gold shrink-0" />
-                  <span>Lý Nam Đế × Mai Hắc Đế, An Hải Tây, Sơn Trà, Đà Nẵng</span>
+                  <span>{t('footer.address')}</span>
                 </li>
               </ul>
               <ul className="space-y-2 text-[12px] sm:text-[12.5px] text-cream/60 list-none m-0 p-0">
