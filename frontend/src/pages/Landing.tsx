@@ -326,6 +326,51 @@ export function Landing() {
     }
   }, [lang])
 
+  // Timeline scroll-driven progress: gold trail fills as user scrolls through
+  // the events section, and each node lights up when it crosses viewport center.
+  const timelineRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const root = timelineRef.current
+    if (!root) return
+    const nodes = root.querySelectorAll<HTMLElement>('[data-tl-node]')
+    let io: IntersectionObserver | null = null
+    if (typeof IntersectionObserver !== 'undefined' && nodes.length) {
+      io = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add('is-active')
+            }
+          })
+        },
+        { threshold: 0.55, rootMargin: '0px 0px -25% 0px' },
+      )
+      nodes.forEach((n) => io!.observe(n))
+    } else {
+      nodes.forEach((n) => n.classList.add('is-active'))
+    }
+    let raf = 0
+    const onScroll = () => {
+      if (raf) return
+      raf = window.requestAnimationFrame(() => {
+        const rect = root.getBoundingClientRect()
+        const vh = window.innerHeight
+        const span = Math.max(1, rect.height * 0.78)
+        const traveled = vh * 0.72 - rect.top
+        const p = Math.max(0, Math.min(1, traveled / span))
+        root.style.setProperty('--tl-progress', p.toString())
+        raf = 0
+      })
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      io?.disconnect()
+      window.removeEventListener('scroll', onScroll)
+      if (raf) window.cancelAnimationFrame(raf)
+    }
+  }, [lang])
+
   const nextHero = () => setHeroSlide((s) => (s + 1) % HERO_SLIDES.length)
   const prevHero = () => setHeroSlide((s) => (s - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)
 
@@ -346,6 +391,23 @@ export function Landing() {
         @keyframes dhtc-kenburns{0%{transform:scale(1.04) translateY(0)}100%{transform:scale(1.12) translateY(-1.5%)}}
         .dhtc-kenburns-active{animation:dhtc-kenburns 9s ease-out forwards}
         @media (prefers-reduced-motion: reduce){.dhtc-kenburns-active{animation:none;transform:none}}
+        /* Scroll-driven timeline */
+        [data-tl-root]{--tl-progress:0}
+        .tl-track-base{background:var(--color-border)}
+        .tl-track-fill{transform-origin:top;transform:scaleY(var(--tl-progress));transition:transform 120ms linear;background:linear-gradient(180deg,var(--color-gold) 0%,var(--color-gold-deep) 100%)}
+        [data-tl-node]{transition:opacity 500ms ease,transform 600ms cubic-bezier(.2,.7,.2,1)}
+        [data-tl-node]:not(.is-active){opacity:.45;transform:translateY(8px)}
+        [data-tl-node].is-active{opacity:1;transform:translateY(0)}
+        .tl-badge{transition:background 380ms ease,color 380ms ease,transform 380ms ease,box-shadow 380ms ease,border-color 380ms ease}
+        [data-tl-node].is-active .tl-badge{background:var(--color-gold);color:var(--color-ink);transform:scale(1.06);border-color:var(--color-gold);box-shadow:0 12px 28px -10px rgba(201,169,97,0.55)}
+        .tl-time{transition:color 380ms ease,letter-spacing 380ms ease}
+        [data-tl-node].is-active .tl-time{color:var(--color-gold-deep)}
+        .tl-pulse{opacity:0;transform:scale(.6);transition:opacity 500ms ease,transform 700ms ease}
+        [data-tl-node].is-active .tl-pulse{opacity:1;transform:scale(1)}
+        @media (prefers-reduced-motion: reduce){
+          .tl-track-fill{transform:scaleY(1);transition:none}
+          [data-tl-node]{opacity:1;transform:none;transition:none}
+        }
       `}</style>
 
       {/* Scroll progress bar */}
@@ -1184,18 +1246,49 @@ export function Landing() {
             {t('events.sub')}
           </p>
 
-          <div className="bg-white border border-border rounded-3xl p-5 sm:p-6 lg:p-10" data-reveal>
-            <ol className="relative space-y-6 sm:space-y-7 list-none m-0 p-0">
-              <div className="absolute left-[22px] sm:left-[26px] top-3 bottom-3 w-px bg-border" aria-hidden />
+          <div
+            ref={timelineRef}
+            data-tl-root
+            className="relative bg-white border border-border rounded-3xl p-5 sm:p-6 lg:p-10 overflow-hidden"
+            data-reveal
+          >
+            {/* Decorative numerals fading in the background */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute -right-4 -top-6 text-cream-dark/60 leading-none select-none"
+              style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(140px, 18vw, 240px)' }}
+            >
+              {eventsMeta.length}
+            </span>
+
+            <ol className="relative space-y-7 sm:space-y-8 list-none m-0 p-0">
+              {/* Track: base + gold fill that grows with scroll progress */}
+              <div
+                className="tl-track-base absolute left-[22px] sm:left-[26px] top-3 bottom-3 w-px"
+                aria-hidden
+              />
+              <div
+                className="tl-track-fill absolute left-[22px] sm:left-[26px] top-3 bottom-3 w-[2px] -ml-px"
+                aria-hidden
+              />
 
               {eventsMeta.map((e) => (
-                <li key={e.n} className="relative pl-12 sm:pl-16">
-                  <div className="absolute left-0 top-0 w-11 h-11 sm:w-[52px] sm:h-[52px] rounded-full bg-cream border border-border flex items-center justify-center text-green">
+                <li
+                  key={e.n}
+                  data-tl-node
+                  className="relative pl-12 sm:pl-16"
+                >
+                  {/* Outer pulse ring that pops when node is active */}
+                  <span
+                    aria-hidden
+                    className="tl-pulse absolute left-0 top-0 w-11 h-11 sm:w-[52px] sm:h-[52px] rounded-full border-2 border-gold/40"
+                  />
+                  <div className="tl-badge absolute left-0 top-0 w-11 h-11 sm:w-[52px] sm:h-[52px] rounded-full bg-cream border border-border flex items-center justify-center text-green">
                     <e.Icon size={18} />
                   </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 mb-1.5">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-4 mb-1.5">
                     <span
-                      className="text-[11px] sm:text-[12px] text-gold-deep font-bold tracking-[0.08em] uppercase"
+                      className="tl-time text-[11px] sm:text-[12px] text-ink-mute font-bold tracking-[0.08em] uppercase"
                       style={{ fontFamily: 'var(--font-mono)' }}
                     >
                       {t(`event.${e.n}.time`)}
@@ -1265,15 +1358,21 @@ export function Landing() {
 
           {/* Card grid */}
           <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 list-none m-0 p-0">
-            {testimonials.map((tt) => {
+            {testimonials.map((tt, idx) => {
               const initials = tt.name
                 .split(' ')
                 .map((p) => p[0])
                 .join('')
                 .slice(0, 2)
                 .toUpperCase()
+              const offset = idx % 3 === 1 ? 'lg:translate-y-6' : idx % 3 === 2 ? 'lg:translate-y-3' : ''
               return (
-                <li key={tt.n} data-reveal>
+                <li
+                  key={tt.n}
+                  data-reveal
+                  className={offset}
+                  style={{ transitionDelay: `${(idx % 3) * 110}ms` }}
+                >
                   <article className="group h-full bg-white border border-border rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_-22px_rgba(38,30,18,0.28)] hover:border-gold/40">
                     {/* Scene strip — mood photo per testimonial */}
                     <div className="relative h-24 sm:h-28 overflow-hidden bg-ink">
