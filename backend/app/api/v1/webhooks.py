@@ -510,6 +510,6 @@ async def facebook_data_deletion(
 
     confirmation_code = await _delete_fb_user_data(db, fb_user_id)
     status_url = (
-        f"{settings.FRONTEND_URL}/privacy/data-deletion?code={confirmation_code}"
+        f"{settings.FRONTEND_URL}/data-deletion?code={confirmation_code}"
     )
     return {"url": status_url, "confirmation_code": confirmation_code}
