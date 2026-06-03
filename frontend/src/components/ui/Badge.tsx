@@ -1,6 +1,6 @@
 import { cn } from '@/lib/cn'
 
-type BadgeVariant =
+export type BadgeVariant =
   | 'processing'
   | 'shipped'
   | 'delivered'
@@ -21,17 +21,17 @@ interface BadgeProps {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  processing: 'bg-blue-50 text-blue-700 border-blue-200',
-  shipped: 'bg-purple-50 text-purple-700 border-purple-200',
+  processing: 'bg-gold/10 text-gold-deep border-gold/20',
+  shipped: 'bg-ink/10 text-ink-soft border-border',
   delivered: 'bg-green/10 text-green border-green/20',
   verified: 'bg-green/10 text-green border-green/20',
   active: 'bg-green/10 text-green border-green/20',
-  pending: 'bg-amber-50 text-amber-700 border-amber-200',
-  cancelled: 'bg-red-50 text-red-600 border-red-200',
-  suspended: 'bg-red-50 text-red-600 border-red-200',
+  pending: 'bg-warning/10 text-warning border-warning/20',
+  cancelled: 'bg-danger/10 text-danger border-danger/20',
+  suspended: 'bg-danger/10 text-danger border-danger/20',
   gold: 'bg-gold/15 text-gold-deep border-gold/30',
-  silver: 'bg-gray-100 text-gray-600 border-gray-200',
-  bronze: 'bg-orange-50 text-orange-700 border-orange-200',
+  silver: 'bg-cream-dark text-ink-mute border-border',
+  bronze: 'bg-gold/8 text-gold-deep border-gold/15',
   default: 'bg-cream-dark text-ink-soft border-border',
 }
 

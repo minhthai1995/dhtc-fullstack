@@ -1,11 +1,20 @@
 from __future__ import annotations
 
+import re
+import uuid
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.product import Product, ProductStatus
 from app.schemas.product import ProductCreate, ProductUpdate
+
+
+def _auto_slug(name: str) -> str:
+    s = re.sub(r'[^\w\s-]', '', name.lower()).strip()
+    s = re.sub(r'[\s_-]+', '-', s)
+    return f"{s}-{uuid.uuid4().hex[:6]}"
 
 
 async def get_by_id(db: AsyncSession, product_id: int) -> Product | None:
@@ -140,7 +149,10 @@ async def get_all(
 
 
 async def create(db: AsyncSession, merchant_id: int, data: ProductCreate) -> Product:
-    product = Product(merchant_id=merchant_id, **data.model_dump())
+    data_dict = data.model_dump()
+    if not data_dict.get('slug'):
+        data_dict['slug'] = _auto_slug(data_dict['name_vi'])
+    product = Product(merchant_id=merchant_id, **data_dict)
     db.add(product)
     await db.commit()
     await db.refresh(product)

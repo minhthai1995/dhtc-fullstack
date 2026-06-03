@@ -19,14 +19,15 @@ import {
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useNotificationSocket } from '@/lib/useNotificationSocket'
 import { useT } from '@/i18n/useT'
+import { useSellerDashboard, useSellerProfile } from '@/features/seller/useSeller'
 
 const navGroups = [
   {
     labelKey: 'sellerLayout.groupSales',
     items: [
       { labelKey: 'sellerLayout.navDashboard', href: '/seller/dashboard', icon: <LayoutDashboard size={18} /> },
-      { labelKey: 'sellerLayout.navProducts', href: '/seller/products', icon: <Package size={18} />, badge: '8' },
-      { labelKey: 'sellerLayout.navOrders', href: '/seller/orders', icon: <ShoppingCart size={18} />, badge: '14' },
+      { labelKey: 'sellerLayout.navProducts', href: '/seller/products', icon: <Package size={18} /> },
+      { labelKey: 'sellerLayout.navOrders', href: '/seller/orders', icon: <ShoppingCart size={18} /> },
       { labelKey: 'sellerLayout.navReturns', href: '/seller/returns', icon: <RotateCcw size={18} /> },
       { labelKey: 'sellerLayout.navPromotions', href: '/seller/promotions', icon: <Tag size={18} /> },
     ],
@@ -57,6 +58,9 @@ export function SellerLayout() {
   const logout = useLogout()
   const navigate = useNavigate()
   const { t } = useT()
+  const { data: sellerDash } = useSellerDashboard()
+  const pendingOrders = sellerDash?.pending_orders ?? 0
+  const { data: profile } = useSellerProfile()
   useNotificationSocket()
 
   const handleLogout = () => {
@@ -96,14 +100,27 @@ export function SellerLayout() {
 
       {/* Store card */}
       <div className="mx-3 my-3 p-3 bg-cream rounded-xl border border-border">
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <Star size={11} className="text-gold fill-gold" />
-          <span className="text-[10px] font-bold text-gold-deep uppercase tracking-wider">{t('sellerLayout.goldTier')}</span>
-        </div>
+        {profile?.tier && (
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Star
+              size={11}
+              className={profile.tier === 'gold' ? 'text-gold fill-gold' : profile.tier === 'silver' ? 'text-ink-soft fill-ink-soft' : 'text-ink-mute fill-ink-mute'}
+            />
+            <span className={`text-[10px] font-bold uppercase tracking-wider ${profile.tier === 'gold' ? 'text-gold-deep' : 'text-ink-mute'}`}>
+              {t(profile.tier === 'gold' ? 'sellerLayout.goldTier' : profile.tier === 'silver' ? 'sellerLayout.silverTier' : 'sellerLayout.bronzeTier')}
+            </span>
+          </div>
+        )}
         <div className="text-xs font-semibold text-ink leading-tight mb-1">
-          {user?.email ?? t('sellerLayout.fallbackStore')}
+          {profile?.shop_name ?? profile?.business_name ?? user?.email ?? t('sellerLayout.fallbackStore')}
         </div>
-        <div className="text-[11px] text-ink-mute">{t('sellerLayout.verified')}</div>
+        <div className="text-[11px] text-ink-mute">
+          {profile?.status === 'active'
+            ? t('sellerLayout.verified')
+            : profile?.status === 'suspended'
+            ? t('sellerLayout.statusSuspended')
+            : t('sellerLayout.statusPending')}
+        </div>
       </div>
 
       {/* Nav */}
@@ -129,9 +146,9 @@ export function SellerLayout() {
               >
                 <span className="flex-shrink-0">{item.icon}</span>
                 <span className="flex-1">{t(item.labelKey)}</span>
-                {item.badge && (
+                {item.href === '/seller/orders' && pendingOrders > 0 && (
                   <span className="text-[10px] bg-green/10 text-green px-1.5 py-0.5 rounded-full font-mono font-bold">
-                    {item.badge}
+                    {pendingOrders}
                   </span>
                 )}
               </NavLink>

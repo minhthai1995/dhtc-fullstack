@@ -6,6 +6,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.crud import promotion as promotion_crud
+from app.crud import shipping as shipping_crud
 from app.models.order import Order, OrderItem, OrderStatus
 from app.models.product import Product, ProductStatus
 from app.schemas.order import CreateOrder, UpdateOrderStatus
@@ -72,7 +74,10 @@ async def create(db: AsyncSession, customer_id: int, data: CreateOrder) -> Order
 
     async with db.begin_nested():
         for item in data.items:
-            product = await db.get(Product, item.product_id)
+            result = await db.execute(
+                select(Product).where(Product.id == item.product_id).with_for_update()
+            )
+            product = result.scalars().first()
             if product is None:
                 raise ValueError(f"Sản phẩm {item.product_id} không tồn tại")
 
@@ -97,11 +102,33 @@ async def create(db: AsyncSession, customer_id: int, data: CreateOrder) -> Order
         if inferred_merchant_id is None:
             raise ValueError("Đơn hàng phải có ít nhất một sản phẩm")
 
+        shipping_fee = float(data.shipping_fee or 0)
+        shipping_method_resolved = data.shipping_method
+        if data.shipping_zone_id is not None:
+            zone = await shipping_crud.get_by_id(db, data.shipping_zone_id)
+            if zone is None or zone.merchant_id != inferred_merchant_id:
+                raise ValueError("Phương thức vận chuyển không hợp lệ")
+            shipping_fee = float(zone.base_rate)
+            shipping_method_resolved = f"zone:{zone.zone_name}"
+
+        applied_promo = None
+        discount = 0.0
+        if data.promotion_code:
+            applied_promo = await promotion_crud.apply_to_subtotal(
+                db, data.promotion_code, inferred_merchant_id, total
+            )
+            discount = applied_promo.discount
+
+        order_total = max(0.0, total - discount) + shipping_fee
         order = Order(
             customer_id=customer_id,
             merchant_id=inferred_merchant_id,
-            total_amount=total,
-            shipping_address=data.shipping_address,
+            total_amount=order_total,
+            shipping_address=data.shipping_address.model_dump(),
+            notes=data.notes,
+            payment_method=data.payment_method,
+            shipping_method=shipping_method_resolved,
+            shipping_fee=shipping_fee,
         )
         db.add(order)
         await db.flush()
@@ -116,9 +143,10 @@ async def create(db: AsyncSession, customer_id: int, data: CreateOrder) -> Order
                 )
             )
 
-    await db.commit()
+    if applied_promo is not None:
+        await promotion_crud.increment_usage(db, applied_promo.promotion.id)
 
-    # Emit initial pending event
+    # Emit initial pending event in the same commit as the order
     from app.models.order_event import OrderEvent as _OrderEvent
     db.add(_OrderEvent(order_id=order.id, status=order.status, note="Đơn hàng được tạo"))
     await db.commit()
@@ -153,20 +181,14 @@ async def update_status_by_id(
     result = await db.execute(
         select(Order)
         .where(Order.id == order_id)
+        .with_for_update()
         .options(selectinload(Order.items).selectinload(OrderItem.product))
     )
     order = result.scalars().first()
     if order is None:
         return None
     data = UpdateOrderStatus(status=new_status, tracking_number=tracking_number)
-    updated = await update_status(db, order, data)
-    # Append note to last event if provided
-    if note:
-        from app.models.order_event import OrderEvent as _OrderEvent
-
-        db.add(_OrderEvent(order_id=updated.id, status=updated.status, note=note))
-        await db.commit()
-        await db.refresh(updated)
+    updated = await update_status(db, order, data, note=note)
     return updated
 
 
@@ -194,7 +216,7 @@ async def _notify(
 
 
 async def update_status(
-    db: AsyncSession, order: Order, data: UpdateOrderStatus
+    db: AsyncSession, order: Order, data: UpdateOrderStatus, note: str | None = None
 ) -> Order:
     from app.crud import wallet as wallet_crud
     from app.models.wallet import TransactionType
@@ -204,26 +226,26 @@ async def update_status(
     # Restore stock when cancelling an order that is not already cancelled
     if data.status == OrderStatus.cancelled and old_status != OrderStatus.cancelled:
         items_result = await db.execute(
-            select(OrderItem).where(OrderItem.order_id == order.id)
+            select(OrderItem).where(OrderItem.order_id == order.id).with_for_update()
         )
         for order_item in items_result.scalars().all():
-            product = await db.get(Product, order_item.product_id)
+            prod_result = await db.execute(
+                select(Product).where(Product.id == order_item.product_id).with_for_update()
+            )
+            product = prod_result.scalars().first()
             if product is not None:
                 product.stock += order_item.quantity
+                product.sold_count = max(0, product.sold_count - order_item.quantity)
 
     order.status = data.status
     if data.tracking_number is not None:
         order.tracking_number = data.tracking_number
-    await db.commit()
-    await db.refresh(order)
 
-    # Emit status-change event
+    # Emit status-change event (staged before commit)
     from app.models.order_event import OrderEvent as _OrderEvent
-    db.add(_OrderEvent(order_id=order.id, status=order.status))
-    await db.commit()
-    await db.refresh(order)
+    db.add(_OrderEvent(order_id=order.id, status=data.status, note=note))
 
-    # Auto-credit seller wallet when order is marked delivered
+    # Credit wallet atomically with the status change — commit=False flushes only
     if data.status == OrderStatus.delivered and old_status != OrderStatus.delivered:
         await wallet_crud.add_transaction(
             db,
@@ -231,7 +253,11 @@ async def update_status(
             TransactionType.sale,
             float(order.total_amount),
             description=f"Order #{order.id} delivered",
+            commit=False,
         )
+
+    await db.commit()
+    await db.refresh(order)
 
     # Notify customer (and seller on delivered/cancelled) based on new status
     notified: list[int] = []
@@ -289,7 +315,10 @@ async def update_status(
         if uid is not None:
             notified.append(uid)
 
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
 
     from app.core.websocket import manager as _ws_manager
     for uid in set(notified):

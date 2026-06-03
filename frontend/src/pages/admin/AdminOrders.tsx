@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAdminOrders, useAdminUpdateOrderStatus } from '@/features/admin/useAdmin'
-import { Badge } from '@/components/ui/Badge'
+import { Badge, type BadgeVariant } from '@/components/ui/Badge'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Spinner } from '@/components/ui/Spinner'
 import { Pagination } from '@/components/ui/Pagination'
@@ -23,7 +23,7 @@ async function downloadCsv(path: string, filename: string) {
   URL.revokeObjectURL(url)
 }
 
-const STATUS_VARIANT: Record<OrderStatus, string> = {
+const STATUS_VARIANT: Record<OrderStatus, BadgeVariant> = {
   pending: 'pending',
   processing: 'processing',
   shipped: 'shipped',
@@ -51,7 +51,7 @@ const FILTER_KEY: Record<'all' | OrderStatus, string> = {
 const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
   pending: ['processing', 'cancelled'],
   processing: ['shipped', 'cancelled'],
-  shipped: ['delivered', 'cancelled'],
+  shipped: ['delivered'],
   delivered: [],
   cancelled: [],
 }
@@ -75,7 +75,7 @@ export function AdminOrders() {
   const filtered = source.filter((o) => {
     const matchSearch =
       String(o.id).includes(search) ||
-      o.shipping_address.name.toLowerCase().includes(search.toLowerCase())
+      (o.shipping_address.name ?? '').toLowerCase().includes(search.toLowerCase())
     const matchFilter = filter === 'all' || o.status === filter
     return matchSearch && matchFilter
   })
@@ -175,7 +175,7 @@ export function AdminOrders() {
                           <span className="text-xs text-ink-mute">{o.shipping_address.country}</span>
                         </td>
                         <td className="px-4 py-3 text-sm font-medium text-green" style={{ fontFamily: 'var(--font-display)' }}>
-                          {(o.total_amount / 1000000).toFixed(1)}M₫
+                          {(o.total_amount / 1_000_000).toLocaleString(localeStr, { maximumFractionDigits: 1 })}M₫
                         </td>
                         <td className="px-4 py-3 text-xs font-mono text-ink-mute">
                           {o.tracking_number ?? '—'}
@@ -187,7 +187,7 @@ export function AdminOrders() {
                               defaultValue=""
                               onChange={(e) => {
                                 if (!e.target.value) return
-                                updateStatus.mutate({ orderId: o.id, status: e.target.value })
+                                updateStatus.mutate({ orderId: o.id, status: e.target.value as OrderStatus })
                                 e.target.value = ''
                               }}
                               disabled={updateStatus.isPending}

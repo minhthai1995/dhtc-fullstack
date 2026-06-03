@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { usePromotions, useCreatePromotion, useDeletePromotion } from '@/features/seller/useSeller'
+import { usePromotions, useCreatePromotion, useDeletePromotion, useUpdatePromotion } from '@/features/seller/useSeller'
 import { Badge } from '@/components/ui/Badge'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { Plus, Trash2, Tag, X } from 'lucide-react'
+import { Plus, Trash2, Tag, X, Pause, Play } from 'lucide-react'
 import { useT } from '@/i18n/useT'
 
 export function SellerPromotions() {
   const { t, lang } = useT()
   const { data: promotions } = usePromotions()
   const createPromotion = useCreatePromotion()
+  const updatePromotion = useUpdatePromotion()
   const deletePromotion = useDeletePromotion()
   const [showForm, setShowForm] = useState(false)
 
@@ -25,13 +26,18 @@ export function SellerPromotions() {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault()
+    const numValue = parseFloat(form.value)
+    if (!form.code.trim() || isNaN(numValue) || numValue <= 0) return
+    const minOrder = parseFloat(form.min_order)
+    const maxUsage = form.max_usage ? parseInt(form.max_usage, 10) : undefined
+    if (isNaN(minOrder) && form.min_order !== '') return
     createPromotion.mutate(
       {
         code: form.code.toUpperCase(),
         type: form.type,
-        value: parseFloat(form.value),
-        min_order: parseFloat(form.min_order) || 0,
-        max_usage: form.max_usage ? parseInt(form.max_usage) : undefined,
+        value: numValue,
+        min_order: form.min_order ? minOrder : 0,
+        max_usage: maxUsage,
         expires_at: form.expires_at || undefined,
       },
       {
@@ -69,7 +75,7 @@ export function SellerPromotions() {
               <h3 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)' }}>
                 {t('sellerPromotions.modalTitle')}
               </h3>
-              <button onClick={() => setShowForm(false)} className="text-ink-mute hover:text-ink">
+              <button onClick={() => { setShowForm(false); setForm({ code: '', type: 'percentage', value: '', min_order: '', max_usage: '', expires_at: '' }) }} className="text-ink-mute hover:text-ink">
                 <X size={18} />
               </button>
             </div>
@@ -108,6 +114,7 @@ export function SellerPromotions() {
                     onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))}
                     required
                     min="0"
+                    step={form.type === 'fixed' ? 1 : 0.01}
                     placeholder={form.type === 'percentage' ? '20' : '50000'}
                     className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                   />
@@ -123,6 +130,7 @@ export function SellerPromotions() {
                     onChange={(e) => setForm((f) => ({ ...f, min_order: e.target.value }))}
                     placeholder="500000"
                     min="0"
+                    step={1}
                     className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                   />
                 </div>
@@ -134,6 +142,7 @@ export function SellerPromotions() {
                     onChange={(e) => setForm((f) => ({ ...f, max_usage: e.target.value }))}
                     placeholder={t('sellerPromotions.maxUsagePlaceholder')}
                     min="1"
+                    step="1"
                     className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                   />
                 </div>
@@ -159,7 +168,7 @@ export function SellerPromotions() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowForm(false)}
+                  onClick={() => { setShowForm(false); setForm({ code: '', type: 'percentage', value: '', min_order: '', max_usage: '', expires_at: '' }) }}
                   className="flex-1 py-2.5 border border-border rounded-xl font-semibold text-sm text-ink-mute hover:border-ink transition-colors"
                 >
                   {t('sellerPromotions.cancel')}
@@ -171,6 +180,11 @@ export function SellerPromotions() {
       )}
 
       {/* Promo cards */}
+      {source.length === 0 ? (
+        <div className="bg-white border border-border rounded-2xl p-12 text-center text-ink-mute text-sm">
+          {t('sellerPromotions.empty')}
+        </div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {source.map((promo) => (
           <div key={promo.id} className="bg-white border border-border rounded-2xl p-5 relative overflow-hidden">
@@ -192,12 +206,23 @@ export function SellerPromotions() {
                   </Badge>
                 </div>
               </div>
-              <button
-                onClick={() => deletePromotion.mutate(promo.id)}
-                className="text-ink-mute hover:text-danger transition-colors"
-              >
-                <Trash2 size={14} />
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => updatePromotion.mutate({ id: promo.id, payload: { is_active: !promo.is_active } })}
+                  disabled={updatePromotion.isPending}
+                  title={promo.is_active ? t('sellerPromotions.deactivate') : t('sellerPromotions.activate')}
+                  className="text-ink-mute hover:text-green transition-colors disabled:opacity-50"
+                >
+                  {promo.is_active ? <Pause size={14} /> : <Play size={14} />}
+                </button>
+                <button
+                  onClick={() => deletePromotion.mutate(promo.id)}
+                  disabled={deletePromotion.isPending}
+                  className="text-ink-mute hover:text-danger transition-colors disabled:opacity-50"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
 
             <div
@@ -221,7 +246,7 @@ export function SellerPromotions() {
               )}
             </div>
 
-            {promo.max_usage && (
+            {promo.max_usage != null && promo.max_usage > 0 && (
               <div className="mt-3">
                 <div className="h-1.5 bg-cream-dark rounded-full overflow-hidden">
                   <div
@@ -234,6 +259,7 @@ export function SellerPromotions() {
           </div>
         ))}
       </div>
+      )}
     </div>
   )
 }

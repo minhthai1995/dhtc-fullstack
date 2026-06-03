@@ -10,9 +10,9 @@ export function Navbar() {
   const { t } = useT()
 
   return (
-    <header className="border-b border-gray-200 bg-white">
+    <header className="border-b border-border bg-white">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-        <Link to="/" className="text-lg font-semibold text-brand hover:text-brand-dark">
+        <Link to="/" className="text-lg font-semibold text-green hover:text-green-soft">
           {t('navbar.brand')}
         </Link>
 

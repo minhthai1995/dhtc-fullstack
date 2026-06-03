@@ -2,10 +2,10 @@ import { type ButtonHTMLAttributes, forwardRef } from 'react'
 import { cn } from '@/lib/cn'
 
 const variants = {
-  primary:   'bg-brand text-white hover:bg-brand-dark focus-visible:ring-brand',
-  secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus-visible:ring-gray-400',
-  ghost:     'text-gray-700 hover:bg-gray-100 focus-visible:ring-gray-400',
-  danger:    'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500',
+  primary:   'bg-green text-white hover:bg-green-soft focus-visible:ring-green',
+  secondary: 'bg-white text-ink-soft border border-border hover:bg-cream focus-visible:ring-border',
+  ghost:     'text-ink-soft hover:bg-cream focus-visible:ring-border',
+  danger:    'bg-danger text-white hover:opacity-90 focus-visible:ring-danger',
 } as const
 
 const sizes = {

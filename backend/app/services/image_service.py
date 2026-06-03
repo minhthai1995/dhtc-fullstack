@@ -23,8 +23,16 @@ class ImageValidationError(ValueError):
     """Raised when uploaded file fails MIME/size/format validation (HTTP 422)."""
 
 
-def process_upload(content: bytes, upload_dir: Path) -> ProductImageOut:
-    """Validate, auto-orient, transcode to 4 WebP sizes. Returns persisted URLs."""
+def process_upload(
+    content: bytes,
+    upload_dir: Path,
+    url_prefix: str = "/uploads/products",
+) -> ProductImageOut:
+    """Validate, auto-orient, transcode to 4 WebP sizes. Returns persisted URLs.
+
+    `url_prefix` is the path written into the response URLs — pass the matching
+    static-mount prefix for the caller's asset family (products, merchants, …).
+    """
     if len(content) > settings.MAX_UPLOAD_BYTES:
         kb = len(content) // 1024
         raise ImageValidationError(f"Ảnh quá lớn ({kb}KB) — tối đa 2MB")
@@ -44,12 +52,13 @@ def process_upload(content: bytes, upload_dir: Path) -> ProductImageOut:
     folder = upload_dir / image_id
     folder.mkdir(parents=True, exist_ok=True)
 
+    prefix = url_prefix.rstrip("/")
     urls: dict[str, str] = {}
     for size_name, (width, height, quality) in SIZES.items():
         resized = ImageOps.contain(img, (width, height))
         path = folder / f"{size_name}.webp"
         resized.save(path, format="WEBP", quality=quality, method=6)
-        urls[size_name] = f"/uploads/products/{image_id}/{size_name}.webp"
+        urls[size_name] = f"{prefix}/{image_id}/{size_name}.webp"
 
     return ProductImageOut(id=image_id, urls=ProductImageUrls(**urls), order=0)
 

@@ -19,5 +19,5 @@ export function RoleRedirect() {
 
   if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />
   if (user.role === 'seller') return <Navigate to="/seller/dashboard" replace />
-  return <Navigate to="/shop" replace />
+  return <Navigate to="/" replace />
 }

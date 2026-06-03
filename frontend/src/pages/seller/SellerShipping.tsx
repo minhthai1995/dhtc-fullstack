@@ -63,7 +63,8 @@ export function SellerShipping() {
                 </div>
                 <button
                   onClick={() => deleteZone.mutate(zone.id)}
-                  className="text-ink-mute hover:text-danger transition-colors flex-shrink-0"
+                  disabled={deleteZone.isPending}
+                  className="text-ink-mute hover:text-danger transition-colors flex-shrink-0 disabled:opacity-40"
                 >
                   <Trash2 size={15} />
                 </button>
@@ -73,13 +74,13 @@ export function SellerShipping() {
                 <div>
                   <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">{t('sellerShipping.baseFee')}</div>
                   <div className="text-sm font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>
-                    {(zone.base_rate / 1000).toFixed(0)}K₫
+                    {(zone.base_rate / 1000).toLocaleString(localeStr, { maximumFractionDigits: 0 })}K₫
                   </div>
                 </div>
                 <div>
                   <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">{t('sellerShipping.perKgFee')}</div>
                   <div className="text-sm font-semibold text-ink" style={{ fontFamily: 'var(--font-mono)' }}>
-                    {(zone.per_kg_rate / 1000).toFixed(0)}K₫
+                    {(zone.per_kg_rate / 1000).toLocaleString(localeStr, { maximumFractionDigits: 0 })}K₫
                   </div>
                 </div>
                 <div>
@@ -110,7 +111,7 @@ export function SellerShipping() {
                 </label>
                 <select
                   value={calcZoneId}
-                  onChange={(e) => setCalcZoneId(parseInt(e.target.value))}
+                  onChange={(e) => setCalcZoneId(parseInt(e.target.value, 10))}
                   className="w-full px-3 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                 >
                   {source.map((z) => (
@@ -189,8 +190,8 @@ export function SellerShipping() {
                   countries: (fd.get('countries') as string).split(',').map((c) => c.trim().toUpperCase()),
                   base_rate: parseFloat(fd.get('base_rate') as string),
                   per_kg_rate: parseFloat(fd.get('per_kg_rate') as string),
-                  estimated_days_min: parseInt(fd.get('days_min') as string),
-                  estimated_days_max: parseInt(fd.get('days_max') as string),
+                  estimated_days_min: parseInt(fd.get('days_min') as string, 10),
+                  estimated_days_max: parseInt(fd.get('days_max') as string, 10),
                 }, { onSuccess: () => setShowForm(false) })
               }}
             >
@@ -205,21 +206,21 @@ export function SellerShipping() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerShipping.baseFeeVnd')}</label>
-                  <input name="base_rate" type="number" required min="0" placeholder="250000" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
+                  <input name="base_rate" type="number" required min="0" step="1" placeholder="250000" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerShipping.perKgFeeVnd')}</label>
-                  <input name="per_kg_rate" type="number" required min="0" placeholder="45000" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
+                  <input name="per_kg_rate" type="number" required min="0" step="1" placeholder="45000" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerShipping.daysMin')}</label>
-                  <input name="days_min" type="number" required min="1" placeholder="3" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
+                  <input name="days_min" type="number" required min="1" step="1" placeholder="3" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerShipping.daysMax')}</label>
-                  <input name="days_max" type="number" required min="1" placeholder="7" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
+                  <input name="days_max" type="number" required min="1" step="1" placeholder="7" className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all" />
                 </div>
               </div>
               <div className="flex gap-3 pt-2">

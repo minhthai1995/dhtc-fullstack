@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import { useT } from '@/i18n/useT'
+import { LangSwitcher } from '@/components/LangSwitcher'
 
 interface LegalLayoutProps {
   title: string
@@ -36,12 +37,15 @@ export function LegalLayout({ title, subtitle, effectiveDate, children }: LegalL
               </span>
             </div>
           </Link>
-          <Link
-            to="/"
-            className="text-sm font-semibold text-ink-soft hover:text-ink no-underline transition-colors"
-          >
-            {t('legalLayout.backHome')}
-          </Link>
+          <div className="flex items-center gap-3">
+            <LangSwitcher variant="ghost" />
+            <Link
+              to="/"
+              className="text-sm font-semibold text-ink-soft hover:text-ink no-underline transition-colors"
+            >
+              {t('legalLayout.backHome')}
+            </Link>
+          </div>
         </header>
 
         <article>

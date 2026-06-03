@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.product import ProductRead
 
@@ -14,8 +14,8 @@ class CartItemRead(BaseModel):
 
 class AddToCart(BaseModel):
     product_id: int
-    quantity: int = 1
+    quantity: int = Field(default=1, ge=1)
 
 
 class UpdateCartItem(BaseModel):
-    quantity: int
+    quantity: int = Field(ge=1)

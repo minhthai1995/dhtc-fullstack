@@ -1,7 +1,7 @@
 import { useRevenueReport, useAdminDashboardFull, useRevenueByOrigin } from '@/features/admin/useAdmin'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { KpiCard } from '@/components/ui/KpiCard'
-import { Download, TrendingUp } from 'lucide-react'
+import { Download, TrendingUp, TrendingDown } from 'lucide-react'
 import { useT } from '@/i18n/useT'
 
 export function AdminReports() {
@@ -70,13 +70,13 @@ export function AdminReports() {
           delta={dashboard?.orders_yesterday !== undefined
             ? t('adminReports.deltaOrdersYesterday').replace('{n}', String(dashboard.orders_yesterday))
             : '—'}
-          deltaType="up"
+          deltaType={(dashboard?.orders_yesterday ?? 0) > 0 ? 'up' : 'neutral'}
         />
         <KpiCard
           label={t('adminReports.kpiAvgOrder')}
           value={avgOrder > 0 ? `₫${(avgOrder / 1_000).toFixed(0)}K` : '—'}
           delta={t('adminReports.deltaAvgAll')}
-          deltaType="up"
+          deltaType="neutral"
         />
         <KpiCard
           label={t('adminReports.kpiMerchants')}
@@ -84,7 +84,7 @@ export function AdminReports() {
           delta={dashboard?.new_merchants_week !== undefined
             ? t('adminReports.deltaNewMerchantsWeek').replace('{n}', String(dashboard.new_merchants_week))
             : '—'}
-          deltaType="up"
+          deltaType={(dashboard?.new_merchants_week ?? 0) > 0 ? 'up' : 'neutral'}
         />
       </div>
 
@@ -97,8 +97,8 @@ export function AdminReports() {
             </h2>
             <p className="text-xs text-ink-mute mt-0.5">{t('adminReports.chartSubtitle')}</p>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-success font-semibold">
-            <TrendingUp size={14} />
+          <div className={`flex items-center gap-1.5 text-xs font-semibold ${growthPct === null ? 'text-ink-mute' : growthType === 'up' ? 'text-success' : 'text-danger'}`}>
+            {growthPct === null ? null : growthType === 'up' ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
             {growthLabel}
           </div>
         </div>
@@ -108,15 +108,15 @@ export function AdminReports() {
             {chartData.map((d) => (
               <div key={d.month} className="flex flex-col items-center gap-1.5 flex-1 group">
                 <span className="text-[9px] text-ink-mute opacity-0 group-hover:opacity-100 transition-opacity" style={{ fontFamily: 'var(--font-mono)' }}>
-                  {d.gmv}M
+                  {(d.gmv / 1_000_000).toFixed(1)}M
                 </span>
                 <div
                   className="w-full rounded-t-[4px] bg-green cursor-default hover:opacity-80 transition-opacity"
                   style={{ height: `${(d.gmv / maxGmv) * 100}%` }}
-                  title={`${d.month}: ${d.gmv}M`}
+                  title={`${d.month}: ₫${(d.gmv / 1_000_000).toFixed(1)}M`}
                 />
                 <span className="text-[8px] text-ink-mute whitespace-nowrap" style={{ fontFamily: 'var(--font-mono)' }}>
-                  {d.month.replace('Tháng ', 'T').replace('/2025', '').replace('/2026', '')}
+                  {d.month.replace('Tháng ', 'T').replace(/\/\d{4}/g, '')}
                 </span>
               </div>
             ))}
@@ -170,7 +170,7 @@ export function AdminReports() {
                   <tr key={d.month} className="border-b border-border last:border-0">
                     <td className="py-2 text-ink-soft text-xs">{d.month}</td>
                     <td className="py-2 text-right font-mono text-sm text-green font-medium">
-                      {d.gmv.toLocaleString(localeStr)}M
+                      {(d.gmv / 1_000_000).toLocaleString(localeStr, { maximumFractionDigits: 1 })}M
                     </td>
                     <td className="py-2 text-right text-xs text-ink-mute font-mono">{d.orders}</td>
                   </tr>

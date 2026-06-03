@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, ConfigDict
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import exists, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.db import get_db
 from app.crud import cart as cart_crud
@@ -15,6 +17,7 @@ from app.crud import order as order_crud
 from app.crud import order_event as event_crud
 from app.crud import product as product_crud
 from app.crud import review as review_crud
+from app.crud import shipping as shipping_crud
 from app.crud import user_address as address_crud
 from app.crud import wishlist as wishlist_crud
 from app.deps import current_user, require_customer
@@ -23,6 +26,8 @@ from app.models.product import Product, ProductStatus
 from app.models.promotion import Promotion, PromotionType
 from app.models.review import Review
 from app.models.user import User
+from app.models.user_address import UserAddress
+from app.models.wishlist import WishlistItem
 from app.schemas.cart import AddToCart, CartItemRead, UpdateCartItem
 from app.schemas.category import CategoryRead
 from app.schemas.merchant import MerchantRead
@@ -30,6 +35,7 @@ from app.schemas.order import CreateOrder, OrderDetail, OrderEventRead, OrderRea
 from app.schemas.product import ProductRead
 from app.schemas.promotion import CouponValidateRequest, CouponValidateResponse
 from app.schemas.review import ReviewCreate, ReviewRead
+from app.schemas.shipping import ShippingZoneRead
 from app.schemas.user import UserRead, UserUpdate
 from app.schemas.user_address import AddressCreate, AddressRead
 from app.schemas.wishlist import WishlistItemRead
@@ -44,8 +50,8 @@ class UserProfile(BaseModel):
 
 
 class UserProfileUpdate(BaseModel):
-    full_name: str | None = None
-    phone: str | None = None
+    full_name: str | None = Field(default=None, min_length=1, max_length=255)
+    phone: str | None = Field(default=None, min_length=1, max_length=20)
 
 router = APIRouter(prefix="/customer", tags=["customer"])
 
@@ -62,17 +68,17 @@ async def list_categories(db: AsyncSession = Depends(get_db)) -> list[CategoryRe
 
 @router.get("/products", response_model=list[ProductRead])
 async def list_products(
-    skip: int = 0,
-    limit: int = 50,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=200),
     category_id: int | None = None,
     merchant_id: int | None = None,
-    search: str | None = None,
-    sort_by: str | None = None,
+    search: str | None = Query(default=None, max_length=200),
+    sort_by: str | None = Query(default=None, max_length=50),
     min_price: float | None = None,
     max_price: float | None = None,
     min_rating: float | None = None,
-    certification: str | None = None,
-    origin: str | None = None,
+    certification: str | None = Query(default=None, max_length=200),
+    origin: str | None = Query(default=None, max_length=100),
     db: AsyncSession = Depends(get_db),
 ) -> list[ProductRead]:
     products = await product_crud.get_all_public(
@@ -129,8 +135,8 @@ async def get_related_products(
 
 @router.get("/merchants", response_model=list[MerchantRead])
 async def list_merchants(
-    skip: int = 0,
-    limit: int = 50,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
 ) -> list[MerchantRead]:
     from app.models.merchant import MerchantStatus
@@ -150,6 +156,31 @@ async def get_merchant(
     if not merchant:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Merchant not found")
     return MerchantRead.model_validate(merchant)
+
+
+# ── Shipping (public) ─────────────────────────────────────────────────────────
+
+@router.get(
+    "/merchants/{merchant_id}/shipping",
+    response_model=list[ShippingZoneRead],
+)
+async def list_merchant_shipping_zones(
+    merchant_id: int,
+    country: str | None = Query(default=None, max_length=100),
+    db: AsyncSession = Depends(get_db),
+) -> list[ShippingZoneRead]:
+    """Return shipping zones for a merchant. Optional ``country`` filter (case-insensitive)."""
+    merchant = await merchant_crud.get_by_id(db, merchant_id)
+    if not merchant:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Merchant not found")
+    zones = await shipping_crud.get_by_merchant(db, merchant_id)
+    if country:
+        wanted = country.upper().strip()
+        zones = [
+            z for z in zones
+            if any((c or "").upper().strip() == wanted for c in (z.countries or []))
+        ]
+    return [ShippingZoneRead.model_validate(z) for z in zones]
 
 
 # ── Promotions (protected) ───────────────────────────────────────────────────
@@ -230,6 +261,16 @@ async def add_to_cart(
     product = await product_crud.get_by_id(db, body.product_id)
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+    if product.status != ProductStatus.active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Sản phẩm này hiện không còn bán",
+        )
+    if product.stock < body.quantity:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Sản phẩm chỉ còn {product.stock} đơn vị trong kho",
+        )
     item = await cart_crud.add_item(db, user.id, body.product_id, body.quantity)
     return CartItemRead.model_validate(item)
 
@@ -290,8 +331,8 @@ async def checkout(
 
 @router.get("/orders", response_model=list[OrderRead])
 async def list_orders(
-    skip: int = 0,
-    limit: int = 50,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=500),
     user: User = Depends(require_customer),
     db: AsyncSession = Depends(get_db),
 ) -> list[OrderRead]:
@@ -319,16 +360,26 @@ async def cancel_order(
 ) -> OrderRead:
     from app.schemas.order import UpdateOrderStatus
 
-    order = await order_crud.get_by_id(db, order_id)
+    order_result = await db.execute(
+        select(Order)
+        .where(Order.id == order_id)
+        .with_for_update()
+        .options(selectinload(Order.items))
+    )
+    order = order_result.scalar_one_or_none()
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Không tìm thấy đơn hàng")
     if order.customer_id != user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Không có quyền hủy đơn hàng này"
         )
+    if order.status == OrderStatus.cancelled:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Đơn hàng đã được hủy trước đó"
+        )
     if order.status not in (OrderStatus.pending, OrderStatus.processing):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_409_CONFLICT,
             detail="Chỉ có thể hủy đơn hàng đang chờ xử lý hoặc đang xử lý",
         )
     try:
@@ -345,7 +396,7 @@ async def cancel_order(
 @router.get("/products/{product_id}/reviews", response_model=list[ReviewRead])
 async def list_reviews(
     product_id: int,
-    sort_by: str = "newest",
+    sort_by: str = Query(default="newest", max_length=50),
     db: AsyncSession = Depends(get_db),
 ) -> list[ReviewRead]:
     from sqlalchemy import asc, desc
@@ -401,7 +452,10 @@ async def update_review(
     user: User = Depends(require_customer),
     db: AsyncSession = Depends(get_db),
 ) -> ReviewRead:
-    review = await review_crud.get_by_id(db, review_id)
+    review_result = await db.execute(
+        select(Review).where(Review.id == review_id).with_for_update()
+    )
+    review = review_result.scalar_one_or_none()
     if not review or review.product_id != product_id:
         raise HTTPException(status_code=404, detail="Không tìm thấy đánh giá")
     if review.customer_id != user.id:
@@ -417,7 +471,10 @@ async def delete_review(
     user: User = Depends(require_customer),
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    review = await review_crud.get_by_id(db, review_id)
+    review_result = await db.execute(
+        select(Review).where(Review.id == review_id).with_for_update()
+    )
+    review = review_result.scalar_one_or_none()
     if not review or review.product_id != product_id:
         raise HTTPException(status_code=404, detail="Không tìm thấy đánh giá")
     if review.customer_id != user.id:
@@ -438,9 +495,18 @@ async def update_account(
     user: User = Depends(current_user),
     db: AsyncSession = Depends(get_db),
 ) -> UserRead:
-    if body.email:
-        user.email = body.email
-        await db.commit()
+    updates = body.model_dump(exclude_unset=True)
+    for field, value in updates.items():
+        setattr(user, field, value)
+    if updates:
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email đã được sử dụng bởi tài khoản khác",
+            ) from None
         await db.refresh(user)
     return UserRead.model_validate(user)
 
@@ -521,7 +587,10 @@ async def delete_address(
     user: User = Depends(require_customer),
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    addr = await address_crud.get_by_id(db, address_id)
+    addr_del_result = await db.execute(
+        select(UserAddress).where(UserAddress.id == address_id).with_for_update()
+    )
+    addr = addr_del_result.scalar_one_or_none()
     if not addr or addr.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Address not found")
     await address_crud.delete(db, addr)
@@ -533,7 +602,10 @@ async def set_default_address(
     user: User = Depends(require_customer),
     db: AsyncSession = Depends(get_db),
 ) -> AddressRead:
-    addr = await address_crud.get_by_id(db, address_id)
+    addr_result = await db.execute(
+        select(UserAddress).where(UserAddress.id == address_id).with_for_update()
+    )
+    addr = addr_result.scalar_one_or_none()
     if not addr or addr.user_id != user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Address not found")
     addr = await address_crud.set_default(db, user.id, addr)
@@ -577,7 +649,12 @@ async def remove_from_wishlist(
     user: User = Depends(require_customer),
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    item = await wishlist_crud.get_item(db, user.id, product_id)
+    item_result = await db.execute(
+        select(WishlistItem)
+        .where(WishlistItem.user_id == user.id, WishlistItem.product_id == product_id)
+        .with_for_update()
+    )
+    item = item_result.scalar_one_or_none()
     if not item:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not in wishlist")
     await wishlist_crud.remove(db, item)
@@ -586,7 +663,7 @@ async def remove_from_wishlist(
 # ── Return requests ───────────────────────────────────────────────────────────
 
 class ReturnRequestCreate(BaseModel):
-    reason: str
+    reason: str = Field(min_length=1)
 
 
 class ReturnRequestRead(BaseModel):
@@ -610,10 +687,13 @@ async def request_return(
     body: ReturnRequestCreate,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_customer),
-) -> object:
+) -> ReturnRequestRead:
     from app.crud import return_request as return_crud
 
-    order = await order_crud.get_by_id(db, order_id)
+    order_result = await db.execute(
+        select(Order).where(Order.id == order_id).with_for_update()
+    )
+    order = order_result.scalar_one_or_none()
     if not order or order.customer_id != user.id:
         raise HTTPException(status_code=404, detail="Order not found")
     if order.status != OrderStatus.delivered:
@@ -625,9 +705,10 @@ async def request_return(
         raise HTTPException(
             status_code=409, detail="Đơn hàng này đã có yêu cầu đổi trả"
         )
-    return await return_crud.create(
+    return_obj = await return_crud.create(
         db, order_id=order_id, customer_id=user.id, reason=body.reason
     )
+    return ReturnRequestRead.model_validate(return_obj)
 
 
 @router.get("/returns", response_model=list[ReturnRequestRead])

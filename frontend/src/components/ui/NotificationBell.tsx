@@ -48,7 +48,7 @@ export function NotificationBell() {
       >
         {unread > 0 ? <BellRing size={18} className="text-ink" /> : <Bell size={18} className="text-ink-mute" />}
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+          <span className="absolute -top-0.5 -right-0.5 bg-danger text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
             {unread > 9 ? '9+' : unread}
           </span>
         )}

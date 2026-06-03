@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
+from app.core.config import settings
 from app.core.db import get_db
 from app.crud import merchant as merchant_crud
 from app.crud import order as order_crud
@@ -18,20 +20,43 @@ from app.deps import require_seller
 from app.models.merchant import Merchant
 from app.models.order import Order, OrderItem, OrderStatus
 from app.models.product import Product, ProductStatus
+from app.models.promotion import Promotion
+from app.models.shipping import ShippingZone
 from app.models.user import User
 from app.models.wallet import TransactionType
 from app.schemas.merchant import MerchantCreate, MerchantRead, MerchantUpdate
-from app.schemas.order import OrderDetail, OrderRead, OrderStatusUpdate
+from app.schemas.order import OrderDetail, OrderRead, OrderStatusUpdate, UpdateOrderStatus
 from app.schemas.product import ProductCreate, ProductRead, ProductUpdate
 from app.schemas.promotion import PromotionCreate, PromotionRead, PromotionUpdate
 from app.schemas.shipping import ShippingZoneCreate, ShippingZoneRead, ShippingZoneUpdate
 from app.schemas.wallet import WalletSummary, WalletTransactionRead, WithdrawRequest
+from app.services.image_service import (
+    ALLOWED_MIME,
+    ImageValidationError,
+    delete_image,
+    process_upload,
+)
+
+_MERCHANT_URL_PREFIX = "/uploads/merchants"
 
 router = APIRouter(prefix="/seller", tags=["seller"])
 
 
 async def _get_merchant_or_404(db: AsyncSession, user_id: int):
     merchant = await merchant_crud.get_by_user_id(db, user_id)
+    if not merchant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Merchant profile not found. Please create your shop first.",
+        )
+    return merchant
+
+
+async def _get_merchant_locked_or_404(db: AsyncSession, user_id: int):
+    result = await db.execute(
+        select(Merchant).where(Merchant.user_id == user_id).with_for_update()
+    )
+    merchant = result.scalar_one_or_none()
     if not merchant:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -244,7 +269,9 @@ async def get_product_analytics(
             OrderItem.product_id,
             Product.name_vi,
             func.sum(OrderItem.quantity).label("total_qty"),
-            func.sum(OrderItem.quantity * OrderItem.unit_price).label("total_revenue"),
+            func.coalesce(
+                func.sum(OrderItem.quantity * OrderItem.unit_price), 0
+            ).label("total_revenue"),
         )
         .join(Product, OrderItem.product_id == Product.id)
         .join(Order, OrderItem.order_id == Order.id)
@@ -273,7 +300,7 @@ async def get_product_analytics(
 
 @router.get("/products/low-stock")
 async def get_low_stock_products(
-    threshold: int = 10,
+    threshold: int = Query(default=10, ge=1, le=100000),
     user: User = Depends(require_seller),
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
@@ -313,17 +340,117 @@ async def update_profile(
     user: User = Depends(require_seller),
     db: AsyncSession = Depends(get_db),
 ) -> MerchantRead:
-    merchant = await _get_merchant_or_404(db, user.id)
+    locked = await db.execute(
+        select(Merchant).where(Merchant.user_id == user.id).with_for_update()
+    )
+    merchant = locked.scalar_one_or_none()
+    if not merchant:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Merchant profile not found. Please create your shop first.",
+        )
     merchant = await merchant_crud.update(db, merchant, body)
     return MerchantRead.model_validate(merchant)
+
+
+# ── Brand assets (logo + banner) ─────────────────────────────────────────────
+
+def _cleanup_old_merchant_image(old_url: str | None) -> None:
+    """Best-effort deletion of the previous image folder when a field is
+    replaced or cleared. Silent on failure — orphaned files don't justify
+    blocking the user's upload."""
+    if not old_url or not old_url.startswith(_MERCHANT_URL_PREFIX + "/"):
+        return
+    parts = old_url.split("/")
+    if len(parts) < 4:
+        return
+    import contextlib
+    with contextlib.suppress(ImageValidationError, OSError):
+        delete_image(parts[3], settings.UPLOAD_DIR / "merchants")
+
+
+async def _set_merchant_image(
+    db: AsyncSession,
+    merchant: Merchant,
+    file: UploadFile,
+    field: str,
+) -> MerchantRead:
+    if file.content_type not in ALLOWED_MIME:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Định dạng ảnh không được hỗ trợ (chỉ JPG/PNG/WebP/HEIC)",
+        )
+    content = await file.read()
+    try:
+        result = process_upload(
+            content, settings.UPLOAD_DIR / "merchants", _MERCHANT_URL_PREFIX
+        )
+    except (ImageValidationError, OSError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from e
+
+    _cleanup_old_merchant_image(getattr(merchant, field))
+    setattr(merchant, field, result.urls.large)
+    await db.commit()
+    await db.refresh(merchant)
+    return MerchantRead.model_validate(merchant)
+
+
+async def _clear_merchant_image(
+    db: AsyncSession, merchant: Merchant, field: str
+) -> MerchantRead:
+    _cleanup_old_merchant_image(getattr(merchant, field))
+    setattr(merchant, field, None)
+    await db.commit()
+    await db.refresh(merchant)
+    return MerchantRead.model_validate(merchant)
+
+
+@router.post("/profile/logo", response_model=MerchantRead)
+async def upload_merchant_logo(
+    file: UploadFile = File(...),
+    user: User = Depends(require_seller),
+    db: AsyncSession = Depends(get_db),
+) -> MerchantRead:
+    merchant = await _get_merchant_locked_or_404(db, user.id)
+    return await _set_merchant_image(db, merchant, file, "logo_url")
+
+
+@router.delete("/profile/logo", response_model=MerchantRead)
+async def delete_merchant_logo(
+    user: User = Depends(require_seller),
+    db: AsyncSession = Depends(get_db),
+) -> MerchantRead:
+    merchant = await _get_merchant_locked_or_404(db, user.id)
+    return await _clear_merchant_image(db, merchant, "logo_url")
+
+
+@router.post("/profile/banner", response_model=MerchantRead)
+async def upload_merchant_banner(
+    file: UploadFile = File(...),
+    user: User = Depends(require_seller),
+    db: AsyncSession = Depends(get_db),
+) -> MerchantRead:
+    merchant = await _get_merchant_locked_or_404(db, user.id)
+    return await _set_merchant_image(db, merchant, file, "banner_url")
+
+
+@router.delete("/profile/banner", response_model=MerchantRead)
+async def delete_merchant_banner(
+    user: User = Depends(require_seller),
+    db: AsyncSession = Depends(get_db),
+) -> MerchantRead:
+    merchant = await _get_merchant_locked_or_404(db, user.id)
+    return await _clear_merchant_image(db, merchant, "banner_url")
 
 
 # ── Products ──────────────────────────────────────────────────────────────────
 
 @router.get("/products", response_model=list[ProductRead])
 async def list_products(
-    skip: int = 0,
-    limit: int = 50,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=500),
     user: User = Depends(require_seller),
     db: AsyncSession = Depends(get_db),
 ) -> list[ProductRead]:
@@ -351,7 +478,10 @@ async def update_product(
     db: AsyncSession = Depends(get_db),
 ) -> ProductRead:
     merchant = await _get_merchant_or_404(db, user.id)
-    product = await product_crud.get_by_id(db, product_id)
+    locked = await db.execute(
+        select(Product).where(Product.id == product_id).with_for_update()
+    )
+    product = locked.scalars().first()
     if not product or product.merchant_id != merchant.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
     product = await product_crud.update(db, product, body)
@@ -365,7 +495,10 @@ async def delete_product(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     merchant = await _get_merchant_or_404(db, user.id)
-    product = await product_crud.get_by_id(db, product_id)
+    product_result = await db.execute(
+        select(Product).where(Product.id == product_id).with_for_update()
+    )
+    product = product_result.scalar_one_or_none()
     if not product or product.merchant_id != merchant.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
     await product_crud.delete(db, product)
@@ -382,6 +515,8 @@ async def bulk_update_stock(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_seller),
 ) -> dict[str, int]:
+    if len(items) > 200:
+        raise HTTPException(status_code=422, detail="Maximum 200 items per request")
     merchant_result = await db.execute(
         select(Merchant).where(Merchant.user_id == current_user.id)
     )
@@ -391,7 +526,10 @@ async def bulk_update_stock(
 
     updated = 0
     for item in items:
-        product = await db.get(Product, item.id)
+        result = await db.execute(
+            select(Product).where(Product.id == item.id).with_for_update()
+        )
+        product = result.scalars().first()
         if product and product.merchant_id == merchant.id:
             product.stock = item.stock
             updated += 1
@@ -403,8 +541,8 @@ async def bulk_update_stock(
 
 @router.get("/orders", response_model=list[OrderDetail])
 async def list_orders(
-    skip: int = 0,
-    limit: int = 50,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=500),
     user: User = Depends(require_seller),
     db: AsyncSession = Depends(get_db),
 ) -> list[OrderDetail]:
@@ -442,7 +580,12 @@ async def seller_update_order_status(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not a merchant")
 
     # Fetch order
-    order_result = await db.execute(select(Order).where(Order.id == order_id))
+    order_result = await db.execute(
+        select(Order)
+        .where(Order.id == order_id)
+        .with_for_update()
+        .options(selectinload(Order.items).selectinload(OrderItem.product))
+    )
     order = order_result.scalar_one_or_none()
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
@@ -461,13 +604,15 @@ async def seller_update_order_status(
     allowed_next = allowed_transitions.get(order.status)
     if payload.status not in allowed_transitions.values() or allowed_next != payload.status:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_409_CONFLICT,
             detail=f"Cannot transition from '{order.status}' to '{payload.status}'",
         )
 
-    updated = await order_crud.update_status_by_id(
-        db, order_id, payload.status, note=payload.note,
-        tracking_number=payload.tracking_number,
+    updated = await order_crud.update_status(
+        db,
+        order,
+        UpdateOrderStatus(status=payload.status, tracking_number=payload.tracking_number),
+        note=payload.note,
     )
     return OrderRead.model_validate(updated)
 
@@ -485,21 +630,30 @@ async def get_wallet(
     total_withdrawals = abs(
         await wallet_crud.get_total_by_type(db, merchant.id, TransactionType.withdrawal)
     )
-    pending_orders = len(
-        await order_crud.get_by_merchant(db, merchant.id, limit=1000)
+    pending_result = await db.execute(
+        select(func.count(Order.id)).where(
+            Order.merchant_id == merchant.id,
+            Order.status == OrderStatus.pending,
+        )
+    )
+    pending_orders = pending_result.scalar_one()
+    last_bank_name, last_bank_account = await wallet_crud.get_last_withdrawal_bank(
+        db, merchant.id
     )
     return WalletSummary(
         balance=balance,
         total_sales=total_sales,
         total_withdrawals=total_withdrawals,
         pending_orders=pending_orders,
+        last_bank_name=last_bank_name,
+        last_bank_account=last_bank_account,
     )
 
 
 @router.get("/wallet/transactions", response_model=list[WalletTransactionRead])
 async def list_transactions(
-    skip: int = 0,
-    limit: int = 50,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=500),
     user: User = Depends(require_seller),
     db: AsyncSession = Depends(get_db),
 ) -> list[WalletTransactionRead]:
@@ -508,26 +662,28 @@ async def list_transactions(
     return [WalletTransactionRead.model_validate(t) for t in txns]
 
 
-@router.post("/wallet/withdraw")
+@router.post("/wallet/withdraw", status_code=status.HTTP_201_CREATED)
 async def request_withdrawal(
     body: WithdrawRequest,
     user: User = Depends(require_seller),
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     merchant = await _get_merchant_or_404(db, user.id)
-    balance = await wallet_crud.get_balance(db, merchant.id)
-    if body.amount > balance:
+    try:
+        await wallet_crud.add_transaction(
+            db,
+            merchant.id,
+            TransactionType.withdrawal,
+            body.amount,
+            description=f"Withdrawal to {body.bank_name} {body.bank_account}",
+            bank_name=body.bank_name,
+            bank_account=body.bank_account,
+        )
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Insufficient balance",
-        )
-    await wallet_crud.add_transaction(
-        db,
-        merchant.id,
-        TransactionType.withdrawal,
-        body.amount,
-        description=f"Withdrawal to {body.bank_name} {body.bank_account}",
-    )
+            detail=str(exc),
+        ) from exc
     return {"message": "Withdrawal request submitted", "amount": body.amount}
 
 
@@ -564,7 +720,10 @@ async def update_promotion(
     db: AsyncSession = Depends(get_db),
 ) -> PromotionRead:
     merchant = await _get_merchant_or_404(db, user.id)
-    promotion = await promotion_crud.get_by_id(db, promotion_id)
+    promo_result = await db.execute(
+        select(Promotion).where(Promotion.id == promotion_id).with_for_update()
+    )
+    promotion = promo_result.scalars().first()
     if not promotion or promotion.merchant_id != merchant.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Promotion not found")
     promotion = await promotion_crud.update(db, promotion, body)
@@ -578,7 +737,10 @@ async def delete_promotion(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     merchant = await _get_merchant_or_404(db, user.id)
-    promotion = await promotion_crud.get_by_id(db, promotion_id)
+    promo_result = await db.execute(
+        select(Promotion).where(Promotion.id == promotion_id).with_for_update()
+    )
+    promotion = promo_result.scalar_one_or_none()
     if not promotion or promotion.merchant_id != merchant.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Promotion not found")
     await promotion_crud.delete(db, promotion)
@@ -617,7 +779,10 @@ async def update_shipping_zone(
     db: AsyncSession = Depends(get_db),
 ) -> ShippingZoneRead:
     merchant = await _get_merchant_or_404(db, user.id)
-    zone = await shipping_crud.get_by_id(db, zone_id)
+    zone_result = await db.execute(
+        select(ShippingZone).where(ShippingZone.id == zone_id).with_for_update()
+    )
+    zone = zone_result.scalars().first()
     if not zone or zone.merchant_id != merchant.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Shipping zone not found"
@@ -633,7 +798,10 @@ async def delete_shipping_zone(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     merchant = await _get_merchant_or_404(db, user.id)
-    zone = await shipping_crud.get_by_id(db, zone_id)
+    zone_result = await db.execute(
+        select(ShippingZone).where(ShippingZone.id == zone_id).with_for_update()
+    )
+    zone = zone_result.scalar_one_or_none()
     if not zone or zone.merchant_id != merchant.id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Shipping zone not found"
@@ -655,7 +823,7 @@ class ReturnRequestRead(BaseModel):
 
 
 class ReturnNoteBody(BaseModel):
-    note: str | None = None
+    note: str | None = Field(default=None, min_length=1)
 
 
 @router.get("/returns", response_model=list[ReturnRequestRead])
@@ -679,17 +847,25 @@ async def approve_return(
     body: ReturnNoteBody,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_seller),
-) -> object:
+) -> ReturnRequestRead:
     from app.crud import return_request as return_crud
-    from app.models.order import Order as _Order
-    rr = await return_crud.get_by_id(db, return_id)
+    from app.models.return_request import ReturnRequest, ReturnStatus
+    rr_result = await db.execute(
+        select(ReturnRequest).where(ReturnRequest.id == return_id).with_for_update()
+    )
+    rr = rr_result.scalar_one_or_none()
     if not rr:
         raise HTTPException(404, "Not found")
+    if rr.status != ReturnStatus.pending:
+        raise HTTPException(409, f"Return already {rr.status.value}")
     merchant_result = await db.execute(
         select(Merchant).where(Merchant.user_id == current_user.id)
     )
     merchant = merchant_result.scalars().first()
-    order = await db.get(_Order, rr.order_id)
+    order_result = await db.execute(
+        select(Order).where(Order.id == rr.order_id).with_for_update()
+    )
+    order = order_result.scalar_one_or_none()
     if not merchant or not order or order.merchant_id != merchant.id:
         raise HTTPException(403, "Forbidden")
     return await return_crud.approve(db, rr, body.note)
@@ -701,17 +877,25 @@ async def reject_return(
     body: ReturnNoteBody,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_seller),
-) -> object:
+) -> ReturnRequestRead:
     from app.crud import return_request as return_crud
-    from app.models.order import Order as _Order
-    rr = await return_crud.get_by_id(db, return_id)
+    from app.models.return_request import ReturnRequest, ReturnStatus
+    rr_result = await db.execute(
+        select(ReturnRequest).where(ReturnRequest.id == return_id).with_for_update()
+    )
+    rr = rr_result.scalar_one_or_none()
     if not rr:
         raise HTTPException(404, "Not found")
+    if rr.status != ReturnStatus.pending:
+        raise HTTPException(409, f"Return already {rr.status.value}")
     merchant_result = await db.execute(
         select(Merchant).where(Merchant.user_id == current_user.id)
     )
     merchant = merchant_result.scalars().first()
-    order = await db.get(_Order, rr.order_id)
+    order_result = await db.execute(
+        select(Order).where(Order.id == rr.order_id).with_for_update()
+    )
+    order = order_result.scalar_one_or_none()
     if not merchant or not order or order.merchant_id != merchant.id:
         raise HTTPException(403, "Forbidden")
     return await return_crud.reject(db, rr, body.note)

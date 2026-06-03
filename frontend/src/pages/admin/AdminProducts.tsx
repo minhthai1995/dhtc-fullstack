@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAdminProducts, useApproveProduct, useBulkApproveProducts } from '@/features/admin/useAdmin'
+import { useAdminProducts, useApproveProduct, useSuspendProduct, useBulkApproveProducts } from '@/features/admin/useAdmin'
 import { Badge } from '@/components/ui/Badge'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Spinner } from '@/components/ui/Spinner'
@@ -31,6 +31,7 @@ export function AdminProducts() {
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const { data: products, isLoading } = useAdminProducts()
   const approveProduct = useApproveProduct()
+  const suspendProduct = useSuspendProduct()
   const bulkApprove = useBulkApproveProducts()
   const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
 
@@ -40,7 +41,9 @@ export function AdminProducts() {
   const source = products ?? []
 
   const filtered = source.filter((p) => {
-    const matchSearch = p.name_vi.toLowerCase().includes(search.toLowerCase())
+    const matchSearch =
+      (p.name_vi ?? '').toLowerCase().includes(search.toLowerCase()) ||
+      (p.name_en ?? '').toLowerCase().includes(search.toLowerCase())
     const matchFilter = filter === 'all' || p.status === filter
     return matchSearch && matchFilter
   })
@@ -52,7 +55,7 @@ export function AdminProducts() {
   function toggleSelect(id: number) {
     setSelected((prev) => {
       const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
+      if (next.has(id)) { next.delete(id) } else { next.add(id) }
       return next
     })
   }
@@ -209,15 +212,26 @@ export function AdminProducts() {
                       <td className="px-4 py-3 text-sm text-ink-soft font-mono">{p.sold_count}</td>
                       <td className="px-4 py-3">{statusBadge(p.status)}</td>
                       <td className="px-4 py-3">
-                        {p.status === 'pending' && (
-                          <button
-                            onClick={() => approveProduct.mutate(p.id)}
-                            disabled={approveProduct.isPending}
-                            className="text-xs px-2.5 py-1 bg-green/10 text-green font-semibold rounded-lg hover:bg-green/20 transition-colors disabled:opacity-50"
-                          >
-                            {t('adminProducts.btnApprove')}
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {p.status === 'pending' && (
+                            <button
+                              onClick={() => approveProduct.mutate(p.id)}
+                              disabled={approveProduct.isPending}
+                              className="text-xs px-2.5 py-1 bg-green/10 text-green font-semibold rounded-lg hover:bg-green/20 transition-colors disabled:opacity-50"
+                            >
+                              {t('adminProducts.btnApprove')}
+                            </button>
+                          )}
+                          {p.status === 'active' && (
+                            <button
+                              onClick={() => suspendProduct.mutate(p.id)}
+                              disabled={suspendProduct.isPending}
+                              className="text-xs px-2.5 py-1 bg-danger/10 text-danger font-semibold rounded-lg hover:bg-danger/20 transition-colors disabled:opacity-50"
+                            >
+                              {t('adminProducts.btnSuspend')}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -225,7 +239,9 @@ export function AdminProducts() {
               </tbody>
             </table>
           </div>
-          <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage} />
+          {filtered.length > PAGE_SIZE && (
+            <Pagination page={page} pageSize={PAGE_SIZE} total={filtered.length} onPage={setPage} />
+          )}
         </div>
       )}
     </div>

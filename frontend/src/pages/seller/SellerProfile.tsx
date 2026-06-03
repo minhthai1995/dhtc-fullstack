@@ -1,24 +1,79 @@
-import { useState, useEffect } from 'react'
-import { useSellerProfile, useUpdateSellerProfile } from '@/features/seller/useSeller'
+import { useState, useEffect, useRef } from 'react'
+import {
+  useSellerProfile,
+  useUpdateSellerProfile,
+  useUploadMerchantLogo,
+  useUploadMerchantBanner,
+  useDeleteMerchantLogo,
+  useDeleteMerchantBanner,
+} from '@/features/seller/useSeller'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Spinner } from '@/components/ui/Spinner'
-import { Plus, X, Save } from 'lucide-react'
+import { Plus, X, Save, Upload, Trash2, ImageIcon } from 'lucide-react'
 import { useT } from '@/i18n/useT'
+import { useToast } from '@/components/ui/Toast'
+
+const ENTITY_TYPES = ['cooperative', 'enterprise', 'household'] as const
+type EntityType = (typeof ENTITY_TYPES)[number]
+
+const ENTITY_TYPE_KEY: Record<EntityType, string> = {
+  cooperative: 'sellerProfile.typeCoop',
+  enterprise: 'sellerProfile.typeEnterprise',
+  household: 'sellerProfile.typeHousehold',
+}
 
 export function SellerProfile() {
   const { t } = useT()
+  const toast = useToast()
   const { data: profile, isLoading } = useSellerProfile()
   const updateProfile = useUpdateSellerProfile()
+  const uploadLogo = useUploadMerchantLogo()
+  const uploadBanner = useUploadMerchantBanner()
+  const deleteLogo = useDeleteMerchantLogo()
+  const deleteBanner = useDeleteMerchantBanner()
+
+  const logoInputRef = useRef<HTMLInputElement>(null)
+  const bannerInputRef = useRef<HTMLInputElement>(null)
+  const [logoProgress, setLogoProgress] = useState<number | null>(null)
+  const [bannerProgress, setBannerProgress] = useState<number | null>(null)
+
+  const handleLogoPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLogoProgress(0)
+    uploadLogo.mutate(
+      { file, onProgress: (p) => setLogoProgress(p) },
+      { onSettled: () => setLogoProgress(null) },
+    )
+    e.target.value = ''
+  }
+
+  const handleBannerPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setBannerProgress(0)
+    uploadBanner.mutate(
+      { file, onProgress: (p) => setBannerProgress(p) },
+      { onSettled: () => setBannerProgress(null) },
+    )
+    e.target.value = ''
+  }
 
   const [form, setForm] = useState({
+    shop_name: '',
     business_name: '',
     business_name_en: '',
     slug: '',
     description: '',
     description_en: '',
+    entity_type: 'cooperative' as EntityType,
     tax_id: '',
+    established_year: '',
+    member_count: '',
     address: '',
+    representative: '',
+    cccd: '',
     email: '',
     phone: '',
     facebook: '',
@@ -29,18 +84,25 @@ export function SellerProfile() {
 
   useEffect(() => {
     if (profile) {
+      const et = (profile.entity_type as EntityType | undefined) ?? 'cooperative'
       setForm({
+        shop_name: profile.shop_name ?? '',
         business_name: profile.business_name ?? '',
         business_name_en: profile.business_name_en ?? '',
         slug: profile.slug ?? '',
-        description: profile.description ?? '',
+        description: profile.description_vi ?? profile.description ?? '',
         description_en: profile.description_en ?? '',
+        entity_type: ENTITY_TYPES.includes(et) ? et : 'cooperative',
         tax_id: profile.tax_id ?? '',
+        established_year: profile.established_year != null ? String(profile.established_year) : '',
+        member_count: profile.member_count != null ? String(profile.member_count) : '',
         address: profile.address ?? '',
+        representative: profile.representative ?? '',
+        cccd: profile.cccd ?? '',
         email: profile.email ?? '',
         phone: profile.phone ?? '',
-        facebook: '',
-        instagram: '',
+        facebook: profile.facebook ?? '',
+        instagram: profile.instagram ?? '',
         newCert: '',
         certifications: [...(profile.certifications ?? [])],
       })
@@ -71,14 +133,27 @@ export function SellerProfile() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const yearNum = form.established_year ? parseInt(form.established_year, 10) : undefined
+    const memberNum = form.member_count ? parseInt(form.member_count, 10) : undefined
     updateProfile.mutate(
       {
-        business_name: form.business_name,
+        shop_name: form.shop_name || undefined,
+        business_name: form.business_name || undefined,
         business_name_en: form.business_name_en || undefined,
-        description: form.description || undefined,
+        slug: form.slug || undefined,
+        description_vi: form.description || undefined,
         description_en: form.description_en || undefined,
+        entity_type: form.entity_type,
+        tax_id: form.tax_id || undefined,
+        established_year: Number.isFinite(yearNum) ? yearNum : undefined,
+        member_count: Number.isFinite(memberNum) ? memberNum : undefined,
         address: form.address || undefined,
+        representative: form.representative || undefined,
+        cccd: form.cccd || undefined,
+        email: form.email || undefined,
         phone: form.phone || undefined,
+        facebook: form.facebook || undefined,
+        instagram: form.instagram || undefined,
         certifications: form.certifications.length > 0 ? form.certifications : undefined,
       },
       {
@@ -86,6 +161,7 @@ export function SellerProfile() {
           setSaved(true)
           setTimeout(() => setSaved(false), 3000)
         },
+        onError: () => toast(t('toasts.errorSaveProfile'), 'error'),
       }
     )
   }
@@ -128,13 +204,13 @@ export function SellerProfile() {
                 {t('sellerProfile.publicInfo')}
               </h3>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.shortNameVi')}</label>
                     <input
                       type="text"
-                      value={form.business_name}
-                      onChange={(e) => handleChange('business_name', e.target.value)}
+                      value={form.shop_name}
+                      onChange={(e) => handleChange('shop_name', e.target.value)}
                       className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                     />
                   </div>
@@ -153,7 +229,7 @@ export function SellerProfile() {
                   <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.slug')}</label>
                   <div className="flex items-center gap-0 border border-border rounded-xl overflow-hidden bg-cream">
                     <span className="px-3 py-2.5 text-sm text-ink-mute bg-cream-dark border-r border-border whitespace-nowrap">
-                      dhtc.vn/store/
+                      dhtcdanang.com/store/
                     </span>
                     <input
                       type="text"
@@ -192,26 +268,31 @@ export function SellerProfile() {
                 {t('sellerProfile.legalInfo')}
               </h3>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.fullName')}</label>
                     <input
                       type="text"
-                      defaultValue="HTX Sản Xuất & Kinh Doanh Cà Phê Hữu Cơ Đắk Lắk"
+                      value={form.business_name}
+                      onChange={(e) => handleChange('business_name', e.target.value)}
                       className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.businessType')}</label>
-                    <select className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all">
-                      <option>{t('sellerProfile.typeCoop')}</option>
-                      <option>{t('sellerProfile.typeEnterprise')}</option>
-                      <option>{t('sellerProfile.typeHousehold')}</option>
+                    <select
+                      value={form.entity_type}
+                      onChange={(e) => handleChange('entity_type', e.target.value)}
+                      className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
+                    >
+                      {ENTITY_TYPES.map((et) => (
+                        <option key={et} value={et}>{t(ENTITY_TYPE_KEY[et])}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.taxId')}</label>
                     <input
@@ -225,7 +306,11 @@ export function SellerProfile() {
                     <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.foundedYear')}</label>
                     <input
                       type="number"
-                      defaultValue={2018}
+                      min={1900}
+                      max={2100}
+                      step={1}
+                      value={form.established_year}
+                      onChange={(e) => handleChange('established_year', e.target.value)}
                       className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                     />
                   </div>
@@ -233,7 +318,10 @@ export function SellerProfile() {
                     <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.memberCount')}</label>
                     <input
                       type="number"
-                      defaultValue={42}
+                      min={0}
+                      step={1}
+                      value={form.member_count}
+                      onChange={(e) => handleChange('member_count', e.target.value)}
                       className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                     />
                   </div>
@@ -249,12 +337,13 @@ export function SellerProfile() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.representative')}</label>
                     <input
                       type="text"
-                      defaultValue="Y Thol Êban"
+                      value={form.representative}
+                      onChange={(e) => handleChange('representative', e.target.value)}
                       className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                     />
                   </div>
@@ -262,7 +351,8 @@ export function SellerProfile() {
                     <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProfile.idNumber')}</label>
                     <input
                       type="text"
-                      defaultValue="066089012345"
+                      value={form.cccd}
+                      onChange={(e) => handleChange('cccd', e.target.value)}
                       className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all font-mono"
                     />
                   </div>
@@ -278,18 +368,98 @@ export function SellerProfile() {
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
                 {t('sellerProfile.brandAssets')}
               </h3>
-              <div className="text-center">
-                <div className="h-36 rounded-xl border border-border bg-cream mb-3 flex items-center justify-center p-4">
-                  <img
-                    src="/img/market/Logo_Food-e1688828159579-1024x470.png"
-                    alt="Logo"
-                    className="max-w-full max-h-full object-contain"
-                  />
+
+              {/* Logo */}
+              <div className="mb-5">
+                <div className="aspect-square w-32 mx-auto rounded-xl border border-border bg-cream mb-3 flex items-center justify-center overflow-hidden">
+                  {profile?.logo_url ? (
+                    <img src={profile.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="flex flex-col items-center text-ink-mute">
+                      <ImageIcon size={28} />
+                      <span className="text-[10px] mt-1">{t('sellerProfile.noLogo')}</span>
+                    </div>
+                  )}
                 </div>
-                <div className="text-[11px] text-ink-mute mb-2">{t('sellerProfile.logoHint')}</div>
-                <button type="button" className="w-full py-2 text-xs font-semibold text-ink-mute border border-border rounded-xl hover:border-green hover:text-green transition-colors">
-                  {t('sellerProfile.changeLogo')}
-                </button>
+                <div className="text-[11px] text-ink-mute text-center mb-2">{t('sellerProfile.logoHint')}</div>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/heic"
+                  onChange={handleLogoPick}
+                  className="hidden"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={uploadLogo.isPending}
+                    onClick={() => logoInputRef.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-ink-mute border border-border rounded-xl hover:border-green hover:text-green disabled:opacity-50 transition-colors"
+                  >
+                    <Upload size={12} />
+                    {logoProgress !== null
+                      ? t('sellerProfile.uploading').replace('{percent}', String(logoProgress))
+                      : t('sellerProfile.changeLogo')}
+                  </button>
+                  {profile?.logo_url && (
+                    <button
+                      type="button"
+                      disabled={deleteLogo.isPending}
+                      onClick={() => deleteLogo.mutate()}
+                      aria-label={t('sellerProfile.removeLogo')}
+                      className="px-2.5 py-2 text-xs font-semibold text-danger border border-border rounded-xl hover:border-danger disabled:opacity-50 transition-colors"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Banner */}
+              <div>
+                <div className="text-xs font-semibold text-ink mb-2">{t('sellerProfile.bannerLabel')}</div>
+                <div className="aspect-[8/3] w-full rounded-xl border border-border bg-cream mb-3 flex items-center justify-center overflow-hidden">
+                  {profile?.banner_url ? (
+                    <img src={profile.banner_url} alt="Banner" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="flex flex-col items-center text-ink-mute">
+                      <ImageIcon size={28} />
+                      <span className="text-[10px] mt-1">{t('sellerProfile.noBanner')}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="text-[11px] text-ink-mute text-center mb-2">{t('sellerProfile.bannerHint')}</div>
+                <input
+                  ref={bannerInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/heic"
+                  onChange={handleBannerPick}
+                  className="hidden"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={uploadBanner.isPending}
+                    onClick={() => bannerInputRef.current?.click()}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-ink-mute border border-border rounded-xl hover:border-green hover:text-green disabled:opacity-50 transition-colors"
+                  >
+                    <Upload size={12} />
+                    {bannerProgress !== null
+                      ? t('sellerProfile.uploading').replace('{percent}', String(bannerProgress))
+                      : t('sellerProfile.changeBanner')}
+                  </button>
+                  {profile?.banner_url && (
+                    <button
+                      type="button"
+                      disabled={deleteBanner.isPending}
+                      onClick={() => deleteBanner.mutate()}
+                      aria-label={t('sellerProfile.removeBanner')}
+                      className="px-2.5 py-2 text-xs font-semibold text-danger border border-border rounded-xl hover:border-danger disabled:opacity-50 transition-colors"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -300,7 +470,7 @@ export function SellerProfile() {
               </h3>
               <div className="space-y-2 mb-3">
                 {form.certifications.map((cert, i) => (
-                  <div key={i} className="flex items-center justify-between p-2.5 bg-cream rounded-xl">
+                  <div key={cert} className="flex items-center justify-between p-2.5 bg-cream rounded-xl">
                     <div className="flex items-center gap-2">
                       <Badge variant="active">{t('sellerProfile.certActive')}</Badge>
                       <span className="text-sm font-semibold text-ink">{cert}</span>

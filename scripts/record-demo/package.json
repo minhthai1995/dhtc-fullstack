@@ -1,0 +1,12 @@
+{
+  "name": "dhtc-demo-recorder",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "record": "bash record.sh",
+    "demo-only": "node demo.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}

@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AddressCreate(BaseModel):
     label: str = "Nhà"
-    name: str
-    phone: str
-    address: str
-    city: str
+    name: str = Field(min_length=1)
+    phone: str = Field(min_length=1)
+    address: str = Field(min_length=1)
+    city: str = Field(min_length=1)
     country: str = "Việt Nam"
     is_default: bool = False
 

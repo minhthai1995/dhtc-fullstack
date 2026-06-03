@@ -12,7 +12,7 @@ RUN apt-get update \
 
 RUN pip install --no-cache-dir uv
 
-WORKDIR /build
+WORKDIR /app
 COPY pyproject.toml ./
 COPY uv.lock* ./
 RUN uv sync --frozen --no-dev || uv sync --no-dev
@@ -32,10 +32,12 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY --from=builder --chown=app:app /build/.venv /app/.venv
+COPY --from=builder --chown=app:app /app/.venv /app/.venv
 COPY --chown=app:app ./app ./app
 COPY --chown=app:app ./alembic ./alembic
 COPY --chown=app:app alembic.ini ./
+
+RUN mkdir -p /app/uploads && chown app:app /app/uploads
 
 USER app
 

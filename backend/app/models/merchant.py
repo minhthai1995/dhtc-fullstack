@@ -3,7 +3,7 @@ from __future__ import annotations
 import enum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin
@@ -46,6 +46,20 @@ class Merchant(Base, TimestampMixin):
         Enum(MerchantStatus), default=MerchantStatus.pending
     )
     established_year: Mapped[int | None] = mapped_column(Integer)
+
+    business_name: Mapped[str | None] = mapped_column(String(200))
+    business_name_en: Mapped[str | None] = mapped_column(String(200))
+    tax_id: Mapped[str | None] = mapped_column(String(50))
+    address: Mapped[str | None] = mapped_column(Text)
+    phone: Mapped[str | None] = mapped_column(String(50))
+    email: Mapped[str | None] = mapped_column(String(255))
+    facebook: Mapped[str | None] = mapped_column(String(255))
+    instagram: Mapped[str | None] = mapped_column(String(255))
+    representative: Mapped[str | None] = mapped_column(String(200))
+    cccd: Mapped[str | None] = mapped_column(String(50))
+    member_count: Mapped[int | None] = mapped_column(Integer)
+    entity_type: Mapped[str | None] = mapped_column(String(50))
+    certifications: Mapped[list[str] | None] = mapped_column(JSON)
 
     # relationships — string refs resolved at mapper configure time
     user: Mapped[User] = relationship("User", backref="merchant", uselist=False)

@@ -4,6 +4,7 @@ from app.api.v1 import (
     admin,
     auth,
     auth_facebook,
+    consent,
     customer,
     health,
     notifications,
@@ -18,6 +19,7 @@ from app.api.v1 import (
 api_router = APIRouter(prefix="/v1")
 api_router.include_router(health.router)
 api_router.include_router(auth.router)
+api_router.include_router(consent.router)
 api_router.include_router(auth_facebook.router)
 api_router.include_router(users.router)
 api_router.include_router(admin.router)

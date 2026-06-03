@@ -3,15 +3,16 @@ from __future__ import annotations
 import csv
 import io
 import re
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import case, distinct, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.config import settings
 from app.core.db import get_db
 from app.crud import merchant as merchant_crud
 from app.crud import order as order_crud
@@ -21,9 +22,10 @@ from app.models.cart import CartItem
 from app.models.category import Category
 from app.models.chat_message import ChatMessage, MessageDirection
 from app.models.merchant import Merchant, MerchantStatus
-from app.models.order import Order, OrderStatus
+from app.models.order import Order, OrderItem, OrderStatus
 from app.models.page_view import PageView
 from app.models.product import Product, ProductStatus
+from app.models.return_request import ReturnStatus
 from app.models.user import User, UserRole
 from app.models.wallet import TransactionType, WalletTransaction
 from app.schemas.admin_behavior import (
@@ -38,7 +40,7 @@ from app.schemas.admin_behavior import (
 )
 from app.schemas.category import CategoryRead
 from app.schemas.merchant import MerchantRead
-from app.schemas.order import OrderRead, OrderStatusUpdate
+from app.schemas.order import OrderRead, OrderStatusUpdate, UpdateOrderStatus
 from app.schemas.product import ProductRead
 from app.services.tracking import derive_device, derive_source
 
@@ -159,7 +161,6 @@ async def admin_dashboard(
 
     today = date.today()
     first_this_month = today.replace(day=1)
-    from datetime import timedelta
     first_prev_month = (first_this_month - timedelta(days=1)).replace(day=1)
     yesterday = today - timedelta(days=1)
     week_ago = today - timedelta(days=7)
@@ -233,8 +234,8 @@ class AdminMerchantDetail(BaseModel):
 
 @router.get("/merchants", response_model=list[MerchantRead])
 async def list_merchants(
-    skip: int = 0,
-    limit: int = 50,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=500),
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> list[MerchantRead]:
@@ -337,9 +338,14 @@ async def approve_merchant(
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> MerchantRead:
-    merchant = await merchant_crud.get_by_id(db, merchant_id)
+    merchant_result = await db.execute(
+        select(Merchant).where(Merchant.id == merchant_id).with_for_update()
+    )
+    merchant = merchant_result.scalar_one_or_none()
     if not merchant:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Merchant not found")
+    if merchant.status == MerchantStatus.active:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Merchant already active")
     merchant = await merchant_crud.update_status(db, merchant, MerchantStatus.active)
     return MerchantRead.model_validate(merchant)
 
@@ -350,10 +356,35 @@ async def suspend_merchant(
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> MerchantRead:
-    merchant = await merchant_crud.get_by_id(db, merchant_id)
+    merchant_result = await db.execute(
+        select(Merchant).where(Merchant.id == merchant_id).with_for_update()
+    )
+    merchant = merchant_result.scalar_one_or_none()
     if not merchant:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Merchant not found")
+    if merchant.status == MerchantStatus.suspended:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Merchant already suspended"
+        )
     merchant = await merchant_crud.update_status(db, merchant, MerchantStatus.suspended)
+    return MerchantRead.model_validate(merchant)
+
+
+@router.patch("/merchants/{merchant_id}/activate", response_model=MerchantRead)
+async def activate_merchant(
+    merchant_id: int,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> MerchantRead:
+    merchant_result = await db.execute(
+        select(Merchant).where(Merchant.id == merchant_id).with_for_update()
+    )
+    merchant = merchant_result.scalar_one_or_none()
+    if not merchant:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Merchant not found")
+    if merchant.status == MerchantStatus.active:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Merchant already active")
+    merchant = await merchant_crud.update_status(db, merchant, MerchantStatus.active)
     return MerchantRead.model_validate(merchant)
 
 
@@ -361,8 +392,8 @@ async def suspend_merchant(
 
 @router.get("/products", response_model=list[ProductRead])
 async def list_all_products(
-    skip: int = 0,
-    limit: int = 50,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=500),
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> list[ProductRead]:
@@ -371,7 +402,7 @@ async def list_all_products(
 
 
 class BulkProductApprove(BaseModel):
-    product_ids: list[int]
+    product_ids: list[int] = Field(max_length=500)
 
 
 @router.post("/products/bulk-approve")
@@ -382,7 +413,8 @@ async def bulk_approve_products(
 ) -> dict:
     approved = 0
     for pid in body.product_ids:
-        product = await db.get(Product, pid)
+        row = await db.execute(select(Product).where(Product.id == pid).with_for_update())
+        product = row.scalars().first()
         if product and product.status == ProductStatus.pending:
             product.status = ProductStatus.active
             approved += 1
@@ -400,14 +432,20 @@ async def approve_product(
     from app.models.notification import NotificationType
     from app.schemas.product import ProductUpdate
 
-    product = await product_crud.get_by_id(db, product_id)
+    product_result = await db.execute(
+        select(Product).where(Product.id == product_id).with_for_update()
+    )
+    product = product_result.scalar_one_or_none()
     if not product:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+    if product.status == ProductStatus.active:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Product already active")
     product = await product_crud.update(
         db, product, ProductUpdate(status=ProductStatus.active)
     )
+    await db.commit()
 
-    # Notify seller
+    # Notify seller — best-effort, never fail the approval
     merchant = await db.get(Merchant, product.merchant_id)
     if merchant:
         try:
@@ -422,8 +460,37 @@ async def approve_product(
             )
             await db.commit()
         except Exception:
-            pass
+            await db.rollback()
 
+    return ProductRead.model_validate(product)
+
+
+@router.patch("/products/{product_id}/suspend", response_model=ProductRead)
+async def suspend_product(
+    product_id: int,
+    user: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+) -> ProductRead:
+    from app.schemas.product import ProductUpdate
+
+    product_result = await db.execute(
+        select(Product).where(Product.id == product_id).with_for_update()
+    )
+    product = product_result.scalar_one_or_none()
+    if not product:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not found")
+    if product.status == ProductStatus.inactive:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Product already suspended"
+        )
+    if product.status == ProductStatus.pending:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot suspend a pending product; reject it instead",
+        )
+    product = await product_crud.update(
+        db, product, ProductUpdate(status=ProductStatus.inactive)
+    )
     return ProductRead.model_validate(product)
 
 
@@ -431,13 +498,22 @@ async def approve_product(
 
 @router.get("/orders", response_model=list[OrderRead])
 async def list_all_orders(
-    skip: int = 0,
-    limit: int = 50,
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=500),
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ) -> list[OrderRead]:
     orders = await order_crud.get_all(db, skip=skip, limit=limit)
     return [OrderRead.model_validate(o) for o in orders]
+
+
+_ALLOWED_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
+    OrderStatus.pending: {OrderStatus.processing, OrderStatus.cancelled},
+    OrderStatus.processing: {OrderStatus.shipped, OrderStatus.cancelled},
+    OrderStatus.shipped: {OrderStatus.delivered},
+    OrderStatus.delivered: set(),
+    OrderStatus.cancelled: set(),
+}
 
 
 @router.patch("/orders/{order_id}/status", response_model=OrderRead)
@@ -447,60 +523,79 @@ async def admin_update_order_status(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> OrderRead:
-    order = await order_crud.update_status_by_id(
-        db, order_id, payload.status, note=payload.note,
-        tracking_number=payload.tracking_number,
+    result = await db.execute(
+        select(Order)
+        .where(Order.id == order_id)
+        .with_for_update()
+        .options(selectinload(Order.items).selectinload(OrderItem.product))
     )
+    order = result.scalars().first()
     if not order:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-    return OrderRead.model_validate(order)
+    allowed = _ALLOWED_TRANSITIONS.get(order.status, set())
+    if payload.status not in allowed:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Không thể chuyển từ '{order.status}' sang '{payload.status}'",
+        )
+    updated = await order_crud.update_status(
+        db,
+        order,
+        UpdateOrderStatus(status=payload.status, tracking_number=payload.tracking_number),
+        note=payload.note,
+    )
+    return OrderRead.model_validate(updated)
 
 
 # ── Customers ─────────────────────────────────────────────────────────────────
 
 @router.get("/customers")
 async def list_customers(
-    skip: int = 0,
-    limit: int = 20,
-    search: str = "",
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=20, ge=1, le=500),
+    search: str = Query(default="", max_length=200),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> list[dict]:
-    q = select(User).where(User.role == UserRole.customer)
+    q = (
+        select(
+            User.id,
+            User.email,
+            User.full_name,
+            User.phone,
+            User.is_active,
+            User.created_at,
+            func.count(Order.id).label("order_count"),
+            func.coalesce(
+                func.sum(
+                    case((Order.status != OrderStatus.cancelled, Order.total_amount), else_=0)
+                ),
+                0,
+            ).label("total_spend"),
+        )
+        .outerjoin(Order, Order.customer_id == User.id)
+        .where(User.role == UserRole.customer)
+        .group_by(User.id, User.email, User.full_name, User.phone, User.is_active, User.created_at)
+    )
     if search:
         q = q.where(
             (User.email.ilike(f"%{search}%")) | (User.full_name.ilike(f"%{search}%"))
         )
     q = q.order_by(User.created_at.desc()).offset(skip).limit(limit)
     result = await db.execute(q)
-    users = result.scalars().all()
-
-    out = []
-    for u in users:
-        order_count_result = await db.execute(
-            select(func.count()).where(Order.customer_id == u.id)
-        )
-        order_count = order_count_result.scalar_one()
-
-        spend_result = await db.execute(
-            select(func.sum(Order.total_amount)).where(
-                Order.customer_id == u.id,
-                Order.status != OrderStatus.cancelled,
-            )
-        )
-        total_spend = spend_result.scalar_one() or 0
-
-        out.append({
-            "id": u.id,
-            "email": u.email,
-            "full_name": u.full_name,
-            "phone": u.phone,
-            "is_active": u.is_active,
-            "created_at": u.created_at.isoformat(),
-            "order_count": order_count,
-            "total_spend": float(total_spend),
-        })
-    return out
+    return [
+        {
+            "id": r.id,
+            "email": r.email,
+            "full_name": r.full_name,
+            "phone": r.phone,
+            "is_active": r.is_active,
+            "created_at": r.created_at.isoformat(),
+            "order_count": r.order_count,
+            "total_spend": float(r.total_spend),
+        }
+        for r in result.all()
+    ]
 
 
 # ── User management ──────────────────────────────────────────────────────────
@@ -511,11 +606,16 @@ async def suspend_user(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> None:
-    target = await db.get(User, user_id)
+    target_result = await db.execute(select(User).where(User.id == user_id).with_for_update())
+    target = target_result.scalar_one_or_none()
     if not target:
         raise HTTPException(status_code=404, detail="User not found")
     if target.role == UserRole.admin:
-        raise HTTPException(status_code=400, detail="Cannot suspend admin users")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="Cannot suspend admin users"
+        )
+    if not target.is_active:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already suspended")
     target.is_active = False
     await db.commit()
 
@@ -526,9 +626,12 @@ async def activate_user(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> None:
-    target = await db.get(User, user_id)
+    target_result = await db.execute(select(User).where(User.id == user_id).with_for_update())
+    target = target_result.scalar_one_or_none()
     if not target:
         raise HTTPException(status_code=404, detail="User not found")
+    if target.is_active:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already active")
     target.is_active = True
     await db.commit()
 
@@ -556,14 +659,20 @@ async def revenue_report(
             dt_from = datetime.strptime(date_from, "%Y-%m-%d")
             q = q.where(Order.created_at >= dt_from)
         except ValueError:
-            pass
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid date_from — expected YYYY-MM-DD",
+            ) from None
 
     if date_to:
         try:
             dt_to = datetime.strptime(date_to, "%Y-%m-%d")
             q = q.where(Order.created_at <= dt_to)
         except ValueError:
-            pass
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid date_to — expected YYYY-MM-DD",
+            ) from None
 
     q = q.group_by("year", "month").order_by("year", "month")
     result = await db.execute(q)
@@ -696,8 +805,8 @@ async def export_customers_csv(
 # ── Platform Settings ──────────────────────────────────────────────────────────
 
 class ConfigItem(BaseModel):
-    key: str
-    value: str
+    key: str = Field(min_length=1)
+    value: str = Field(min_length=1)
     description: str | None = None
 
 
@@ -720,7 +829,10 @@ async def save_settings(
 ) -> list[ConfigItem]:
     from app.models.platform_config import PlatformConfig
     for item in items:
-        existing = await db.get(PlatformConfig, item.key)
+        existing_result = await db.execute(
+            select(PlatformConfig).where(PlatformConfig.key == item.key).with_for_update()
+        )
+        existing = existing_result.scalar_one_or_none()
         if existing:
             existing.value = item.value
             if item.description is not None:
@@ -734,30 +846,118 @@ async def save_settings(
 
 
 @router.get("/integrations")
-async def integration_health(user: User = Depends(require_admin)) -> list[dict]:
+async def integration_health(_: User = Depends(require_admin)) -> list[dict]:
+    """Real integration health — derived from env configuration.
+
+    Status:
+      - online: required env vars are set (treated as healthy without active probe)
+      - not_configured: required env vars missing
+      - degraded: partially configured
+    """
+    now = datetime.now(UTC).isoformat()
+
+    fb_page = bool(settings.FACEBOOK_PAGE_ACCESS_TOKEN)
+    fb_secret = bool(settings.FACEBOOK_APP_SECRET)
+    fb_verify = bool(settings.FACEBOOK_WEBHOOK_VERIFY_TOKEN)
+    if fb_page and fb_secret and fb_verify:
+        msg_status = "online"
+    elif fb_page or fb_secret:
+        msg_status = "degraded"
+    else:
+        msg_status = "not_configured"
+
+    fb_app_id = bool(settings.FACEBOOK_APP_ID)
+    if fb_app_id and fb_secret:
+        oauth_status = "online"
+    elif fb_app_id or fb_secret:
+        oauth_status = "degraded"
+    else:
+        oauth_status = "not_configured"
+
+    ai_key = settings.OPENROUTER_API_KEY or settings.ANTHROPIC_API_KEY
+    ai_status = "online" if ai_key else "not_configured"
+    ai_model = (
+        settings.OPENROUTER_MODEL
+        if settings.OPENROUTER_API_KEY
+        else ("anthropic" if settings.ANTHROPIC_API_KEY else None)
+    )
+
     return [
-        {"name": "VCB VietQR", "status": "online", "uptime": 99.8},
-        {"name": "DHL Express", "status": "online", "uptime": 100.0},
-        {"name": "Meta Messenger", "status": "degraded", "uptime": 94.2},
-        {"name": "Zalo OA", "status": "online", "uptime": 98.1},
+        {
+            "key": "messenger_webhook",
+            "name": "Messenger Webhook",
+            "icon": "💬",
+            "status": msg_status,
+            "configured": fb_page and fb_secret,
+            "last_check": now,
+            "api_version": settings.FACEBOOK_GRAPH_API_VERSION,
+            "details": {
+                "page_token": fb_page,
+                "app_secret": fb_secret,
+                "verify_token": fb_verify,
+            },
+        },
+        {
+            "key": "facebook_oauth",
+            "name": "Facebook OAuth Login",
+            "icon": "🔑",
+            "status": oauth_status,
+            "configured": fb_app_id and fb_secret,
+            "last_check": now,
+            "api_version": settings.FACEBOOK_GRAPH_API_VERSION,
+            "details": {
+                "app_id": fb_app_id,
+                "app_secret": fb_secret,
+                "redirect_uri": bool(settings.FACEBOOK_OAUTH_REDIRECT_URI),
+            },
+        },
+        {
+            "key": "ai_chatbot",
+            "name": "AI Chatbot",
+            "icon": "🤖",
+            "status": ai_status,
+            "configured": bool(ai_key),
+            "last_check": now,
+            "api_version": ai_model,
+            "details": {
+                "openrouter": bool(settings.OPENROUTER_API_KEY),
+                "anthropic": bool(settings.ANTHROPIC_API_KEY),
+            },
+        },
+        {
+            "key": "proactive_reply",
+            "name": "Proactive Reply (Check-ins)",
+            "icon": "📣",
+            "status": (
+                "online" if settings.PROACTIVE_REPLY_ENABLED else "not_configured"
+            ),
+            "configured": settings.PROACTIVE_REPLY_ENABLED,
+            "last_check": now,
+            "api_version": settings.FACEBOOK_GRAPH_API_VERSION,
+            "details": {
+                "enabled": settings.PROACTIVE_REPLY_ENABLED,
+                "dry_run": settings.PROACTIVE_REPLY_DRY_RUN,
+                "rate_limit_per_hour": settings.PROACTIVE_REPLY_RATE_LIMIT_PER_HOUR,
+            },
+        },
     ]
 
 
 # ── Category management ────────────────────────────────────────────────────────
 
 class CategoryCreate(BaseModel):
-    name_vi: str
-    name_en: str
-    slug: str
+    name_vi: str = Field(min_length=1)
+    name_en: str = Field(min_length=1)
+    slug: str = Field(min_length=1)
     parent_id: int | None = None
     icon_url: str | None = None
     sort_order: int = 0
 
 
 class CategoryUpdate(BaseModel):
-    name_vi: str | None = None
-    name_en: str | None = None
-    slug: str | None = None
+    name_vi: str | None = Field(default=None, min_length=1)
+    name_en: str | None = Field(default=None, min_length=1)
+    slug: str | None = Field(default=None, min_length=1)
     icon_url: str | None = None
     sort_order: int | None = None
 
@@ -771,24 +971,23 @@ async def list_categories(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> list:
-    result = await db.execute(
-        select(Category).order_by(Category.sort_order, Category.id)
+    count_subq = (
+        select(Product.category_id, func.count(Product.id).label("cnt"))
+        .group_by(Product.category_id)
+        .subquery()
     )
-    categories = result.scalars().all()
-    out = []
-    for cat in categories:
-        count_res = await db.execute(
-            select(func.count()).select_from(Product).where(
-                Product.category_id == cat.id
-            )
+    result = await db.execute(
+        select(Category, func.coalesce(count_subq.c.cnt, 0).label("product_count"))
+        .outerjoin(count_subq, Category.id == count_subq.c.category_id)
+        .order_by(Category.sort_order, Category.id)
+    )
+    return [
+        CategoryWithCount(
+            **CategoryRead.model_validate(cat).model_dump(),
+            product_count=product_count,
         )
-        out.append(
-            CategoryWithCount(
-                **CategoryRead.model_validate(cat).model_dump(),
-                product_count=count_res.scalar_one(),
-            )
-        )
-    return out
+        for cat, product_count in result.all()
+    ]
 
 
 @router.post("/categories", response_model=CategoryRead, status_code=201)
@@ -811,7 +1010,10 @@ async def update_category(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> Category:
-    cat = await db.get(Category, category_id)
+    cat_result = await db.execute(
+        select(Category).where(Category.id == category_id).with_for_update()
+    )
+    cat = cat_result.scalar_one_or_none()
     if not cat:
         raise HTTPException(404, "Category not found")
     for field, value in body.model_dump(exclude_none=True).items():
@@ -827,7 +1029,10 @@ async def delete_category(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> None:
-    cat = await db.get(Category, category_id)
+    cat_result = await db.execute(
+        select(Category).where(Category.id == category_id).with_for_update()
+    )
+    cat = cat_result.scalar_one_or_none()
     if not cat:
         raise HTTPException(404, "Category not found")
     count_res = await db.execute(
@@ -864,6 +1069,48 @@ async def list_returns(
     ]
 
 
+@router.patch("/returns/{return_id}/approve")
+async def admin_approve_return(
+    return_id: int,
+    note: str | None = None,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> dict:
+    from app.crud import return_request as return_crud
+    from app.models.return_request import ReturnRequest
+    rr_result = await db.execute(
+        select(ReturnRequest).where(ReturnRequest.id == return_id).with_for_update()
+    )
+    rr = rr_result.scalar_one_or_none()
+    if not rr:
+        raise HTTPException(status_code=404, detail="Return not found")
+    if rr.status != ReturnStatus.pending:
+        raise HTTPException(status_code=409, detail=f"Return already {rr.status.value}")
+    rr = await return_crud.approve(db, rr, note)
+    return {"id": rr.id, "status": rr.status.value, "seller_note": rr.seller_note}
+
+
+@router.patch("/returns/{return_id}/reject")
+async def admin_reject_return(
+    return_id: int,
+    note: str | None = None,
+    db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_admin),
+) -> dict:
+    from app.crud import return_request as return_crud
+    from app.models.return_request import ReturnRequest
+    rr_result = await db.execute(
+        select(ReturnRequest).where(ReturnRequest.id == return_id).with_for_update()
+    )
+    rr = rr_result.scalar_one_or_none()
+    if not rr:
+        raise HTTPException(status_code=404, detail="Return not found")
+    if rr.status != ReturnStatus.pending:
+        raise HTTPException(status_code=409, detail=f"Return already {rr.status.value}")
+    rr = await return_crud.reject(db, rr, note)
+    return {"id": rr.id, "status": rr.status.value, "seller_note": rr.seller_note}
+
+
 # ── Withdrawals ───────────────────────────────────────────────────────────────
 
 # Note: WalletTransaction has no dedicated status column.
@@ -879,6 +1126,8 @@ class WithdrawalRead(BaseModel):
     amount: float
     status: str  # "pending" | "approved" | "rejected"
     description: str | None
+    bank_name: str | None
+    bank_account: str | None
     created_at: datetime
 
 
@@ -902,6 +1151,8 @@ async def _enrich_withdrawal(db: AsyncSession, txn: WalletTransaction) -> Withdr
         amount=abs(float(txn.amount)),
         status=_withdrawal_status(txn.description),
         description=txn.description,
+        bank_name=txn.bank_name,
+        bank_account=txn.bank_account,
         created_at=txn.created_at,
     )
 
@@ -912,15 +1163,25 @@ async def list_withdrawals(
     _: User = Depends(require_admin),
 ) -> list[WithdrawalRead]:
     result = await db.execute(
-        select(WalletTransaction)
+        select(WalletTransaction, Merchant)
+        .outerjoin(Merchant, WalletTransaction.merchant_id == Merchant.id)
         .where(WalletTransaction.type == TransactionType.withdrawal)
         .order_by(WalletTransaction.created_at.desc())
     )
-    transactions = result.scalars().all()
-    enriched = []
-    for txn in transactions:
-        enriched.append(await _enrich_withdrawal(db, txn))
-    return enriched
+    return [
+        WithdrawalRead(
+            id=txn.id,
+            merchant_id=txn.merchant_id,
+            merchant_name=merchant.shop_name if merchant else "Unknown",
+            amount=abs(float(txn.amount)),
+            status=_withdrawal_status(txn.description),
+            description=txn.description,
+            bank_name=txn.bank_name,
+            bank_account=txn.bank_account,
+            created_at=txn.created_at,
+        )
+        for txn, merchant in result.all()
+    ]
 
 
 @router.patch("/withdrawals/{txn_id}/approve", response_model=WithdrawalRead)
@@ -932,7 +1193,10 @@ async def approve_withdrawal(
     from app.crud.notification import create as create_notif
     from app.models.notification import NotificationType
 
-    txn = await db.get(WalletTransaction, txn_id)
+    txn_result = await db.execute(
+        select(WalletTransaction).where(WalletTransaction.id == txn_id).with_for_update()
+    )
+    txn = txn_result.scalar_one_or_none()
     if not txn or txn.type != TransactionType.withdrawal:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Withdrawal not found")
     current_desc = txn.description or ""
@@ -960,7 +1224,7 @@ async def approve_withdrawal(
             )
             await db.commit()
         except Exception:
-            pass
+            await db.rollback()
 
     return await _enrich_withdrawal(db, txn)
 
@@ -974,7 +1238,10 @@ async def reject_withdrawal(
     from app.crud.notification import create as create_notif
     from app.models.notification import NotificationType
 
-    txn = await db.get(WalletTransaction, txn_id)
+    txn_result = await db.execute(
+        select(WalletTransaction).where(WalletTransaction.id == txn_id).with_for_update()
+    )
+    txn = txn_result.scalar_one_or_none()
     if not txn or txn.type != TransactionType.withdrawal:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Withdrawal not found")
     current_desc = txn.description or ""
@@ -1002,7 +1269,7 @@ async def reject_withdrawal(
             )
             await db.commit()
         except Exception:
-            pass
+            await db.rollback()
 
     return await _enrich_withdrawal(db, txn)
 
@@ -1032,35 +1299,43 @@ async def list_conversations(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> list[ConversationSummary]:
+    last_time_cte = (
+        select(ChatMessage.session_id, func.max(ChatMessage.created_at).label("max_at"))
+        .group_by(ChatMessage.session_id)
+        .cte("last_time")
+    )
+    last_content_subq = (
+        select(ChatMessage.session_id, ChatMessage.content)
+        .join(
+            last_time_cte,
+            (ChatMessage.session_id == last_time_cte.c.session_id)
+            & (ChatMessage.created_at == last_time_cte.c.max_at),
+        )
+        .subquery("last_content")
+    )
     result = await db.execute(
         select(
             ChatMessage.fb_user_id,
             ChatMessage.session_id,
             func.count(ChatMessage.id).label("message_count"),
             func.max(ChatMessage.created_at).label("last_activity"),
+            func.max(last_content_subq.c.content).label("last_content"),
         )
+        .outerjoin(last_content_subq, ChatMessage.session_id == last_content_subq.c.session_id)
         .group_by(ChatMessage.fb_user_id, ChatMessage.session_id)
         .order_by(func.max(ChatMessage.created_at).desc())
+        .limit(200)
     )
-    rows = result.all()
-
-    summaries: list[ConversationSummary] = []
-    for row in rows:
-        last = await db.execute(
-            select(ChatMessage.content)
-            .where(ChatMessage.session_id == row.session_id)
-            .order_by(ChatMessage.created_at.desc())
-            .limit(1)
+    return [
+        ConversationSummary(
+            fb_user_id=r.fb_user_id,
+            session_id=r.session_id,
+            message_count=r.message_count,
+            last_message=(r.last_content or "")[:80],
+            last_activity=r.last_activity,
         )
-        last_content = last.scalar_one_or_none() or ""
-        summaries.append(ConversationSummary(
-            fb_user_id=row.fb_user_id,
-            session_id=row.session_id,
-            message_count=row.message_count,
-            last_message=last_content[:80],
-            last_activity=row.last_activity,
-        ))
-    return summaries
+        for r in result.all()
+    ]
 
 
 @router.get("/crm/conversations/{session_id}", response_model=list[ChatMessageOut])
@@ -1135,7 +1410,7 @@ class CustomerDetail(BaseModel):
 def _derive_segment(
     order_count: int, last_order_date: datetime | None, created_at: datetime
 ) -> str:
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     if order_count >= 2:
         return "returning"
     if order_count == 1 and last_order_date and (now - last_order_date).days > 60:
@@ -1150,7 +1425,7 @@ async def get_crm_stats(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> CRMStats:
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     thirty_days_ago = now - timedelta(days=30)
 
     messenger_contacts = (await db.execute(
@@ -1264,13 +1539,18 @@ async def get_crm_segments(
 
 @router.get("/crm/customers", response_model=list[CustomerRow])
 async def list_crm_customers(
-    segment: str | None = None,
-    q: str | None = None,
-    skip: int = 0,
-    limit: int = 50,
+    segment: str | None = Query(default=None, max_length=50),
+    q: str | None = Query(default=None, max_length=200),
+    skip: int = Query(default=0, ge=0),
+    limit: int = Query(default=50, ge=1, le=500),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> list[CustomerRow]:
+    base_where = [User.role == UserRole.customer]
+    if q:
+        like = f"%{q}%"
+        base_where.append((User.email.ilike(like)) | (User.full_name.ilike(like)))
+
     stmt = (
         select(
             User.id,
@@ -1283,14 +1563,11 @@ async def list_crm_customers(
             func.coalesce(func.sum(Order.total_amount), 0).label("total_spent"),
         )
         .outerjoin(Order, Order.customer_id == User.id)
-        .where(User.role == UserRole.customer)
+        .where(*base_where)
         .group_by(User.id, User.email, User.full_name, User.phone, User.created_at)
         .order_by(func.max(Order.created_at).desc().nullslast(), User.created_at.desc())
+        .limit(10_000)
     )
-
-    if q:
-        like = f"%{q}%"
-        stmt = stmt.where((User.email.ilike(like)) | (User.full_name.ilike(like)))
 
     result = await db.execute(stmt)
     rows = result.all()
@@ -1502,8 +1779,8 @@ async def get_conversation_overview(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> ConversationOverview:
-    now = datetime.utcnow()
-    today_start = datetime(now.year, now.month, now.day)
+    now = datetime.now(UTC)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     seven_days_ago = today_start - timedelta(days=6)
     thirty_days_ago = now - timedelta(days=30)
 
@@ -1712,7 +1989,7 @@ def _parse_day(value: str | None) -> date:
         return date.fromisoformat(value)
     except ValueError as exc:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Invalid date — expected YYYY-MM-DD",
         ) from exc
 
@@ -1807,15 +2084,11 @@ async def get_behavior_overview(
 
 @router.get("/behavior/sessions", response_model=list[SessionSummary])
 async def list_behavior_sessions(
-    limit: int = 50,
-    offset: int = 0,
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> list[SessionSummary]:
-    if limit < 1 or limit > 200:
-        raise HTTPException(status_code=400, detail="limit must be 1..200")
-    if offset < 0:
-        raise HTTPException(status_code=400, detail="offset must be >= 0")
 
     agg = (
         await db.execute(

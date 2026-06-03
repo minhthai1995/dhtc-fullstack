@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useProducts, useCategories } from '@/features/products/useProducts'
 import { useAddToCart } from '@/features/cart/useCart'
-import { Search, ShoppingCart, Star } from 'lucide-react'
+import { Package, Search, ShoppingCart, Star } from 'lucide-react'
 import { productImageSrc, type ProductRead } from '@/types/api'
 import { useT } from '@/i18n/useT'
 
@@ -69,6 +69,7 @@ const REGION_ORIGIN_MAP: Record<string, string> = {
 function ProductCard({ product }: { product: ProductRead }) {
   const addToCart = useAddToCart()
   const { t, lang } = useT()
+  const locale = lang === 'vi' ? 'vi-VN' : 'en-US'
   const displayName = lang === 'en' && product.name_en ? product.name_en : product.name_vi
   const primary = product.images?.find((i) => i.is_primary) ?? product.images?.[0]
   const primaryImage = primary ? productImageSrc(primary, 'medium') : undefined
@@ -82,7 +83,7 @@ function ProductCard({ product }: { product: ProductRead }) {
           {primaryImage ? (
             <img src={primaryImage} alt={displayName} className="w-full h-full object-cover" />
           ) : (
-            <div className="text-4xl">🌿</div>
+            <Package size={32} className="text-ink-mute" />
           )}
         </div>
         {(hasOcop || hasOrganic) && (
@@ -115,7 +116,7 @@ function ProductCard({ product }: { product: ProductRead }) {
         </Link>
         <div className="flex items-center gap-1 text-[11.5px] mb-2" style={{ color: 'var(--color-gold-deep)' }}>
           <Star size={11} fill="currentColor" />
-          <span className="font-semibold">{product.rating?.toFixed(1)}</span>
+          <span className="font-semibold">{product.rating != null ? product.rating.toFixed(1) : ''}</span>
           <span className="text-ink-mute text-[10.5px] ml-1.5">{t('shop.soldCount').replace('{count}', product.sold_count?.toLocaleString() ?? '0')}</span>
         </div>
         <div className="mt-auto">
@@ -123,7 +124,7 @@ function ProductCard({ product }: { product: ProductRead }) {
             className="text-lg font-semibold text-green tracking-tight"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            {product.price.toLocaleString('vi-VN')}₫
+            {product.price.toLocaleString(locale)}₫
           </div>
           <div className="text-[10px] text-ink-mute font-mono mt-0.5">
             ≈ ${(product.price / 25000).toFixed(2)} USD
@@ -146,6 +147,7 @@ const PAGE_SIZE = 12
 
 export function Shop() {
   const { t, lang } = useT()
+  const locale = lang === 'vi' ? 'vi-VN' : 'en-US'
   const [activeCategoryId, setActiveCategoryId] = useState<number | undefined>(undefined)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -436,7 +438,7 @@ export function Shop() {
                     </div>
                     <div className="min-w-0">
                       <div className="text-xs font-semibold text-ink truncate">{item.name}</div>
-                      <div className="text-[11px] text-green font-mono mt-0.5">{item.price.toLocaleString('vi-VN')}₫</div>
+                      <div className="text-[11px] text-green font-mono mt-0.5">{item.price.toLocaleString(locale)}₫</div>
                     </div>
                   </Link>
                 ))}

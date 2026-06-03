@@ -59,3 +59,33 @@ export function useRejectReturn() {
 export function useAdminReturns() {
   return useQuery({ queryKey: ['admin', 'returns'], queryFn: returnsApi.getAdminReturns })
 }
+
+export function useAdminApproveReturn() {
+  const qc = useQueryClient()
+  const toast = useToast()
+  const { t } = useT()
+  return useMutation({
+    mutationFn: ({ returnId, note }: { returnId: number; note?: string }) =>
+      returnsApi.adminApproveReturn(returnId, note),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'returns'] })
+      toast(t('toasts.returnApproved'), 'success')
+    },
+    onError: () => toast(t('toasts.errorProcessReturn'), 'error'),
+  })
+}
+
+export function useAdminRejectReturn() {
+  const qc = useQueryClient()
+  const toast = useToast()
+  const { t } = useT()
+  return useMutation({
+    mutationFn: ({ returnId, note }: { returnId: number; note?: string }) =>
+      returnsApi.adminRejectReturn(returnId, note),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'returns'] })
+      toast(t('toasts.returnRejected'), 'success')
+    },
+    onError: () => toast(t('toasts.errorProcessReturn'), 'error'),
+  })
+}

@@ -51,9 +51,10 @@ export function AdminMerchantDetail() {
   }
 
   const m = merchant
-  const displayName = m.store_name || `Merchant #${m.id}`
+  const displayName = m.shop_name || `Merchant #${m.id}`
   const tierAsMerchantTier = m.tier as MerchantTier
   const registeredDate = new Date(m.created_at).toLocaleDateString(localeStr)
+  const description = lang === 'en' && m.description_en ? m.description_en : m.description_vi
 
   const stats = [
     {
@@ -111,7 +112,7 @@ export function AdminMerchantDetail() {
             </div>
             <h3 className="font-semibold text-ink mb-1">{displayName}</h3>
             <p className="text-sm text-ink-mute leading-relaxed mb-4">
-              {m.description ?? t('adminMerchantDetail.noDescription')}
+              {description ?? t('adminMerchantDetail.noDescription')}
             </p>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2 text-ink-soft">

@@ -39,3 +39,13 @@ export async function getAdminReturns(): Promise<ReturnRequestRead[]> {
   const { data } = await api.get<ReturnRequestRead[]>('/admin/returns')
   return data
 }
+
+export async function adminApproveReturn(returnId: number, note?: string): Promise<ReturnRequestRead> {
+  const { data } = await api.patch<ReturnRequestRead>(`/admin/returns/${returnId}/approve`, { note })
+  return data
+}
+
+export async function adminRejectReturn(returnId: number, note?: string): Promise<ReturnRequestRead> {
+  const { data } = await api.patch<ReturnRequestRead>(`/admin/returns/${returnId}/reject`, { note })
+  return data
+}

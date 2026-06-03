@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,7 +41,7 @@ class NotificationRead(BaseModel):
 @router.get("", response_model=list[NotificationRead])
 async def list_notifications(
     unread_only: bool = False,
-    limit: int = 50,
+    limit: int = Query(default=50, ge=1, le=500),
     user: User = Depends(current_user),
     db: AsyncSession = Depends(get_db),
 ) -> list[NotificationRead]:

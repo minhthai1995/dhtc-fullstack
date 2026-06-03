@@ -4,11 +4,11 @@ interface KpiCardProps {
   label: string
   value: string | number
   delta?: string
-  deltaType?: 'up' | 'down' | 'warn'
+  deltaType?: 'up' | 'down' | 'warn' | 'neutral'
   className?: string
 }
 
-export function KpiCard({ label, value, delta, deltaType = 'up', className }: KpiCardProps) {
+export function KpiCard({ label, value, delta, deltaType = 'neutral', className }: KpiCardProps) {
   return (
     <div
       className={cn(
@@ -31,7 +31,8 @@ export function KpiCard({ label, value, delta, deltaType = 'up', className }: Kp
             'text-xs font-medium',
             deltaType === 'up' && 'text-success',
             deltaType === 'down' && 'text-danger',
-            deltaType === 'warn' && 'text-warning'
+            deltaType === 'warn' && 'text-warning',
+            deltaType === 'neutral' && 'text-ink-mute'
           )}
         >
           {deltaType === 'up' && '▲ '}

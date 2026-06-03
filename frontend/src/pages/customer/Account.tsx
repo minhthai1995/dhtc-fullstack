@@ -9,6 +9,7 @@ import { useAddToCart } from '@/features/cart/useCart'
 import { Package, MapPin, Heart, Store, Settings, LogOut, User, Lock } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import type { OrderStatus } from '@/types/api'
+import { productImageSrc } from '@/types/api'
 import { useT } from '@/i18n/useT'
 
 type AccountSection = 'dashboard' | 'orders' | 'addresses' | 'wishlist' | 'following' | 'settings'
@@ -56,7 +57,7 @@ export function Account() {
   const { data: profile } = useProfile()
   const updateProfile = useUpdateProfile()
   const changePassword = useChangePassword()
-  const { t, lang } = useT()
+  const { t, lang, setLang } = useT()
   const locale = lang === 'vi' ? 'vi-VN' : 'en-US'
 
   const [section, setSection] = useState<AccountSection>('dashboard')
@@ -69,12 +70,12 @@ export function Account() {
     name: '',
     email: '',
     phone: '',
-    language: 'vi',
-    currency: 'VND',
-    timezone: 'Asia/Ho_Chi_Minh',
-    notifyOrderEmail: true,
-    notifyDeliverySms: true,
-    notifyPromos: false,
+    language: lang,
+    currency: localStorage.getItem('pref_currency') ?? 'VND',
+    timezone: localStorage.getItem('pref_timezone') ?? 'Asia/Ho_Chi_Minh',
+    notifyOrderEmail: localStorage.getItem('pref_notify_order') !== 'false',
+    notifyDeliverySms: localStorage.getItem('pref_notify_delivery') !== 'false',
+    notifyPromos: localStorage.getItem('pref_notify_promos') === 'true',
   })
 
   // Sync settings form when profile loads
@@ -176,7 +177,7 @@ export function Account() {
               </div>
               <div className="bg-white border border-border rounded-2xl p-5 text-center">
                 <div className="text-3xl font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>
-                  {(totalSpent / 1_000_000).toFixed(2)}M
+                  {(totalSpent / 1_000_000).toLocaleString(locale, { maximumFractionDigits: 2 })}M
                 </div>
                 <div className="text-xs text-ink-mute mt-1 font-medium uppercase tracking-wider">{t('account.kpiSpent')}</div>
               </div>
@@ -215,7 +216,7 @@ export function Account() {
                     </div>
                     <Badge variant={STATUS_VARIANT[order.status]}>{t(STATUS_KEY[order.status])}</Badge>
                     <div className="text-sm font-semibold font-mono text-ink">
-                      {order.total_amount.toLocaleString('vi-VN')}₫
+                      {order.total_amount.toLocaleString(locale)}₫
                     </div>
                   </div>
                 ))}
@@ -250,12 +251,12 @@ export function Account() {
                       <span className="font-medium">{order.shipping_address.city}, {order.shipping_address.country}</span>
                     </div>
                     <div className="font-semibold text-green font-mono" style={{ fontFamily: 'var(--font-display)' }}>
-                      {order.total_amount.toLocaleString('vi-VN')}₫
+                      {order.total_amount.toLocaleString(locale)}₫
                     </div>
                   </div>
                   {order.tracking_number && (
                     <div className="mt-2 text-xs text-ink-mute">
-                      AWB: <span className="font-mono font-semibold text-green">{order.tracking_number}</span>
+                      {t('account.awbLabel')}: <span className="font-mono font-semibold text-green">{order.tracking_number}</span>
                     </div>
                   )}
                 </div>
@@ -300,7 +301,7 @@ export function Account() {
                   className="w-full px-3 py-2 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green" />
                 <button
                   onClick={() => {
-                    if (!newAddr.name || !newAddr.address || !newAddr.city) return
+                    if (!newAddr.name || !newAddr.phone || !newAddr.address || !newAddr.city) return
                     createAddress.mutate({ ...newAddr, is_default: addresses.length === 0 }, {
                       onSuccess: () => { setShowAddressForm(false); setNewAddr({ label: t('account.addressDefaultLabel'), name: '', phone: '', address: '', city: '', country: t('account.addressDefaultCountry') }) }
                     })
@@ -372,7 +373,8 @@ export function Account() {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {wishlist.map((item) => {
-                  const primaryImage = item.product.images?.find((i) => i.is_primary)?.url ?? item.product.images?.[0]?.url
+                  const primaryImg = item.product.images?.find((i) => i.is_primary) ?? item.product.images?.[0]
+                  const primaryImage = primaryImg ? productImageSrc(primaryImg, 'medium') : null
                   const pName = lang === 'en' && item.product.name_en ? item.product.name_en : item.product.name_vi
                   return (
                     <div key={item.id} className="bg-white border border-border rounded-2xl overflow-hidden hover:-translate-y-1 hover:border-green hover:shadow-lg transition-all duration-200">
@@ -380,7 +382,7 @@ export function Account() {
                         {primaryImage ? (
                           <img src={primaryImage} alt={pName} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="text-3xl">🌿</div>
+                          <Package size={28} className="text-ink-mute" />
                         )}
                       </div>
                       <div className="p-3">
@@ -389,18 +391,20 @@ export function Account() {
                           {pName}
                         </div>
                         <div className="text-sm font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>
-                          {item.product.price.toLocaleString('vi-VN')}₫
+                          {item.product.price.toLocaleString(locale)}₫
                         </div>
                         <div className="mt-2 flex gap-1">
                           <button
                             onClick={() => addToCart.mutate({ productId: item.product_id, quantity: 1 })}
-                            className="flex-1 py-1.5 bg-cream border border-green text-green rounded-lg text-xs font-medium hover:bg-green hover:text-cream transition-all"
+                            disabled={addToCart.isPending}
+                            className="flex-1 py-1.5 bg-cream border border-green text-green rounded-lg text-xs font-medium hover:bg-green hover:text-cream transition-all disabled:opacity-50"
                           >
                             {t('shop.addToCart')}
                           </button>
                           <button
                             onClick={() => removeFromWishlist.mutate(item.product_id)}
-                            className="p-1.5 border border-border rounded-lg text-ink-mute hover:border-danger hover:text-danger transition-colors"
+                            disabled={removeFromWishlist.isPending}
+                            className="p-1.5 border border-border rounded-lg text-ink-mute hover:border-danger hover:text-danger transition-colors disabled:opacity-50"
                             title={t('account.wishlistRemove')}
                           >
                             ×
@@ -421,36 +425,12 @@ export function Account() {
             <h1 className="text-3xl font-medium tracking-tight text-ink mb-5" style={{ fontFamily: 'var(--font-display)' }}>
               {t('account.followingTitle')}
             </h1>
-            <div className="space-y-3">
-              {[
-                { id: 8, name: 'HTX Cà Phê Hữu Cơ Đắk Lắk', region: 'Tây Nguyên', tier: 'GOLD', rating: 4.85, initial: 'Đ' },
-                { id: 15, name: 'Hợp tác xã Trà Hà Giang', region: 'Bắc Bộ', tier: 'SILVER', rating: 4.72, initial: 'T' },
-              ].map((store) => (
-                <div key={store.id} className="bg-white border border-border rounded-2xl p-4 flex items-center gap-4">
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0"
-                    style={{ background: 'var(--color-green)', color: 'var(--color-gold)', fontFamily: 'var(--font-display)' }}
-                  >
-                    {store.initial}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm text-ink">{store.name}</div>
-                    <div className="text-xs text-ink-mute mt-0.5">{store.region} · ★ {store.rating}</div>
-                  </div>
-                  <span
-                    className="text-[9.5px] font-bold px-2 py-0.5 rounded flex-shrink-0"
-                    style={{
-                      background: store.tier === 'GOLD' ? 'var(--color-gold)' : '#E0E0E0',
-                      color: store.tier === 'GOLD' ? 'var(--color-green)' : '#555',
-                    }}
-                  >
-                    {store.tier}
-                  </span>
-                  <button className="text-xs font-semibold text-ink-mute border border-border px-3 py-1.5 rounded-lg hover:border-danger hover:text-danger transition-colors flex-shrink-0">
-                    {t('account.followingUnfollow')}
-                  </button>
-                </div>
-              ))}
+            <div className="bg-white border border-border rounded-2xl p-10 text-center">
+              <div className="text-sm font-semibold text-ink mb-1.5">{t('account.followingEmpty')}</div>
+              <div className="text-xs text-ink-mute mb-3">{t('account.followingHint')}</div>
+              <div className="inline-block text-[10.5px] font-bold uppercase tracking-widest px-2.5 py-1 rounded" style={{ background: 'var(--color-cream-dark)', color: 'var(--color-ink-soft)' }}>
+                {t('account.followingComingSoon')}
+              </div>
             </div>
           </div>
         )}
@@ -510,19 +490,26 @@ export function Account() {
                     <label className="block text-sm font-semibold text-ink mb-1.5">{t('account.prefLanguage')}</label>
                     <select
                       value={settingsForm.language}
-                      onChange={(e) => setSettingsForm((f) => ({ ...f, language: e.target.value }))}
+                      onChange={(e) => {
+                        const v = e.target.value as 'vi' | 'en'
+                        setSettingsForm((f) => ({ ...f, language: v }))
+                        setLang(v)
+                      }}
                       className="w-full px-3 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                     >
                       <option value="vi">Tiếng Việt</option>
                       <option value="en">English</option>
-                      <option value="ja">日本語</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-semibold text-ink mb-1.5">{t('account.prefCurrency')}</label>
                     <select
                       value={settingsForm.currency}
-                      onChange={(e) => setSettingsForm((f) => ({ ...f, currency: e.target.value }))}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setSettingsForm((f) => ({ ...f, currency: v }))
+                        localStorage.setItem('pref_currency', v)
+                      }}
                       className="w-full px-3 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                     >
                       <option value="VND">VND ₫</option>
@@ -535,7 +522,11 @@ export function Account() {
                     <label className="block text-sm font-semibold text-ink mb-1.5">{t('account.prefTimezone')}</label>
                     <select
                       value={settingsForm.timezone}
-                      onChange={(e) => setSettingsForm((f) => ({ ...f, timezone: e.target.value }))}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        setSettingsForm((f) => ({ ...f, timezone: v }))
+                        localStorage.setItem('pref_timezone', v)
+                      }}
                       className="w-full px-3 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                     >
                       <option value="Asia/Ho_Chi_Minh">ICT +07:00</option>
@@ -562,7 +553,12 @@ export function Account() {
                       <input
                         type="checkbox"
                         checked={settingsForm[item.key]}
-                        onChange={(e) => setSettingsForm((f) => ({ ...f, [item.key]: e.target.checked }))}
+                        onChange={(e) => {
+                          const v = e.target.checked
+                          setSettingsForm((f) => ({ ...f, [item.key]: v }))
+                          const lsKey = item.key === 'notifyOrderEmail' ? 'pref_notify_order' : item.key === 'notifyDeliverySms' ? 'pref_notify_delivery' : 'pref_notify_promos'
+                          localStorage.setItem(lsKey, String(v))
+                        }}
                         className="mt-0.5 accent-green"
                       />
                       <div>

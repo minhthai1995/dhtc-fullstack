@@ -420,7 +420,7 @@ function EnBody() {
 
 export function TermsOfService() {
   const { t, lang } = useT()
-  const effectiveDate = lang === 'en' ? 'May 25, 2026' : '25/05/2026'
+  const effectiveDate = lang === 'en' ? 'May 31, 2026' : '31/05/2026'
   return (
     <LegalLayout
       title={t('legalPage.terms.title')}

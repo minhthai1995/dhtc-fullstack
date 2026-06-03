@@ -135,9 +135,11 @@ export function AdminCustomers() {
               )}
             </tbody>
           </table>
-          <div className="p-4">
-            <Pagination page={page} pageSize={PAGE_SIZE} total={customers.length} onPage={setPage} />
-          </div>
+          {customers.length > PAGE_SIZE && (
+            <div className="p-4">
+              <Pagination page={page} pageSize={PAGE_SIZE} total={customers.length} onPage={setPage} />
+            </div>
+          )}
         </div>
       )}
     </div>

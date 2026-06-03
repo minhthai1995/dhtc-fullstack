@@ -35,6 +35,13 @@ class Order(Base, TimestampMixin):
     shipping_address: Mapped[dict] = mapped_column(sa.JSON)
     tracking_number: Mapped[str | None] = mapped_column(String(100))
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    payment_method: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    payment_status: Mapped[str] = mapped_column(
+        String(16), default="pending", server_default="pending"
+    )
+    payment_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    shipping_method: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    shipping_fee: Mapped[float] = mapped_column(Numeric(10, 2), default=0, server_default="0")
 
     # relationships — string refs resolved at mapper configure time
     customer: Mapped[User] = relationship(

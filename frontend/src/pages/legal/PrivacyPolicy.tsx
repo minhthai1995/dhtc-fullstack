@@ -116,13 +116,21 @@ function ViBody() {
         </li>
       </ul>
 
-      <h2>3. Mục đích sử dụng dữ liệu</h2>
+      <h2>3. Mục đích sử dụng dữ liệu và cơ sở pháp lý</h2>
+      <p>
+        Chúng tôi xử lý dữ liệu cá nhân trên cơ sở: <strong>(a)</strong> thực hiện hợp đồng (đơn
+        hàng, thanh toán); <strong>(b)</strong> đồng ý của bạn (cookie phân tích, nhận tin khuyến
+        mãi); <strong>(c)</strong> nghĩa vụ pháp lý; <strong>(d)</strong> lợi ích hợp pháp (bảo mật
+        tài khoản, chống gian lận) — theo Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân, Luật An
+        toàn thông tin mạng 86/2015/QH13, và các văn bản pháp luật liên quan có hiệu lực.
+      </p>
       <ol>
         <li>Cung cấp dịch vụ thương mại điện tử (đăng ký, đăng nhập, đặt hàng, thanh toán, vận chuyển).</li>
         <li>Xác thực danh tính và bảo vệ tài khoản (chống fraud, bot, spam).</li>
         <li>Liên lạc với bạn về đơn hàng, khuyến mãi (chỉ khi bạn đã đồng ý nhận tin).</li>
-        <li>Phân tích thống kê tổng hợp (KHÔNG định danh cá nhân) để cải thiện trải nghiệm.</li>
+        <li>Phân tích thống kê tổng hợp ẩn danh (GA4 — chỉ khi bạn đồng ý cookie) để cải thiện trải nghiệm.</li>
         <li>Tuân thủ nghĩa vụ pháp lý (hoá đơn điện tử, báo cáo thuế theo luật Việt Nam).</li>
+        <li>Ghi nhận lựa chọn đồng ý cookie và xử lý yêu cầu xoá / xuất dữ liệu của bạn (DSR).</li>
       </ol>
 
       <h2>4. Chia sẻ dữ liệu với bên thứ ba</h2>
@@ -227,10 +235,22 @@ function ViBody() {
           <code>fb_oauth_state</code> (HttpOnly cookie, TTL 600s) — CSRF token cho luồng Facebook
           Login.
         </li>
+        <li>
+          <code>dhtc_cookie_consent</code> (localStorage) — lưu lựa chọn đồng ý cookie của bạn
+          (giá trị <code>"accepted"</code> hoặc <code>"rejected"</code>). Không chứa dữ liệu cá
+          nhân; được xoá khi bạn xoá dữ liệu trình duyệt.
+        </li>
       </ul>
       <p>
-        Chúng tôi KHÔNG dùng cookies tracking của bên thứ ba (Google Analytics, Facebook Pixel) ở
-        thời điểm hiện tại.
+        Khi bạn <strong>đồng ý</strong> qua banner thông báo cookie, chúng tôi sẽ tải{' '}
+        <strong>Google Analytics 4 (GA4)</strong> của Google LLC để đo lường lượt truy cập ẩn danh.
+        Nếu bạn <strong>từ chối</strong>, GA4 không được tải và không có dữ liệu nào được gửi đến
+        Google. Bạn có thể thay đổi lựa chọn bất cứ lúc nào bằng cách xoá{' '}
+        <code>dhtc_cookie_consent</code> khỏi localStorage của trình duyệt và tải lại trang.
+      </p>
+      <p>
+        Chúng tôi không dùng <strong>Facebook Pixel</strong> hoặc bất kỳ cookie tracking nào khác
+        của bên thứ ba ngoài GA4 đã nêu trên.
       </p>
 
       <h2>9. Trẻ em dưới 13 tuổi</h2>
@@ -381,13 +401,22 @@ function EnBody() {
         </li>
       </ul>
 
-      <h2>3. How we use data</h2>
+      <h2>3. How we use data and our legal basis</h2>
+      <p>
+        We process personal data on the bases of: <strong>(a)</strong> contract performance (orders,
+        payment); <strong>(b)</strong> your consent (analytics cookies, marketing opt-in);{' '}
+        <strong>(c)</strong> legal obligation; <strong>(d)</strong> legitimate interests (account
+        security, fraud prevention) — in accordance with Decree 13/2023/NĐ-CP on personal data
+        protection, the Network Information Security Law 86/2015/QH13, and other applicable
+        Vietnamese regulations in force.
+      </p>
       <ol>
         <li>Provide e-commerce services (sign-up, login, ordering, payment, shipping).</li>
         <li>Authenticate identity and protect accounts (fraud, bot, spam prevention).</li>
         <li>Communicate about orders and promotions (only with your opt-in).</li>
-        <li>Aggregate statistical analysis (NOT individually identifying) to improve UX.</li>
+        <li>Anonymous aggregate analytics (GA4 — only when you consent to cookies) to improve UX.</li>
         <li>Comply with legal obligations (e-invoices, tax reporting under Vietnamese law).</li>
+        <li>Record your cookie consent choices and handle data deletion / export requests (DSR).</li>
       </ol>
 
       <h2>4. Sharing with third parties</h2>
@@ -493,9 +522,22 @@ function EnBody() {
           <code>fb_oauth_state</code> (HttpOnly cookie, TTL 600s) — CSRF token for the Facebook
           Login flow.
         </li>
+        <li>
+          <code>dhtc_cookie_consent</code> (localStorage) — stores your cookie consent choice
+          (<code>"accepted"</code> or <code>"rejected"</code>). Contains no personal data; cleared
+          when you clear browser data.
+        </li>
       </ul>
       <p>
-        We do NOT use third-party tracking cookies (Google Analytics, Facebook Pixel) at this time.
+        When you <strong>accept</strong> via the cookie consent banner, we load{' '}
+        <strong>Google Analytics 4 (GA4)</strong> by Google LLC for anonymous traffic measurement.
+        If you <strong>decline</strong>, GA4 is never loaded and no data is sent to Google. You can
+        change your choice at any time by clearing <code>dhtc_cookie_consent</code> from your
+        browser's localStorage and reloading the page.
+      </p>
+      <p>
+        We do not use <strong>Facebook Pixel</strong> or any other third-party tracking cookies
+        beyond GA4 as stated above.
       </p>
 
       <h2>9. Children under 13</h2>
@@ -534,7 +576,7 @@ function EnBody() {
 
 export function PrivacyPolicy() {
   const { t, lang } = useT()
-  const effectiveDate = lang === 'en' ? 'May 25, 2026' : '25/05/2026'
+  const effectiveDate = lang === 'en' ? 'May 31, 2026' : '31/05/2026'
   return (
     <LegalLayout
       title={t('legalPage.privacy.title')}

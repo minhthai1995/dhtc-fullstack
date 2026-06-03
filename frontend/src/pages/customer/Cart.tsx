@@ -4,12 +4,12 @@ import { useCart, useUpdateCartItem, useRemoveFromCart } from '@/features/cart/u
 import { useMerchants } from '@/features/products/useProducts'
 import { useValidateCoupon } from '@/features/customer/useCoupon'
 import type { CartItemRead, CouponValidateResponse } from '@/types/api'
-import { Minus, Plus, Trash2, ShoppingBag, Lock } from 'lucide-react'
+import { Minus, Package, Plus, Trash2, ShoppingBag, Lock } from 'lucide-react'
 import { useT } from '@/i18n/useT'
 
-const SUGGESTED_CODES = [
+const getSuggestedCodes = (t: (k: string) => string) => [
   { code: 'FRESH15', desc: '−15%' },
-  { code: 'FREESHIP500', desc: 'free ship' },
+  { code: 'FREESHIP500', desc: t('cart.suggestedFreeShip') },
   { code: 'COMBO18', desc: '−18%' },
 ]
 
@@ -19,7 +19,8 @@ export function Cart() {
   const updateItem = useUpdateCartItem()
   const removeItem = useRemoveFromCart()
   const navigate = useNavigate()
-  const { t } = useT()
+  const { t, lang } = useT()
+  const locale = lang === 'vi' ? 'vi-VN' : 'en-US'
   const [couponCode, setCouponCode] = useState('')
   const [appliedCode, setAppliedCode] = useState<string | null>(null)
   const [couponResult, setCouponResult] = useState<CouponValidateResponse | null>(null)
@@ -29,10 +30,8 @@ export function Cart() {
   const items: CartItemRead[] = cart ?? []
 
   const subtotal = items.reduce((sum, item) => sum + (item.product?.price ?? 0) * item.quantity, 0)
-  const shipping = 135000
   const discount = couponResult?.discount_amount ?? 0
-  const vat = Math.round((subtotal + shipping - discount) * 0.1)
-  const total = subtotal + shipping - discount + vat
+  const total = Math.max(0, subtotal - discount)
 
   // Group by merchant_id
   const byMerchant = items.reduce<Record<number, CartItemRead[]>>((acc, item) => {
@@ -110,7 +109,7 @@ export function Cart() {
         {/* Cart items */}
         <div className="space-y-4">
           {Object.entries(byMerchant).map(([merchantIdStr, merchantItems]) => {
-            const mid = parseInt(merchantIdStr)
+            const mid = parseInt(merchantIdStr, 10)
             return (
               <div key={mid} className="bg-white border border-border rounded-2xl p-5">
                 {/* Merchant header */}
@@ -125,8 +124,8 @@ export function Cart() {
                   <span
                     className="text-[9.5px] font-bold px-1.5 py-0.5 rounded"
                     style={{
-                      background: merchantTiers[mid] === 'GOLD' ? 'var(--color-gold)' : '#E0E0E0',
-                      color: merchantTiers[mid] === 'GOLD' ? 'var(--color-green)' : '#555',
+                      background: merchantTiers[mid] === 'GOLD' ? 'var(--color-gold)' : 'var(--color-cream-dark)',
+                      color: merchantTiers[mid] === 'GOLD' ? 'var(--color-green)' : 'var(--color-ink-soft)',
                     }}
                   >
                     {merchantTiers[mid] ?? 'MERCHANT'}
@@ -149,7 +148,7 @@ export function Cart() {
                           {img ? (
                             <img src={img} alt={item.product?.name_vi} className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-2xl">🌿</div>
+                            <Package size={24} className="text-ink-mute" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -160,14 +159,15 @@ export function Cart() {
                             {item.product?.name_vi ?? `Product #${item.product_id}`}
                           </Link>
                           <div className="text-xs text-ink-mute mt-0.5">
-                            {(item.product?.price ?? 0).toLocaleString('vi-VN')}₫ {t('cart.unitSuffix')}
+                            {(item.product?.price ?? 0).toLocaleString(locale)}₫ {t('cart.unitSuffix')}
                           </div>
                         </div>
                         {/* QTY */}
                         <div className="flex items-center border border-border rounded-lg bg-white">
                           <button
                             onClick={() => updateItem.mutate({ productId: item.product_id, quantity: Math.max(1, item.quantity - 1) })}
-                            className="w-8 h-9 flex items-center justify-center text-green hover:bg-cream transition-colors rounded-l-lg"
+                            disabled={updateItem.isPending}
+                            className="w-8 h-9 flex items-center justify-center text-green hover:bg-cream transition-colors rounded-l-lg disabled:opacity-40"
                           >
                             <Minus size={12} />
                           </button>
@@ -178,20 +178,21 @@ export function Cart() {
                                 updateItem.mutate({ productId: item.product_id, quantity: item.quantity + 1 })
                               }
                             }}
-                            disabled={item.quantity >= (item.product?.stock ?? 999)}
-                            className={`w-8 h-9 flex items-center justify-center text-green hover:bg-cream transition-colors rounded-r-lg${item.quantity >= (item.product?.stock ?? 999) ? ' opacity-40 cursor-not-allowed' : ''}`}
+                            disabled={updateItem.isPending || item.quantity >= (item.product?.stock ?? 999)}
+                            className={`w-8 h-9 flex items-center justify-center text-green hover:bg-cream transition-colors rounded-r-lg${(updateItem.isPending || item.quantity >= (item.product?.stock ?? 999)) ? ' opacity-40 cursor-not-allowed' : ''}`}
                           >
                             <Plus size={12} />
                           </button>
                         </div>
                         {/* Subtotal */}
                         <div className="text-sm font-semibold text-green font-mono min-w-[80px] text-right" style={{ fontFamily: 'var(--font-display)' }}>
-                          {((item.product?.price ?? 0) * item.quantity).toLocaleString('vi-VN')}₫
+                          {((item.product?.price ?? 0) * item.quantity).toLocaleString(locale)}₫
                         </div>
                         {/* Remove */}
                         <button
                           onClick={() => removeItem.mutate(item.product_id)}
-                          className="text-ink-mute hover:text-danger transition-colors"
+                          disabled={removeItem.isPending}
+                          className="text-ink-mute hover:text-danger transition-colors disabled:opacity-40"
                         >
                           <Trash2 size={14} />
                         </button>
@@ -248,7 +249,7 @@ export function Cart() {
               </div>
             )}
             <div className="flex flex-wrap gap-2 mt-3">
-              {SUGGESTED_CODES.map((sc) => (
+              {getSuggestedCodes(t).map((sc) => (
                 <button
                   key={sc.code}
                   onClick={() => {
@@ -274,32 +275,35 @@ export function Cart() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between py-1.5">
                 <span className="text-ink-mute">{t('cart.subtotal')}</span>
-                <span className="font-mono font-semibold">{subtotal.toLocaleString('vi-VN')}₫</span>
-              </div>
-              <div className="flex justify-between py-1.5">
-                <span className="text-ink-mute">{t('cart.shipping')}</span>
-                <span className="font-mono font-semibold">{shipping.toLocaleString('vi-VN')}₫</span>
+                <span className="font-mono font-semibold">{subtotal.toLocaleString(locale)}₫</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between py-1.5 text-green">
                   <span>{t('cart.couponLabel').replace('{code}', appliedCode ?? '')}</span>
-                  <span className="font-mono font-semibold">−{discount.toLocaleString('vi-VN')}₫</span>
+                  <span className="font-mono font-semibold">−{discount.toLocaleString(locale)}₫</span>
                 </div>
               )}
-              <div className="flex justify-between py-1.5">
-                <span className="text-ink-mute">{t('cart.vat')}</span>
-                <span className="font-mono font-semibold">{vat.toLocaleString('vi-VN')}₫</span>
+              <div className="flex justify-between py-1.5 items-center">
+                <span className="text-ink-mute">{t('cart.shipping')}</span>
+                <span className="text-xs text-ink-mute italic">{t('cart.shippingAtCheckout')}</span>
               </div>
               <div className="flex justify-between py-4 border-t border-dashed border-border mt-2">
                 <span className="text-lg font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>{t('cart.total')}</span>
                 <span className="text-lg font-semibold text-green font-mono" style={{ fontFamily: 'var(--font-display)' }}>
-                  {total.toLocaleString('vi-VN')}₫
+                  {total.toLocaleString(locale)}₫
                 </span>
               </div>
             </div>
 
             <button
-              onClick={() => navigate('/shop/checkout')}
+              onClick={() => {
+                if (appliedCode) {
+                  sessionStorage.setItem('dhtc.checkout.coupon', appliedCode)
+                } else {
+                  sessionStorage.removeItem('dhtc.checkout.coupon')
+                }
+                navigate('/shop/checkout')
+              }}
               className="w-full py-3.5 bg-green text-white rounded-xl font-semibold hover:bg-green-soft transition-colors flex items-center justify-center gap-2 mt-2"
             >
               <ShoppingBag size={16} />

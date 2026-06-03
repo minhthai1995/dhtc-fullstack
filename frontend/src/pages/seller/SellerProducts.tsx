@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useSellerProducts, useDeleteProduct, sellerKeys } from '@/features/seller/useSeller'
+import { useSellerProducts, useDeleteProduct, useUpdateProduct, sellerKeys } from '@/features/seller/useSeller'
 import { Badge } from '@/components/ui/Badge'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Spinner } from '@/components/ui/Spinner'
-import { Plus, Edit, Trash2, Package, Layers } from 'lucide-react'
+import { Plus, Edit, Trash2, Package, Layers, EyeOff, Eye } from 'lucide-react'
 import type { ProductStatus } from '@/types/api'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/axios'
@@ -26,6 +26,7 @@ export function SellerProducts() {
   const { t, lang } = useT()
   const { data: products, isLoading } = useSellerProducts()
   const deleteProduct = useDeleteProduct()
+  const updateProduct = useUpdateProduct()
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [stockModalOpen, setStockModalOpen] = useState(false)
   const [stockEdits, setStockEdits] = useState<Record<number, number>>({})
@@ -60,8 +61,8 @@ export function SellerProducts() {
 
   const handleSaveBulkStock = () => {
     const changed = activeProducts
-      .filter((p) => stockEdits[p.id] !== p.stock)
-      .map((p) => ({ id: p.id, stock: stockEdits[p.id] ?? p.stock }))
+      .filter((p) => stockEdits[p.id] !== undefined && stockEdits[p.id] !== p.stock)
+      .map((p) => ({ id: p.id, stock: stockEdits[p.id]! }))
     if (changed.length === 0) {
       setStockModalOpen(false)
       return
@@ -157,6 +158,26 @@ export function SellerProducts() {
                     <td className="px-4 py-3">{statusBadge(p.status)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
+                        {p.status === 'active' && (
+                          <button
+                            onClick={() => updateProduct.mutate({ id: p.id, payload: { status: 'inactive' } })}
+                            disabled={updateProduct.isPending}
+                            className="text-ink-mute hover:text-warning transition-colors disabled:opacity-40"
+                            title={t('sellerProducts.hideTooltip')}
+                          >
+                            <EyeOff size={15} />
+                          </button>
+                        )}
+                        {p.status === 'inactive' && (
+                          <button
+                            onClick={() => updateProduct.mutate({ id: p.id, payload: { status: 'active' } })}
+                            disabled={updateProduct.isPending}
+                            className="text-ink-mute hover:text-green transition-colors disabled:opacity-40"
+                            title={t('sellerProducts.showTooltip')}
+                          >
+                            <Eye size={15} />
+                          </button>
+                        )}
                         <Link
                           to={`/seller/products/${p.id}/edit`}
                           className="text-ink-mute hover:text-green transition-colors"
@@ -217,10 +238,13 @@ export function SellerProducts() {
                         <input
                           type="number"
                           min={0}
+                          step={1}
                           value={stockEdits[p.id] ?? p.stock}
-                          onChange={(e) =>
-                            setStockEdits((prev) => ({ ...prev, [p.id]: Math.max(0, parseInt(e.target.value) || 0) }))
-                          }
+                          onChange={(e) => {
+                            if (e.target.value === '') return
+                            const v = parseInt(e.target.value, 10)
+                            if (!Number.isNaN(v)) setStockEdits((prev) => ({ ...prev, [p.id]: Math.max(0, v) }))
+                          }}
                           className="w-24 px-2.5 py-1.5 border border-border rounded-lg text-sm bg-cream focus:outline-none focus:border-green font-mono"
                         />
                       </td>

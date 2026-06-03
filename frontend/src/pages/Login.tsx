@@ -74,7 +74,7 @@ export function Login() {
 
         <div className="bg-white border border-border rounded-2xl p-8 shadow-sm">
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
+            <div className="mb-4 p-3 bg-danger/10 border border-danger/20 text-danger text-sm rounded-xl">
               {error}
             </div>
           )}
@@ -142,9 +142,9 @@ export function Login() {
 
         <div className="text-center mt-4 text-xs text-ink-mute">
           {t('auth.login.terms')}{' '}
-          <span className="text-green cursor-pointer hover:underline">
+          <Link to="/terms" className="text-green hover:underline no-underline">
             {t('auth.login.termsLink')}
-          </span>
+          </Link>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import { cn } from '@/lib/cn'
-import { Star } from 'lucide-react'
 import { productImageSrc, type ProductRead } from '@/types/api'
 import { useT } from '@/i18n/useT'
+import { RatingStars } from '@/components/ui/RatingStars'
 
 interface ProductCardProps {
   product: ProductRead
@@ -91,15 +91,7 @@ export function ProductCard({ product, onClick, className }: ProductCardProps) {
 
         {/* Rating & sold */}
         <div className="flex items-center gap-2 mt-2">
-          <div className="flex items-center gap-0.5">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                size={10}
-                className={star <= 4 ? 'text-gold fill-gold' : 'text-border'}
-              />
-            ))}
-          </div>
+          <RatingStars rating={product.rating} size={10} />
           <span className="text-[11px] text-ink-mute">{t('productCard.sold').replace('{n}', String(product.sold_count))}</span>
         </div>
 

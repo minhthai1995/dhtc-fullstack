@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ReviewCreate(BaseModel):
     rating: int = Field(ge=1, le=5)
-    comment: str | None = None
+    comment: str | None = Field(default=None, max_length=5000)
 
 
 class ReviewRead(BaseModel):

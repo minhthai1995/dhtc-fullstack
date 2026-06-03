@@ -26,8 +26,8 @@ const STATUS_BADGE: Record<OrderStatus, 'pending' | 'processing' | 'shipped' | '
 
 const STATUS_COLOR: Record<OrderStatus, string> = {
   pending: 'bg-warning',
-  processing: 'bg-blue-500',
-  shipped: 'bg-indigo-500',
+  processing: 'bg-gold',
+  shipped: 'bg-green-soft',
   delivered: 'bg-green',
   cancelled: 'bg-danger',
 }
@@ -73,7 +73,7 @@ export function Tracking() {
 
   const toggleExpand = (id: number) => setExpandedOrders(prev => {
     const next = new Set(prev)
-    next.has(id) ? next.delete(id) : next.add(id)
+    if (next.has(id)) { next.delete(id) } else { next.add(id) }
     return next
   })
   const highlightedOrderId = searchParams.get('order')
@@ -153,7 +153,7 @@ export function Tracking() {
                       className="text-xl font-semibold text-green"
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      {order.total_amount.toLocaleString('vi-VN')}₫
+                      {order.total_amount.toLocaleString(locale)}₫
                     </div>
                     {order.tracking_number && (
                       <div className="text-[11px] font-mono text-ink-mute mt-1">
@@ -176,7 +176,7 @@ export function Tracking() {
                             <span className="text-xs text-ink truncate">{item.product_name}</span>
                           </div>
                           <span className="text-xs font-medium text-ink shrink-0 font-mono">
-                            {(item.unit_price * item.quantity).toLocaleString('vi-VN')}₫
+                            {(item.unit_price * item.quantity).toLocaleString(locale)}₫
                           </span>
                           {order.status === 'delivered' && (
                             <Link
@@ -220,7 +220,7 @@ export function Tracking() {
                             {t('tracking.returnApproved')}
                           </span>
                         ) : (
-                          <span className="text-xs font-semibold text-danger bg-red-50 border border-red-200 rounded-lg px-2.5 py-1">
+                          <span className="text-xs font-semibold text-danger bg-danger/10 border border-danger/20 rounded-lg px-2.5 py-1">
                             {t('tracking.returnRejected')}
                           </span>
                         )
@@ -235,10 +235,12 @@ export function Tracking() {
                     )}
                     {(order.status === 'delivered' || order.status === 'cancelled') && order.items && (
                       <button
-                        onClick={() => {
-                          order.items!.forEach((item) => {
-                            addToCart.mutate({ productId: item.product_id, quantity: item.quantity })
-                          })
+                        onClick={async () => {
+                          for (const item of order.items!) {
+                            await addToCart.mutateAsync(
+                              { productId: item.product_id, quantity: item.quantity },
+                            ).catch(() => {})
+                          }
                         }}
                         className="text-xs text-ink-mute font-semibold hover:text-green hover:underline transition-colors"
                       >

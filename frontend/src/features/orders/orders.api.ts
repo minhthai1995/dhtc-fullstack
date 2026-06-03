@@ -6,6 +6,10 @@ export interface CreateOrderPayload {
   shipping_address: ShippingAddress
   promotion_code?: string
   notes?: string
+  payment_method?: string
+  shipping_method?: string
+  shipping_fee?: number
+  shipping_zone_id?: number
 }
 
 export async function createOrder(payload: CreateOrderPayload): Promise<OrderRead> {

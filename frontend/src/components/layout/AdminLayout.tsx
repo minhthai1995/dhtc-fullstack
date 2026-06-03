@@ -23,6 +23,7 @@ import {
 import { NotificationBell } from '@/components/ui/NotificationBell'
 import { useNotificationSocket } from '@/lib/useNotificationSocket'
 import { useT } from '@/i18n/useT'
+import { useAdminDashboard } from '@/features/admin/useAdmin'
 
 const navGroups = [
   {
@@ -35,10 +36,10 @@ const navGroups = [
   {
     labelKey: 'adminNav.groupManage',
     items: [
-      { labelKey: 'adminNav.merchants', href: '/admin/merchants', icon: <Users size={18} />, badge: '287' },
-      { labelKey: 'adminNav.products', href: '/admin/products', icon: <Package size={18} />, badge: '15k' },
+      { labelKey: 'adminNav.merchants', href: '/admin/merchants', icon: <Users size={18} /> },
+      { labelKey: 'adminNav.products', href: '/admin/products', icon: <Package size={18} /> },
       { labelKey: 'adminNav.categories', href: '/admin/categories', icon: <Tag size={18} /> },
-      { labelKey: 'adminNav.approvals', href: '/admin/approvals', icon: <CheckSquare size={18} />, badge: '8' },
+      { labelKey: 'adminNav.approvals', href: '/admin/approvals', icon: <CheckSquare size={18} /> },
       { labelKey: 'adminNav.orders', href: '/admin/orders', icon: <ShoppingCart size={18} /> },
       { labelKey: 'adminNav.returns', href: '/admin/returns', icon: <RotateCcw size={18} /> },
       { labelKey: 'adminNav.customers', href: '/admin/customers', icon: <UserCircle2 size={18} /> },
@@ -61,6 +62,8 @@ export function AdminLayout() {
   const { data: user } = useCurrentUser()
   const logout = useLogout()
   const navigate = useNavigate()
+  const { data: dashboard } = useAdminDashboard()
+  const pendingApprovals = dashboard?.pending_approvals ?? 0
   useNotificationSocket()
 
   const handleLogout = () => {
@@ -73,7 +76,7 @@ export function AdminLayout() {
     <aside
       className={cn(
         'fixed top-0 left-0 h-full w-[248px] flex flex-col z-40 transition-transform duration-300',
-        'bg-[#1a2e1e]',
+        'bg-green-deep',
         sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
       )}
     >
@@ -121,9 +124,9 @@ export function AdminLayout() {
               >
                 <span className="flex-shrink-0 opacity-80">{item.icon}</span>
                 <span className="flex-1">{t(item.labelKey)}</span>
-                {item.badge && (
+                {item.href === '/admin/approvals' && pendingApprovals > 0 && (
                   <span className="text-[10px] bg-white/15 text-white/70 px-1.5 py-0.5 rounded-full font-mono">
-                    {item.badge}
+                    {pendingApprovals}
                   </span>
                 )}
               </NavLink>
@@ -169,7 +172,7 @@ export function AdminLayout() {
       {/* Main content */}
       <div className="flex-1 lg:ml-[248px] flex flex-col min-h-screen">
         {/* Mobile topbar */}
-        <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-[#1a2e1e] border-b border-white/10">
+        <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-green-deep border-b border-white/10">
           <button onClick={() => setSidebarOpen(true)} className="text-white">
             <Menu size={22} />
           </button>

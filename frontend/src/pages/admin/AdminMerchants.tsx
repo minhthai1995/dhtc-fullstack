@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { useAdminMerchants, useApproveMerchant, useSuspendMerchant } from '@/features/admin/useAdmin'
+import { useToast } from '@/components/ui/Toast'
+import { useAdminMerchants, useApproveMerchant, useSuspendMerchant, useActivateMerchant } from '@/features/admin/useAdmin'
 import { Badge } from '@/components/ui/Badge'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Spinner } from '@/components/ui/Spinner'
@@ -34,12 +35,14 @@ const PAGE_SIZE = 20
 
 export function AdminMerchants() {
   const { t } = useT()
+  const toast = useToast()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'all' | MerchantStatus>('all')
   const [page, setPage] = useState(1)
   const { data: merchants, isLoading } = useAdminMerchants()
   const approve = useApproveMerchant()
   const suspend = useSuspendMerchant()
+  const activate = useActivateMerchant()
 
   useEffect(() => { setPage(1) }, [search])
   useEffect(() => { setPage(1) }, [filter])
@@ -93,7 +96,7 @@ export function AdminMerchants() {
           />
         </div>
         <div className="flex gap-1">
-          {(['all', 'active', 'pending', 'suspended'] as const).map((f) => (
+          {(['all', 'active', 'pending', 'verified', 'suspended'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -160,7 +163,7 @@ export function AdminMerchants() {
                           </Link>
                           {m.status === 'pending' && (
                             <button
-                              onClick={() => approve.mutate(m.id)}
+                              onClick={() => approve.mutate(m.id, { onError: () => toast(t('toasts.errorApproveMerchant'), 'error') })}
                               disabled={approve.isPending}
                               className="text-xs px-2.5 py-1 bg-green/10 text-green font-semibold rounded-lg hover:bg-green/20 transition-colors disabled:opacity-50"
                             >
@@ -169,11 +172,20 @@ export function AdminMerchants() {
                           )}
                           {m.status === 'active' && (
                             <button
-                              onClick={() => suspend.mutate(m.id)}
+                              onClick={() => suspend.mutate(m.id, { onError: () => toast(t('toasts.errorSuspendMerchant'), 'error') })}
                               disabled={suspend.isPending}
-                              className="text-xs px-2.5 py-1 bg-red-50 text-danger font-semibold rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50"
+                              className="text-xs px-2.5 py-1 bg-danger/10 text-danger font-semibold rounded-lg hover:bg-danger/20 transition-colors disabled:opacity-50"
                             >
                               {t('adminMerchants.btnSuspend')}
+                            </button>
+                          )}
+                          {m.status === 'suspended' && (
+                            <button
+                              onClick={() => activate.mutate(m.id, { onError: () => toast(t('toasts.errorActivateMerchant'), 'error') })}
+                              disabled={activate.isPending}
+                              className="text-xs px-2.5 py-1 bg-green/10 text-green font-semibold rounded-lg hover:bg-green/20 transition-colors disabled:opacity-50"
+                            >
+                              {t('adminMerchants.btnActivate')}
                             </button>
                           )}
                         </div>

@@ -34,9 +34,24 @@ async def get_item(
 async def add_item(
     db: AsyncSession, customer_id: int, product_id: int, quantity: int = 1
 ) -> CartItem:
-    existing = await get_item(db, customer_id, product_id)
+    existing_result = await db.execute(
+        select(CartItem)
+        .where(
+            CartItem.customer_id == customer_id,
+            CartItem.product_id == product_id,
+        )
+        .with_for_update()
+    )
+    existing = existing_result.scalars().first()
     if existing:
-        existing.quantity += quantity
+        new_qty = existing.quantity + quantity
+        product_result = await db.execute(
+            select(Product).where(Product.id == product_id).with_for_update()
+        )
+        product = product_result.scalar_one_or_none()
+        if product and new_qty > product.stock:
+            raise ValueError(f"Sản phẩm chỉ còn {product.stock} đơn vị trong kho")
+        existing.quantity = new_qty
         await db.commit()
         # Re-fetch with product eager-loaded
         return await get_item(db, customer_id, product_id)  # type: ignore[return-value]
@@ -50,7 +65,12 @@ async def add_item(
 
 
 async def update_item(db: AsyncSession, item: CartItem, quantity: int) -> CartItem:
-    product = await db.get(Product, item.product_id)
+    if quantity <= 0:
+        raise ValueError("Số lượng phải lớn hơn 0")
+    product_result = await db.execute(
+        select(Product).where(Product.id == item.product_id).with_for_update()
+    )
+    product = product_result.scalar_one_or_none()
     if product and quantity > product.stock:
         raise ValueError(f"Chỉ còn {product.stock} sản phẩm trong kho")
     item.quantity = quantity

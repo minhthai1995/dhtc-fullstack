@@ -4,6 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.product import Product
 from app.models.review import Review
 from app.schemas.review import ReviewCreate
 
@@ -39,8 +40,10 @@ async def update(db: AsyncSession, review: Review, rating: int, comment: str) ->
     )
     avg = avg_result.scalar_one_or_none()
     if avg is not None:
-        from app.models.product import Product
-        product = await db.get(Product, review.product_id)
+        prod_result = await db.execute(
+            select(Product).where(Product.id == review.product_id).with_for_update()
+        )
+        product = prod_result.scalar_one_or_none()
         if product:
             product.rating = round(float(avg), 2)
     await db.commit()
@@ -56,8 +59,10 @@ async def delete(db: AsyncSession, review: Review) -> None:
         select(func.avg(Review.rating)).where(Review.product_id == product_id)
     )
     avg = avg_result.scalar_one_or_none()
-    from app.models.product import Product
-    product = await db.get(Product, product_id)
+    prod_result = await db.execute(
+        select(Product).where(Product.id == product_id).with_for_update()
+    )
+    product = prod_result.scalar_one_or_none()
     if product:
         product.rating = round(float(avg), 2) if avg is not None else None
     await db.commit()
@@ -66,8 +71,6 @@ async def delete(db: AsyncSession, review: Review) -> None:
 async def create(
     db: AsyncSession, customer_id: int, product_id: int, data: ReviewCreate
 ) -> Review:
-    from app.models.product import Product
-
     review = Review(customer_id=customer_id, product_id=product_id, **data.model_dump())
     db.add(review)
     try:
@@ -82,7 +85,10 @@ async def create(
     )
     avg = avg_result.scalar_one_or_none()
     if avg is not None:
-        product = await db.get(Product, product_id)
+        prod_result = await db.execute(
+            select(Product).where(Product.id == product_id).with_for_update()
+        )
+        product = prod_result.scalar_one_or_none()
         if product:
             product.rating = round(float(avg), 2)
 

@@ -28,6 +28,7 @@ export interface CreateProductPayload {
   name_en?: string
   price: number
   stock: number
+  status?: 'active' | 'inactive' | 'pending_review'
   category_id?: number
   description_vi?: string
   description_en?: string
@@ -46,6 +47,7 @@ export interface CreatePromotionPayload {
   min_order: number
   max_usage?: number
   expires_at?: string
+  is_active?: boolean
 }
 
 export interface CreateShippingZonePayload {
@@ -79,6 +81,44 @@ export async function setupMerchant(payload: SetupMerchantPayload): Promise<Merc
 
 export async function updateSellerProfile(payload: Partial<MerchantRead>): Promise<MerchantRead> {
   const { data } = await api.put<MerchantRead>('/seller/profile', payload)
+  return data
+}
+
+export type UploadProgressHandler = (percent: number) => void
+
+async function uploadMerchantAsset(
+  path: '/seller/profile/logo' | '/seller/profile/banner',
+  file: File,
+  onProgress?: UploadProgressHandler,
+): Promise<MerchantRead> {
+  const form = new FormData()
+  form.append('file', file)
+  const { data } = await api.post<MerchantRead>(path, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (evt) => {
+      if (onProgress && evt.total) {
+        onProgress(Math.round((evt.loaded * 100) / evt.total))
+      }
+    },
+  })
+  return data
+}
+
+export function uploadMerchantLogo(file: File, onProgress?: UploadProgressHandler) {
+  return uploadMerchantAsset('/seller/profile/logo', file, onProgress)
+}
+
+export function uploadMerchantBanner(file: File, onProgress?: UploadProgressHandler) {
+  return uploadMerchantAsset('/seller/profile/banner', file, onProgress)
+}
+
+export async function deleteMerchantLogo(): Promise<MerchantRead> {
+  const { data } = await api.delete<MerchantRead>('/seller/profile/logo')
+  return data
+}
+
+export async function deleteMerchantBanner(): Promise<MerchantRead> {
+  const { data } = await api.delete<MerchantRead>('/seller/profile/banner')
   return data
 }
 
@@ -169,7 +209,7 @@ export async function createShippingZone(payload: CreateShippingZonePayload): Pr
 }
 
 export async function updateShippingZone(id: number, payload: Partial<CreateShippingZonePayload>): Promise<ShippingZoneRead> {
-  const { data } = await api.patch<ShippingZoneRead>(`/seller/shipping/${id}`, payload)
+  const { data } = await api.put<ShippingZoneRead>(`/seller/shipping/${id}`, payload)
   return data
 }
 

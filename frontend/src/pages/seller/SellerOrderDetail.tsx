@@ -1,9 +1,9 @@
 import { useParams, Link } from 'react-router-dom'
-import { useSellerOrder, useUpdateOrderStatus } from '@/features/seller/useSeller'
+import { useSellerOrder, useSellerUpdateOrderStatus } from '@/features/seller/useSeller'
 import { Badge } from '@/components/ui/Badge'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Spinner } from '@/components/ui/Spinner'
-import { ArrowLeft, Package, MapPin, Phone, Printer } from 'lucide-react'
+import { ArrowLeft, Package, MapPin, Phone, Printer, CreditCard, Truck } from 'lucide-react'
 import type { OrderDetail, OrderStatus } from '@/types/api'
 import { useT } from '@/i18n/useT'
 
@@ -14,16 +14,35 @@ const STATUS_STEPS: { key: OrderStatus; labelKey: string }[] = [
   { key: 'delivered', labelKey: 'sellerOrderDetail.stepDelivered' },
 ]
 
+const SHIPPING_METHOD_KEYS: Record<string, string> = {
+  dhl_express: 'sellerOrderDetail.shippingMethodDhlExpress',
+  dhl_economy: 'sellerOrderDetail.shippingMethodDhlEconomy',
+}
+
+const PAYMENT_METHOD_KEYS: Record<string, string> = {
+  vietqr: 'sellerOrderDetail.paymentMethodVietqr',
+  card: 'sellerOrderDetail.paymentMethodCard',
+}
+
+const PAYMENT_STATUS_KEYS: Record<string, string> = {
+  pending: 'sellerOrderDetail.paymentStatusPending',
+  paid: 'sellerOrderDetail.paymentStatusPaid',
+  refunded: 'sellerOrderDetail.paymentStatusRefunded',
+  failed: 'sellerOrderDetail.paymentStatusFailed',
+}
+
 export function SellerOrderDetail() {
   const { t, lang } = useT()
   const { id } = useParams<{ id: string }>()
-  const orderId = parseInt(id ?? '0')
+  const orderId = parseInt(id ?? '0', 10)
   const { data: order, isLoading } = useSellerOrder(orderId)
-  const updateStatus = useUpdateOrderStatus()
+  const updateStatus = useSellerUpdateOrderStatus()
 
   const o = order as OrderDetail | undefined
 
-  const currentStepIndex = STATUS_STEPS.findIndex((s) => s.key === o?.status)
+  const currentStepIndex = o?.status === 'cancelled'
+    ? -1
+    : Math.max(0, STATUS_STEPS.findIndex((s) => s.key === o?.status))
 
   if (isLoading) {
     return (
@@ -68,10 +87,12 @@ export function SellerOrderDetail() {
                   ? 'processing'
                   : o.status === 'shipped'
                   ? 'shipped'
+                  : o.status === 'cancelled'
+                  ? 'cancelled'
                   : 'delivered'
               }
             >
-              {t(STATUS_STEPS.find((s) => s.key === o.status)?.labelKey ?? 'sellerOrderDetail.stepPending')}
+              {t(STATUS_STEPS.find((s) => s.key === o.status)?.labelKey ?? 'sellerOrderDetail.stepDelivered')}
             </Badge>
           </div>
         }
@@ -137,25 +158,40 @@ export function SellerOrderDetail() {
               ))}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-border">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-ink-mute">{t('sellerOrderDetail.subtotal')}</span>
-                <span className="text-sm text-ink">{o.total_amount.toLocaleString(localeStr)}₫</span>
-              </div>
-              <div className="flex justify-between items-center mt-1">
-                <span className="text-sm text-ink-mute">{t('sellerOrderDetail.shippingFee')}</span>
-                <span className="text-sm text-ink">{t('sellerOrderDetail.dhlExpress')}</span>
-              </div>
-              <div className="flex justify-between items-center mt-2 pt-2 border-t border-border">
-                <span className="font-semibold text-ink">{t('sellerOrderDetail.total')}</span>
-                <span
-                  className="font-semibold text-lg text-green"
-                  style={{ fontFamily: 'var(--font-display)' }}
-                >
-                  {o.total_amount.toLocaleString(localeStr)}₫
-                </span>
-              </div>
-            </div>
+            {(() => {
+              const shippingFee = o.shipping_fee ?? 0
+              const itemsSubtotal = o.items.reduce((sum, it) => sum + it.unit_price * it.quantity, 0)
+              const subtotal = itemsSubtotal || Math.max(0, o.total_amount - shippingFee)
+              const shippingMethodKey = o.shipping_method
+                ? SHIPPING_METHOD_KEYS[o.shipping_method]
+                : null
+              return (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-ink-mute">{t('sellerOrderDetail.subtotal')}</span>
+                    <span className="text-sm text-ink font-mono">{subtotal.toLocaleString(localeStr)}₫</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <span className="text-sm text-ink-mute">
+                      {t('sellerOrderDetail.shippingFee')}
+                      {shippingMethodKey && (
+                        <span className="text-ink-mute"> · {t(shippingMethodKey)}</span>
+                      )}
+                    </span>
+                    <span className="text-sm text-ink font-mono">{shippingFee.toLocaleString(localeStr)}₫</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-2 pt-2 border-t border-border">
+                    <span className="font-semibold text-ink">{t('sellerOrderDetail.total')}</span>
+                    <span
+                      className="font-semibold text-lg text-green font-mono"
+                      style={{ fontFamily: 'var(--font-display)' }}
+                    >
+                      {o.total_amount.toLocaleString(localeStr)}₫
+                    </span>
+                  </div>
+                </div>
+              )
+            })()}
           </div>
 
           {/* Actions */}
@@ -177,7 +213,7 @@ export function SellerOrderDetail() {
                 <button
                   onClick={() => updateStatus.mutate({ id: o.id, status: 'cancelled' })}
                   disabled={updateStatus.isPending}
-                  className="px-4 py-2.5 bg-red-50 text-danger rounded-xl font-semibold text-sm hover:bg-red-100 disabled:opacity-60 transition-colors"
+                  className="px-4 py-2.5 bg-danger/10 text-danger rounded-xl font-semibold text-sm hover:bg-danger/20 disabled:opacity-60 transition-colors"
                 >
                   {t('sellerOrderDetail.cancelOrder')}
                 </button>
@@ -227,12 +263,61 @@ export function SellerOrderDetail() {
                 <div className="text-sm text-ink-soft">{o.shipping_address.phone}</div>
               </div>
             </div>
+            <div className="mt-3 pt-3 border-t border-border flex items-center gap-2">
+              <Truck size={14} className="text-ink-mute flex-shrink-0" />
+              <div className="text-xs text-ink-mute">{t('sellerOrderDetail.shippingMethod')}:</div>
+              <div className="text-xs text-ink-soft">
+                {o.shipping_method && SHIPPING_METHOD_KEYS[o.shipping_method]
+                  ? t(SHIPPING_METHOD_KEYS[o.shipping_method])
+                  : t('sellerOrderDetail.shippingMethodUnknown')}
+              </div>
+            </div>
             {o.tracking_number && (
               <div className="mt-3 pt-3 border-t border-border">
                 <div className="text-xs text-ink-mute mb-1">{t('sellerOrderDetail.trackingCode')}</div>
                 <div className="text-sm font-mono font-semibold text-green">{o.tracking_number}</div>
               </div>
             )}
+          </div>
+
+          {/* Payment info */}
+          <div className="bg-white border border-border rounded-2xl p-5">
+            <h3
+              className="font-semibold text-ink mb-4 flex items-center gap-2"
+              style={{ fontFamily: 'var(--font-display)' }}
+            >
+              <CreditCard size={16} className="text-ink-mute" />
+              {t('sellerOrderDetail.paymentInfo')}
+            </h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-ink-mute">{t('sellerOrderDetail.paymentMethod')}</span>
+                <span className="text-ink-soft">
+                  {o.payment_method && PAYMENT_METHOD_KEYS[o.payment_method]
+                    ? t(PAYMENT_METHOD_KEYS[o.payment_method])
+                    : t('sellerOrderDetail.paymentMethodUnknown')}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-ink-mute">{t('sellerOrderDetail.paymentStatus')}</span>
+                <Badge
+                  variant={
+                    o.payment_status === 'paid'
+                      ? 'delivered'
+                      : o.payment_status === 'failed'
+                      ? 'cancelled'
+                      : o.payment_status === 'refunded'
+                      ? 'processing'
+                      : 'pending'
+                  }
+                >
+                  {t(
+                    PAYMENT_STATUS_KEYS[o.payment_status ?? 'pending'] ??
+                      'sellerOrderDetail.paymentStatusPending',
+                  )}
+                </Badge>
+              </div>
+            </div>
           </div>
         </div>
       </div>

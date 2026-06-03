@@ -12,7 +12,6 @@ from httpx import ASGITransport, AsyncClient
 from app.core.db import get_db
 from app.main import app
 
-
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _make_signed_request(user_id: str, secret: str) -> str:

@@ -9,14 +9,6 @@ function getVal(configs: { key: string; value: string }[], key: string, fallback
   return configs.find((c) => c.key === key)?.value ?? fallback
 }
 
-const SECURITY_KEYS: { labelKey: string; enabled: boolean }[] = [
-  { labelKey: 'adminSettings.sec2fa', enabled: true },
-  { labelKey: 'adminSettings.secAuditLog', enabled: true },
-  { labelKey: 'adminSettings.secLoginLimit', enabled: true },
-  { labelKey: 'adminSettings.secLoginEmail', enabled: false },
-  { labelKey: 'adminSettings.secAutoLock', enabled: false },
-]
-
 export function AdminSettings() {
   const { t } = useT()
   const { data: configs = [], isLoading } = useSettings()
@@ -107,13 +99,6 @@ export function AdminSettings() {
                   className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-ink mb-1.5">{t('adminSettings.defaultLang')}</label>
-                <select className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all">
-                  <option value="vi">{t('adminSettings.langVi')}</option>
-                  <option value="en">{t('adminSettings.langEn')}</option>
-                </select>
-              </div>
             </div>
           )}
         </div>
@@ -123,15 +108,8 @@ export function AdminSettings() {
           <h2 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
             {t('adminSettings.security')}
           </h2>
-          <div className="space-y-3">
-            {SECURITY_KEYS.map((setting) => (
-              <div key={setting.labelKey} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                <span className="text-sm text-ink">{t(setting.labelKey)}</span>
-                <div className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors ${setting.enabled ? 'bg-green' : 'bg-border'}`}>
-                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${setting.enabled ? 'left-[22px]' : 'left-0.5'}`} />
-                </div>
-              </div>
-            ))}
+          <div className="text-sm text-ink-mute italic py-4">
+            {t('adminSettings.securityComingSoon')}
           </div>
         </div>
       </div>

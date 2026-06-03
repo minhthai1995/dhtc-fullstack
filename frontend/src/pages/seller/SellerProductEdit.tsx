@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useCreateProduct, useUpdateProduct } from '@/features/seller/useSeller'
-import { useProduct } from '@/features/products/useProducts'
+import { useProduct, useCategories } from '@/features/products/useProducts'
 import { ImageUploader } from '@/features/products/ImageUploader'
 import type { ProductImage } from '@/features/products/types'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -34,7 +34,7 @@ function toProductImages(raw: unknown): ProductImage[] {
 }
 
 export function SellerProductEdit() {
-  const { t } = useT()
+  const { t, lang } = useT()
   const { id } = useParams<{ id: string }>()
   const isEdit = !!id
   const productId = id ? parseInt(id) : 0
@@ -43,9 +43,12 @@ export function SellerProductEdit() {
   const updateProduct = useUpdateProduct()
   const { data: existingProduct, isLoading: loadingProduct } = useProduct(productId)
 
+  const { data: categories = [] } = useCategories()
+
   const [form, setForm] = useState({
     name_vi: '',
     name_en: '',
+    category_id: '' as string,
     price: '',
     stock: '',
     origin: '',
@@ -62,6 +65,7 @@ export function SellerProductEdit() {
       setForm({
         name_vi: existingProduct.name_vi ?? '',
         name_en: existingProduct.name_en ?? '',
+        category_id: existingProduct.category_id != null ? String(existingProduct.category_id) : '',
         price: String(existingProduct.price ?? ''),
         stock: String(existingProduct.stock ?? ''),
         origin: existingProduct.origin ?? '',
@@ -99,11 +103,32 @@ export function SellerProductEdit() {
     e.preventDefault()
     setError('')
 
+    if (!form.name_vi.trim()) {
+      setError(t('sellerProductEdit.errorNameRequired'))
+      return
+    }
+    if (images.length === 0) {
+      setError(t('sellerProductEdit.errorImagesRequired'))
+      return
+    }
+
+    const price = parseFloat(form.price)
+    const stock = parseInt(form.stock)
+    if (isNaN(price) || price <= 0) {
+      setError(t('sellerProductEdit.errorPrice'))
+      return
+    }
+    if (isNaN(stock) || stock < 0) {
+      setError(t('sellerProductEdit.errorStock'))
+      return
+    }
+
     const payload = {
       name_vi: form.name_vi,
       name_en: form.name_en || undefined,
-      price: parseFloat(form.price),
-      stock: parseInt(form.stock),
+      category_id: form.category_id ? parseInt(form.category_id, 10) : undefined,
+      price,
+      stock,
       origin: form.origin || undefined,
       description_vi: form.description_vi || undefined,
       description_en: form.description_en || undefined,
@@ -159,7 +184,7 @@ export function SellerProductEdit() {
                 {t('sellerProductEdit.basicInfo')}
               </h3>
               {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
+                <div className="mb-4 p-3 bg-danger/10 border border-danger/20 text-danger text-sm rounded-xl">
                   {error}
                 </div>
               )}
@@ -190,6 +215,22 @@ export function SellerProductEdit() {
                     placeholder={t('sellerProductEdit.nameEnPlaceholder')}
                     className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">{t('sellerProductEdit.category')}</label>
+                  <select
+                    value={form.category_id}
+                    onChange={(e) => handleChange('category_id', e.target.value)}
+                    className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
+                  >
+                    <option value="">{t('sellerProductEdit.categoryNone')}</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={String(cat.id)}>
+                        {lang === 'vi' ? cat.name_vi : cat.name_en}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -225,6 +266,7 @@ export function SellerProductEdit() {
                       onChange={(e) => handleChange('stock', e.target.value)}
                       required
                       min="0"
+                      step="1"
                       placeholder="100"
                       className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                     />
@@ -302,7 +344,7 @@ export function SellerProductEdit() {
                 <div className="flex flex-wrap gap-2">
                   {form.certifications.map((cert, i) => (
                     <span
-                      key={i}
+                      key={cert}
                       className="flex items-center gap-1.5 text-xs font-bold text-success bg-green/10 px-2.5 py-1 rounded-full"
                     >
                       {cert}

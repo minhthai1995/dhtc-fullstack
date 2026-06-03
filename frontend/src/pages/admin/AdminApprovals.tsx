@@ -53,7 +53,7 @@ export function AdminApprovals() {
       {/* Summary row */}
       <div className="grid grid-cols-2 gap-4 mb-5">
         <div className="bg-white border border-border rounded-xl p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
             <Package size={18} className="text-warning" />
           </div>
           <div>

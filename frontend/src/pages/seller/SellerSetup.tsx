@@ -25,6 +25,7 @@ export function SellerSetup() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!form.shop_name.trim() || !form.business_name.trim() || !form.slug.trim()) return
     setupMerchant.mutate(
       {
         shop_name: form.shop_name,
@@ -95,7 +96,7 @@ export function SellerSetup() {
             </label>
             <div className="flex items-center gap-0 border border-border rounded-xl overflow-hidden bg-cream">
               <span className="px-3 py-2.5 text-sm text-ink-mute bg-cream-dark border-r border-border whitespace-nowrap">
-                dhtc.vn/store/
+                dhtcdanang.com/store/
               </span>
               <input
                 type="text"
@@ -155,7 +156,7 @@ export function SellerSetup() {
           </div>
 
           {setupMerchant.error && (
-            <div className="p-3 bg-red-50 border border-red-200 text-danger text-sm rounded-xl">
+            <div className="p-3 bg-danger/10 border border-danger/20 text-danger text-sm rounded-xl">
               {t('sellerSetup.errorMsg')}
             </div>
           )}

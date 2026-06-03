@@ -13,6 +13,7 @@ const TAB_FILTERS: { key: 'all' | OrderStatus; labelKey: string }[] = [
   { key: 'processing', labelKey: 'sellerOrders.tabProcessing' },
   { key: 'shipped', labelKey: 'sellerOrders.tabShipped' },
   { key: 'delivered', labelKey: 'sellerOrders.tabDelivered' },
+  { key: 'cancelled', labelKey: 'sellerOrders.tabCancelled' },
 ]
 
 const STATUS_KEY: Record<OrderStatus, string> = {
@@ -129,8 +130,8 @@ export function SellerOrders() {
                                     trackingNumber: trackingInputs[order.id],
                                   })
                                 }
-                                disabled={updateStatus.isPending}
-                                className="text-xs px-3 py-1.5 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 transition-colors disabled:opacity-50"
+                                disabled={updateStatus.isPending || !trackingInputs[order.id]?.trim()}
+                                className="text-xs px-3 py-1.5 bg-green text-white font-semibold rounded-lg hover:bg-green-soft transition-colors disabled:opacity-50"
                               >
                                 {t('sellerOrders.deliverBtn')}
                               </button>
@@ -154,7 +155,7 @@ export function SellerOrders() {
                       className="text-base font-medium text-green mb-1"
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      {(order.total_amount / 1000).toFixed(0)}K₫
+                      {(order.total_amount / 1_000_000).toLocaleString(lang === 'vi' ? 'vi-VN' : 'en-US', { maximumFractionDigits: 1 })}M₫
                     </div>
                     <div className="text-[11px] text-ink-mute font-mono">
                       {new Date(order.created_at).toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-US')}

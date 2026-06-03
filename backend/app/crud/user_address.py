@@ -22,8 +22,10 @@ async def get_by_id(db: AsyncSession, address_id: int) -> UserAddress | None:
 
 async def create(db: AsyncSession, user_id: int, data: AddressCreate) -> UserAddress:
     if data.is_default:
-        existing = await get_by_user(db, user_id)
-        for addr in existing:
+        locked = await db.execute(
+            select(UserAddress).where(UserAddress.user_id == user_id).with_for_update()
+        )
+        for addr in locked.scalars().all():
             if addr.is_default:
                 addr.is_default = False
     addr = UserAddress(user_id=user_id, **data.model_dump())
@@ -39,8 +41,10 @@ async def delete(db: AsyncSession, addr: UserAddress) -> None:
 
 
 async def set_default(db: AsyncSession, user_id: int, addr: UserAddress) -> UserAddress:
-    existing = await get_by_user(db, user_id)
-    for a in existing:
+    locked = await db.execute(
+        select(UserAddress).where(UserAddress.user_id == user_id).with_for_update()
+    )
+    for a in locked.scalars().all():
         a.is_default = False
     addr.is_default = True
     await db.commit()

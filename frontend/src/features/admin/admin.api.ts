@@ -44,6 +44,10 @@ export async function suspendMerchant(id: number): Promise<void> {
   await api.patch(`/admin/merchants/${id}/suspend`)
 }
 
+export async function activateMerchant(id: number): Promise<void> {
+  await api.patch(`/admin/merchants/${id}/activate`)
+}
+
 export async function getAdminProducts(): Promise<ProductRead[]> {
   const { data } = await api.get<ProductRead[]>('/admin/products')
   return data
@@ -51,6 +55,10 @@ export async function getAdminProducts(): Promise<ProductRead[]> {
 
 export async function approveProduct(id: number): Promise<void> {
   await api.patch(`/admin/products/${id}/approve`)
+}
+
+export async function suspendProduct(id: number): Promise<void> {
+  await api.patch(`/admin/products/${id}/suspend`)
 }
 
 export async function getAdminOrders(): Promise<OrderRead[]> {
@@ -88,7 +96,9 @@ export interface WithdrawalItem {
   merchant_name: string
   amount: number
   status: string
-  note: string | null
+  description: string | null
+  bank_name: string | null
+  bank_account: string | null
   created_at: string
 }
 
@@ -123,7 +133,7 @@ export async function getAdminCustomers(search = ''): Promise<AdminCustomer[]> {
   return data
 }
 
-export async function bulkApproveProducts(productIds: number[]): Promise<{ approved: number[] }> {
+export async function bulkApproveProducts(productIds: number[]): Promise<{ approved: number; total: number }> {
   const { data } = await api.post('/admin/products/bulk-approve', { product_ids: productIds })
   return data
 }

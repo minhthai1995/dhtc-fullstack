@@ -22,6 +22,7 @@ export function useOrder(id: number) {
   return useQuery({
     queryKey: orderKeys.detail(id),
     queryFn: () => ordersApi.getOrder(id),
+    enabled: id > 0,
   })
 }
 
@@ -31,7 +32,10 @@ export function useCreateOrder() {
   const { t } = useT()
   return useMutation({
     mutationFn: (payload: CreateOrderPayload) => ordersApi.createOrder(payload),
-    onSuccess: () => qc.invalidateQueries({ queryKey: orderKeys.list }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: orderKeys.list })
+      qc.invalidateQueries({ queryKey: ['cart'] })
+    },
     onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }
@@ -50,9 +54,11 @@ export function useCancelOrder() {
   const { t } = useT()
   return useMutation({
     mutationFn: ordersApi.cancelOrder,
-    onSuccess: () => {
+    onSuccess: (_data, orderId) => {
       toast(t('toasts.orderCancelled'), 'success')
-      qc.invalidateQueries({ queryKey: ['orders', 'list'] })
+      qc.invalidateQueries({ queryKey: orderKeys.list })
+      qc.invalidateQueries({ queryKey: orderKeys.detail(orderId) })
+      qc.invalidateQueries({ queryKey: ['seller', 'orders'] })
     },
     onError: (err: unknown) => {
       const message = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail

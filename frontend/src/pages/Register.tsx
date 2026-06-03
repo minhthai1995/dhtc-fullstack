@@ -90,7 +90,7 @@ export function Register() {
 
         <div className="bg-white border border-border rounded-2xl p-8 shadow-sm">
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl">
+            <div className="mb-4 p-3 bg-danger/10 border border-danger/20 text-danger text-sm rounded-xl">
               {error}
             </div>
           )}

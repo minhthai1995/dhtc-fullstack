@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useWallet, useWalletTransactions, useRequestWithdrawal } from '@/features/seller/useSeller'
+import { useToast } from '@/components/ui/Toast'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Wallet, Download, CreditCard, Clock, X } from 'lucide-react'
@@ -7,39 +8,52 @@ import type { WalletTransactionRead } from '@/types/api'
 import { useT } from '@/i18n/useT'
 
 
-function txTypeBadge(type: WalletTransactionRead['type']) {
+function txTypeBadge(type: WalletTransactionRead['type'], t: (k: string) => string) {
   switch (type) {
-    case 'income': return <Badge variant="active">INCOME</Badge>
-    case 'payout': return <Badge variant="pending">PAYOUT</Badge>
-    case 'fee': return <Badge variant="pending">FEE</Badge>
-    case 'refund': return <Badge variant="cancelled">REFUND</Badge>
+    case 'income': return <Badge variant="active">{t('sellerWallet.txTypeIncome')}</Badge>
+    case 'payout': return <Badge variant="pending">{t('sellerWallet.txTypePayout')}</Badge>
+    case 'fee': return <Badge variant="pending">{t('sellerWallet.txTypeFee')}</Badge>
+    case 'refund': return <Badge variant="cancelled">{t('sellerWallet.txTypeRefund')}</Badge>
     default: return <Badge>{type}</Badge>
   }
 }
 
 export function SellerWallet() {
   const { t, lang } = useT()
+  const toast = useToast()
   const { data: wallet } = useWallet()
   const { data: transactions } = useWalletTransactions()
   const requestWithdrawal = useRequestWithdrawal()
   const [showWithdraw, setShowWithdraw] = useState(false)
   const [withdrawAmount, setWithdrawAmount] = useState('')
-  const [withdrawBank, setWithdrawBank] = useState('Vietcombank')
+  const [withdrawBank, setWithdrawBank] = useState('')
   const [withdrawAccount, setWithdrawAccount] = useState('')
 
   const w = wallet ?? { available_balance: 0, pending_balance: 0, total_withdrawn: 0 }
   const txList = transactions ?? []
   const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
 
+  const openWithdraw = () => {
+    setWithdrawAmount('')
+    setWithdrawBank(wallet?.last_bank_name ?? '')
+    setWithdrawAccount(wallet?.last_bank_account ?? '')
+    setShowWithdraw(true)
+  }
+
   const handleWithdraw = (e: React.FormEvent) => {
     e.preventDefault()
     const amount = parseFloat(withdrawAmount)
-    if (amount < 500000) return
+    if (!Number.isFinite(amount) || amount < 500000) return
+    if (amount > (w.available_balance ?? 0)) return
     requestWithdrawal.mutate({ amount, bankName: withdrawBank, bankAccount: withdrawAccount }, {
       onSuccess: () => {
         setShowWithdraw(false)
         setWithdrawAmount('')
         setWithdrawAccount('')
+      },
+      onError: (err: unknown) => {
+        const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail
+        toast(t('toasts.errorWithMsg').replace('{msg}', detail ?? ''), 'error')
       },
     })
   }
@@ -51,7 +65,7 @@ export function SellerWallet() {
         subtitle={t('sellerWallet.subtitle')}
         actions={
           <button
-            onClick={() => setShowWithdraw(true)}
+            onClick={openWithdraw}
             className="flex items-center gap-2 px-4 py-2 bg-green text-white rounded-xl text-sm font-semibold hover:bg-green-soft transition-colors"
           >
             <Download size={15} />
@@ -87,7 +101,7 @@ export function SellerWallet() {
             className="text-3xl font-medium"
             style={{ fontFamily: 'var(--font-display)', color: 'var(--color-gold)' }}
           >
-            ₫{((w.pending_balance ?? 0) / 1000000).toFixed(2)}<small className="text-lg">M</small>
+            ₫{((w.pending_balance ?? 0) / 1_000_000).toLocaleString(localeStr, { maximumFractionDigits: 2 })}<small className="text-lg">M</small>
           </div>
           <div className="text-xs text-ink-mute mt-1">{t('sellerWallet.ordersFinalizing')}</div>
         </div>
@@ -98,7 +112,7 @@ export function SellerWallet() {
             className="text-3xl font-medium text-ink"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            ₫{((w.total_withdrawn ?? 0) / 1000000).toFixed(1)}<small className="text-lg">M</small>
+            ₫{((w.total_withdrawn ?? 0) / 1_000_000).toLocaleString(localeStr, { maximumFractionDigits: 1 })}<small className="text-lg">M</small>
           </div>
           <div className="text-xs text-green mt-1">{t('sellerWallet.withdrawalsCount')}</div>
         </div>
@@ -135,7 +149,7 @@ export function SellerWallet() {
                         {new Date(tx.created_at).toLocaleString(localeStr, { dateStyle: 'short', timeStyle: 'short' })}
                       </td>
                       <td className="px-4 py-3 text-xs text-ink max-w-[200px] truncate">{tx.description}</td>
-                      <td className="px-4 py-3">{txTypeBadge(tx.type)}</td>
+                      <td className="px-4 py-3">{txTypeBadge(tx.type, t)}</td>
                       <td className={`px-4 py-3 text-sm font-semibold font-mono text-right ${tx.amount > 0 ? 'text-green' : 'text-danger'}`}>
                         {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString(localeStr)}₫
                       </td>
@@ -157,21 +171,29 @@ export function SellerWallet() {
             <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
               {t('sellerWallet.receivingAccount')}
             </h3>
-            <div
-              className="p-4 bg-cream rounded-xl"
-              style={{ borderLeft: '3px solid var(--color-gold)' }}
-            >
-              <div className="text-[11px] font-bold uppercase tracking-widest mb-1.5" style={{ color: 'var(--color-gold-deep)' }}>
-                {t('sellerWallet.mainAccount')}
+            {wallet?.last_bank_name && wallet?.last_bank_account ? (
+              <div
+                className="p-4 bg-cream rounded-xl"
+                style={{ borderLeft: '3px solid var(--color-gold)' }}
+              >
+                <div className="text-[11px] font-bold uppercase tracking-widest mb-1.5" style={{ color: 'var(--color-gold-deep)' }}>
+                  {t('sellerWallet.lastUsedAccount')}
+                </div>
+                <div className="text-base font-medium mb-1" style={{ fontFamily: 'var(--font-display)' }}>
+                  {wallet.last_bank_name}
+                </div>
+                <div className="text-sm font-mono text-ink">{wallet.last_bank_account}</div>
+                <div className="text-xs text-ink-mute mt-0.5">{t('sellerWallet.fromLastWithdrawal')}</div>
               </div>
-              <div className="text-base font-medium mb-1" style={{ fontFamily: 'var(--font-display)' }}>Vietcombank</div>
-              <div className="text-sm font-mono text-ink">0011 0023 9876</div>
-              <div className="text-xs text-ink-mute mt-0.5">HTX Cà Phê Hữu Cơ Đắk Lắk</div>
-            </div>
-            <button className="w-full mt-3 py-2 text-xs font-semibold text-ink-mute border border-border rounded-xl hover:border-green hover:text-green transition-colors flex items-center justify-center gap-1.5">
-              <CreditCard size={12} />
-              {t('sellerWallet.addAccount')}
-            </button>
+            ) : (
+              <div className="p-4 bg-cream rounded-xl text-xs text-ink-mute italic">
+                {t('sellerWallet.noReceivingAccount')}
+              </div>
+            )}
+            <p className="mt-3 text-[11px] text-ink-mute leading-relaxed flex items-start gap-1.5">
+              <CreditCard size={12} className="mt-0.5 flex-shrink-0" />
+              {t('sellerWallet.bankPerWithdrawalHint')}
+            </p>
           </div>
 
           {/* Payout cycle */}
@@ -258,7 +280,7 @@ export function SellerWallet() {
                   value={withdrawBank}
                   onChange={(e) => setWithdrawBank(e.target.value)}
                   required
-                  placeholder="Vietcombank"
+                  placeholder={t('sellerWallet.bankPlaceholder')}
                   className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all"
                 />
               </div>
@@ -272,7 +294,7 @@ export function SellerWallet() {
                   value={withdrawAccount}
                   onChange={(e) => setWithdrawAccount(e.target.value)}
                   required
-                  placeholder="0011 0023 9876"
+                  placeholder={t('sellerWallet.accountPlaceholder')}
                   className="w-full px-4 py-2.5 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all font-mono"
                 />
               </div>

@@ -13,6 +13,14 @@ function statusToBadge(status: string) {
   return 'default'
 }
 
+const STATUS_KEY: Record<string, string> = {
+  pending: 'adminOrders.statusPending',
+  processing: 'adminOrders.statusProcessing',
+  shipped: 'adminOrders.statusShipped',
+  delivered: 'adminOrders.statusDelivered',
+  cancelled: 'adminOrders.statusCancelled',
+}
+
 export function AdminDashboard() {
   const { t, lang } = useT()
   const { data: dashboard, isLoading } = useAdminDashboardFull()
@@ -51,7 +59,7 @@ export function AdminDashboard() {
     ? originData.slice(0, 5).map((o) => ({
         name: o.origin,
         pct: Math.round((o.revenue / maxOriginRevenue) * 100),
-        val: `₫${(o.revenue / 1_000_000).toFixed(1)}M`,
+        val: `₫${(o.revenue / 1_000_000).toLocaleString(localeStr, { maximumFractionDigits: 1 })}M`,
       }))
     : []
 
@@ -90,7 +98,7 @@ export function AdminDashboard() {
               ? t('adminDashboard.ordersYesterday').replace('{n}', String(dashboard.orders_yesterday))
               : t('adminDashboard.loading')
           }
-          deltaType="up"
+          deltaType={(dashboard?.orders_yesterday ?? 0) > 0 ? 'up' : 'neutral'}
         />
         <KpiCard
           label={t('adminDashboard.kpiMerchants')}
@@ -100,12 +108,12 @@ export function AdminDashboard() {
               ? t('adminDashboard.merchantsNew').replace('{n}', String(dashboard.new_merchants_week))
               : '—'
           }
-          deltaType="up"
+          deltaType={(dashboard?.new_merchants_week ?? 0) > 0 ? 'up' : 'neutral'}
         />
         <KpiCard
           label={t('adminDashboard.kpiPending')}
           value={isLoading ? '—' : (dashboard?.pending_approvals ?? 0)}
-          delta={t('adminDashboard.pendingProcess')}
+          delta={(dashboard?.pending_approvals ?? 0) > 0 ? t('adminDashboard.pendingProcess') : undefined}
           deltaType="warn"
         />
       </div>
@@ -159,10 +167,6 @@ export function AdminDashboard() {
               <span className="inline-block w-2.5 h-2.5 rounded-[2px] mr-1 align-middle" style={{ background: 'var(--color-green)' }} />
               {t('adminDashboard.actual')}
             </span>
-            <span>
-              <span className="inline-block w-2.5 h-2.5 rounded-[2px] mr-1 align-middle bg-gold/45" />
-              {t('adminDashboard.projected')}
-            </span>
           </div>
         </div>
 
@@ -213,10 +217,10 @@ export function AdminDashboard() {
             ) : (
               <Link
                 to="/admin/approvals"
-                className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl no-underline hover:bg-amber-100 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 bg-warning/10 border border-warning/30 rounded-xl no-underline hover:bg-warning/20 transition-colors"
               >
-                <span className="text-amber-600 font-bold text-sm">{dashboard?.pending_approvals}</span>
-                <span className="text-xs text-amber-700 font-medium">{t('adminDashboard.pendingLabel')}</span>
+                <span className="text-warning font-bold text-sm">{dashboard?.pending_approvals}</span>
+                <span className="text-xs text-warning font-medium">{t('adminDashboard.pendingLabel')}</span>
               </Link>
             )}
           </div>
@@ -300,10 +304,10 @@ export function AdminDashboard() {
                       className="text-sm font-medium text-green"
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      ₫{(order.total_amount / 1_000_000).toFixed(1)}M
+                      ₫{(order.total_amount / 1_000_000).toLocaleString(localeStr, { maximumFractionDigits: 1 })}M
                     </div>
                     <Badge variant={statusToBadge(order.status) as Parameters<typeof Badge>[0]['variant']} className="text-[9px]">
-                      {order.status}
+                      {t(STATUS_KEY[order.status] ?? order.status)}
                     </Badge>
                   </div>
                 </div>
@@ -322,53 +326,40 @@ export function AdminDashboard() {
               {t('adminDashboard.viewDetails')}
             </Link>
           </div>
-          {integrations ? (
-            <div className="space-y-2.5">
-              {integrations.map((int) => (
-                <div key={int.name} className="flex items-center gap-2.5 text-[12.5px]">
-                  <div
-                    className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      int.status === 'online'
-                        ? 'bg-success'
-                        : int.status === 'degraded'
-                        ? 'bg-warning'
-                        : 'bg-danger'
-                    }`}
-                  />
-                  <span className="flex-1 font-medium">{int.name}</span>
-                  <span
-                    className="text-[11px] text-ink-mute"
-                    style={{ fontFamily: 'var(--font-mono)' }}
-                  >
-                    {int.uptime}%
-                  </span>
-                </div>
-              ))}
-            </div>
+          {integrations === undefined ? (
+            <div className="text-xs text-ink-mute py-2">{t('adminDashboard.loading')}</div>
+          ) : integrations.length === 0 ? (
+            <div className="text-xs text-ink-mute py-2">{t('adminDashboard.integrationsEmpty')}</div>
           ) : (
             <div className="space-y-2.5">
-              {[
-                { name: 'Vietcombank VietQR', status: 'online', uptime: 99.9 },
-                { name: 'DHL Express API', status: 'online', uptime: 99.7 },
-                { name: 'Messenger Webhook', status: 'online', uptime: 98.5 },
-                { name: 'Zalo OA API', status: 'degraded', uptime: 95.2 },
-                { name: 'AI Chatbot', status: 'online', uptime: 99.1 },
-              ].map((int) => (
-                <div key={int.name} className="flex items-center gap-2.5 text-[12.5px]">
-                  <div
-                    className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      int.status === 'online' ? 'bg-success' : 'bg-warning'
-                    }`}
-                  />
-                  <span className="flex-1 font-medium">{int.name}</span>
-                  <span
-                    className="text-[11px] text-ink-mute"
-                    style={{ fontFamily: 'var(--font-mono)' }}
-                  >
-                    {int.uptime}%
-                  </span>
-                </div>
-              ))}
+              {integrations.map((int) => {
+                const statusKey = int.status === 'online'
+                  ? 'adminIntegrations.statusOnline'
+                  : int.status === 'degraded'
+                  ? 'adminIntegrations.statusDegraded'
+                  : int.status === 'offline'
+                  ? 'adminIntegrations.statusOffline'
+                  : 'adminIntegrations.badgeNotConfigured'
+                const dotClass = int.status === 'online'
+                  ? 'bg-success'
+                  : int.status === 'degraded'
+                  ? 'bg-warning'
+                  : int.status === 'offline'
+                  ? 'bg-danger'
+                  : 'bg-ink-mute'
+                return (
+                  <div key={int.key} className="flex items-center gap-2.5 text-[12.5px]">
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dotClass}`} />
+                    <span className="flex-1 font-medium">{int.name}</span>
+                    <span
+                      className="text-[11px] text-ink-mute"
+                      style={{ fontFamily: 'var(--font-mono)' }}
+                    >
+                      {t(statusKey)}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>

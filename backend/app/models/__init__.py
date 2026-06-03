@@ -2,6 +2,7 @@ from app.models.base import Base, TimestampMixin
 from app.models.cart import CartItem
 from app.models.category import Category
 from app.models.chat_message import ChatMessage, MessageDirection, MessagePlatform
+from app.models.consent import ConsentEventType, ConsentLog, DSRRequest, DSRStatus, DSRType
 from app.models.customer_cluster import CustomerCluster, CustomerClusterMember
 from app.models.fb_graph_call_log import FBGraphCallLog
 from app.models.fb_profile import FBProfile
@@ -32,6 +33,11 @@ from app.models.wishlist import WishlistItem
 __all__ = [
     "Base",
     "TimestampMixin",
+    "ConsentLog",
+    "ConsentEventType",
+    "DSRRequest",
+    "DSRType",
+    "DSRStatus",
     "User",
     "UserRole",
     "Merchant",

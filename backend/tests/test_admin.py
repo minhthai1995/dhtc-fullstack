@@ -140,3 +140,34 @@ async def test_non_admin_cannot_access(client: AsyncClient, db_session: AsyncSes
         headers={"Authorization": f"Bearer {customer_token}"},
     )
     assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_admin_integrations_shape(
+    client: AsyncClient, db_session: AsyncSession
+) -> None:
+    admin_token = await create_user_and_token(
+        client, db_session, "admin_int@test.com", "adminpass", role=UserRole.admin
+    )
+    response = await client.get(
+        "/api/v1/admin/integrations",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert isinstance(data, list) and len(data) >= 1
+    keys = {item["key"] for item in data}
+    assert {"messenger_webhook", "facebook_oauth", "ai_chatbot"} <= keys
+    for item in data:
+        assert set(item.keys()) >= {
+            "key", "name", "icon", "status", "configured",
+            "last_check", "api_version", "details",
+        }
+        assert item["status"] in {"online", "degraded", "offline", "not_configured"}
+        assert isinstance(item["configured"], bool)
+
+
+@pytest.mark.asyncio
+async def test_admin_integrations_requires_auth(client: AsyncClient) -> None:
+    response = await client.get("/api/v1/admin/integrations")
+    assert response.status_code == 401

@@ -15,10 +15,10 @@ import type {
 import { useT } from "@/i18n/useT"
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const fmtMoney = (n: number) => {
-  if (n >= 1_000_000) return `₫${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `₫${(n / 1_000).toFixed(0)}K`
-  return `₫${n.toFixed(0)}`
+const fmtMoney = (n: number, localeStr = 'vi-VN') => {
+  if (n >= 1_000_000) return `₫${(n / 1_000_000).toLocaleString(localeStr, { maximumFractionDigits: 1 })}M`
+  if (n >= 1_000) return `₫${(n / 1_000).toLocaleString(localeStr, { maximumFractionDigits: 0 })}K`
+  return `₫${n.toLocaleString(localeStr, { maximumFractionDigits: 0 })}`
 }
 
 const fmtDate = (iso: string, localeStr: string) =>
@@ -63,6 +63,14 @@ const SEG_BADGE_KEY: Record<string, string> = {
   returning: "adminCRM.segBadgeReturning",
   at_risk: "adminCRM.segBadgeAtRisk",
   no_order: "adminCRM.segBadgeNoOrder",
+}
+
+const STATUS_KEY: Record<string, string> = {
+  pending: "adminOrders.statusPending",
+  processing: "adminOrders.statusProcessing",
+  shipped: "adminOrders.statusShipped",
+  delivered: "adminOrders.statusDelivered",
+  cancelled: "adminOrders.statusCancelled",
 }
 
 function segBadgeMeta(seg: string): { variant: "active"|"processing"|"pending"|"default"; labelKey: string } {
@@ -185,7 +193,8 @@ const INTENT_ICON: Record<string, string> = {
 
 // ── Tab: Tổng quan ────────────────────────────────────────────────────────────
 function OverviewTab() {
-  const { t } = useT()
+  const { t, lang } = useT()
+  const localeStr = lang === "vi" ? "vi-VN" : "en-US"
   const { data: stats, isLoading } = useCRMStats()
   const { data: funnel = [] } = useCRMFunnel()
   const { data: segments } = useCRMSegments()
@@ -209,13 +218,13 @@ function OverviewTab() {
           label={t("adminCRM.kpiMessengerContacts")}
           value={isLoading ? "—" : (stats?.messenger_contacts ?? 0)}
           delta={t("adminCRM.kpiDeltaUniqueUsers")}
-          deltaType="up"
+          deltaType="neutral"
         />
         <KpiCard
           label={t("adminCRM.kpiRegistered")}
           value={isLoading ? "—" : (stats?.total_customers ?? 0)}
           delta={stats ? t("adminCRM.kpiDeltaNewMonth").replace("{n}", String(stats.new_this_month)) : "—"}
-          deltaType="up"
+          deltaType={(stats?.new_this_month ?? 0) > 0 ? "up" : "neutral"}
         />
         <KpiCard
           label={t("adminCRM.kpiReturnRate")}
@@ -225,13 +234,13 @@ function OverviewTab() {
               : "—"
           }
           delta={t("adminCRM.kpiDeltaRepeatBuyers").replace("{n}", String(stats?.repeat_buyers ?? 0))}
-          deltaType="up"
+          deltaType="neutral"
         />
         <KpiCard
           label={t("adminCRM.kpiAOV")}
-          value={stats ? fmtMoney(stats.avg_order_value) : "—"}
+          value={stats ? fmtMoney(stats.avg_order_value, localeStr) : "—"}
           delta={t("adminCRM.kpiDeltaBuyers").replace("{n}", String(stats?.buyers ?? 0))}
-          deltaType="up"
+          deltaType="neutral"
         />
       </div>
 
@@ -436,7 +445,7 @@ function CustomersTab() {
                         </td>
                         <td className="px-4 py-3 text-right hidden md:table-cell">
                           <span className="text-[13px] text-ink" style={display}>
-                            {fmtMoney(c.total_spent)}
+                            {fmtMoney(c.total_spent, localeStr)}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-[11px] text-ink-mute hidden lg:table-cell">
@@ -493,7 +502,7 @@ function CustomersTab() {
                     <div className="text-[10px] text-ink-mute mt-0.5">{t("adminCRM.detailTotalOrders")}</div>
                   </div>
                   <div className="bg-cream rounded-xl p-3 text-center">
-                    <div className="text-[18px] font-semibold text-green leading-tight" style={display}>{fmtMoney(detail.total_spent)}</div>
+                    <div className="text-[18px] font-semibold text-green leading-tight" style={display}>{fmtMoney(detail.total_spent, localeStr)}</div>
                     <div className="text-[10px] text-ink-mute mt-0.5">{t("adminCRM.detailSpend")}</div>
                   </div>
                 </div>
@@ -516,7 +525,7 @@ function CustomersTab() {
                           <div className="text-[10.5px] text-ink-mute">{fmtDate(o.created_at, localeStr)}</div>
                         </div>
                         <div className="text-right">
-                          <div className="text-[13px] text-green font-medium mb-0.5" style={display}>{fmtMoney(o.total_amount)}</div>
+                          <div className="text-[13px] text-green font-medium mb-0.5" style={display}>{fmtMoney(o.total_amount, localeStr)}</div>
                           <Badge
                             variant={
                               o.status === "delivered" ? "delivered"
@@ -524,7 +533,7 @@ function CustomersTab() {
                               : o.status === "shipped" ? "shipped"
                               : "pending"
                             }
-                          >{o.status}</Badge>
+                          >{t(STATUS_KEY[o.status] ?? o.status)}</Badge>
                         </div>
                       </div>
                     ))}
@@ -547,7 +556,6 @@ function ConversationsTab() {
   const { data: overview } = useCRMConversationOverview()
   const { data: conversations = [], isLoading } = useCRMConversations()
 
-  const channelTotal = conversations.length || 1
   const maxIntent = Math.max(...(overview?.intent_breakdown.map((i) => i.count) ?? [1]), 1)
   const funnel = overview?.funnel ?? []
 
@@ -558,25 +566,25 @@ function ConversationsTab() {
           label={t("adminCRM.convKpiToday")}
           value={overview ? overview.stats.total_today : "—"}
           delta={t("adminCRM.convKpiDeltaUniqueUsers")}
-          deltaType="up"
+          deltaType="neutral"
         />
         <KpiCard
           label={t("adminCRM.convKpiMessagesToday")}
           value={overview ? overview.stats.total_messages_today : "—"}
           delta={t("adminCRM.convKpiDeltaInOut")}
-          deltaType="up"
+          deltaType="neutral"
         />
         <KpiCard
           label={t("adminCRM.convKpiResponseTime")}
           value="—"
           delta={t("adminCRM.convKpiNotMeasured")}
-          deltaType="up"
+          deltaType="neutral"
         />
         <KpiCard
           label={t("adminCRM.convKpiConversion")}
           value="—"
           delta={t("adminCRM.convKpiNotMeasured")}
-          deltaType="up"
+          deltaType="neutral"
         />
       </div>
 
@@ -650,7 +658,7 @@ function ConversationsTab() {
           <ThinBar
             label={t("adminCRM.convChannelMessenger")}
             pct={100}
-            value={`${channelTotal === 1 && conversations.length === 0 ? 0 : conversations.length}`}
+            value={String(conversations.length)}
           />
           <p className="text-[10.5px] text-ink-mute italic mt-3">{t("adminCRM.convChannelHint")}</p>
         </div>
@@ -943,10 +951,10 @@ function BehaviorTab() {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <KpiCard label={t("adminCRM.behKpiSessions")} value={String(stats.total_sessions)} delta={t("adminCRM.behKpiToday")} deltaType="up" />
-        <KpiCard label={t("adminCRM.behKpiPageviews")} value={String(totalPageviews)} delta={t("adminCRM.behKpiToday")} deltaType="up" />
-        <KpiCard label={t("adminCRM.behKpiBounce")} value={bounceLabel} delta={t("adminCRM.behKpiPagesPerSession").replace("{n}", pagesPerSession)} deltaType="up" />
-        <KpiCard label={t("adminCRM.behKpiAvgSession")} value={avgDuration} delta={t("adminCRM.behKpiAvgHint")} deltaType="up" />
+        <KpiCard label={t("adminCRM.behKpiSessions")} value={String(stats.total_sessions)} delta={t("adminCRM.behKpiToday")} deltaType="neutral" />
+        <KpiCard label={t("adminCRM.behKpiPageviews")} value={String(totalPageviews)} delta={t("adminCRM.behKpiToday")} deltaType="neutral" />
+        <KpiCard label={t("adminCRM.behKpiBounce")} value={bounceLabel} delta={t("adminCRM.behKpiPagesPerSession").replace("{n}", pagesPerSession)} deltaType="neutral" />
+        <KpiCard label={t("adminCRM.behKpiAvgSession")} value={avgDuration} delta={t("adminCRM.behKpiAvgHint")} deltaType="neutral" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

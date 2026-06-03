@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as adminApi from './admin.api'
 import type { RevenueReport, WithdrawalItem, OriginRevenue, CRMStats, FunnelStage, SegmentCount, CustomerRow, CustomerDetail, CRMCustomersParams, Demographics, ConversationOverview, ConversationProfile, ConversationSummary, ChatMessageOut, BehaviorOverview, SessionSummary } from './admin.api'
 import type { AdminDashboard, AdminMerchantDetail, ProductRead } from '@/types/api'
+import { productKeys } from '@/features/products/useProducts'
 import { useToast } from '@/components/ui/Toast'
 import { useT } from '@/i18n/useT'
 
@@ -22,7 +23,10 @@ export function useAdminDashboard() {
 }
 
 export function useAdminDashboardFull() {
-  return useQuery<AdminDashboard>({ queryKey: adminKeys.dashboard, queryFn: adminApi.getAdminDashboard })
+  return useQuery<AdminDashboard>({
+    queryKey: [...adminKeys.dashboard, 'full'],
+    queryFn: adminApi.getAdminDashboard,
+  })
 }
 
 export function useAdminUpdateOrderStatus() {
@@ -32,9 +36,10 @@ export function useAdminUpdateOrderStatus() {
   return useMutation({
     mutationFn: ({ orderId, status, note }: { orderId: number; status: string; note?: string }) =>
       adminApi.adminUpdateOrderStatus(orderId, status, note),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: adminKeys.orders })
       qc.invalidateQueries({ queryKey: adminKeys.dashboard })
+      qc.invalidateQueries({ queryKey: ['orders', variables.orderId] })
       toast(t('toasts.statusUpdated'), 'success')
     },
     onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
@@ -46,7 +51,7 @@ export function useAdminMerchants() {
 }
 
 export function useAdminMerchant(id: number) {
-  return useQuery({ queryKey: adminKeys.merchant(id), queryFn: () => adminApi.getMerchant(id) })
+  return useQuery({ queryKey: adminKeys.merchant(id), queryFn: () => adminApi.getMerchant(id), enabled: id > 0 })
 }
 
 export function useAdminMerchantDetail(merchantId: number | null) {
@@ -67,17 +72,43 @@ export function useAdminMerchantProducts(merchantId: number | null) {
 
 export function useApproveMerchant() {
   const qc = useQueryClient()
+  const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: adminApi.approveMerchant,
-    onSuccess: () => qc.invalidateQueries({ queryKey: adminKeys.merchants }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.merchants })
+      toast(t('toasts.merchantApproved'), 'success')
+    },
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }
 
 export function useSuspendMerchant() {
   const qc = useQueryClient()
+  const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: adminApi.suspendMerchant,
-    onSuccess: () => qc.invalidateQueries({ queryKey: adminKeys.merchants }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.merchants })
+      toast(t('toasts.merchantSuspended'), 'success')
+    },
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
+  })
+}
+
+export function useActivateMerchant() {
+  const qc = useQueryClient()
+  const toast = useToast()
+  const { t } = useT()
+  return useMutation({
+    mutationFn: adminApi.activateMerchant,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.merchants })
+      toast(t('toasts.merchantActivated'), 'success')
+    },
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }
 
@@ -87,9 +118,31 @@ export function useAdminProducts() {
 
 export function useApproveProduct() {
   const qc = useQueryClient()
+  const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: adminApi.approveProduct,
-    onSuccess: () => qc.invalidateQueries({ queryKey: adminKeys.products }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.products })
+      qc.invalidateQueries({ queryKey: productKeys.all })
+      toast(t('toasts.productApproved'), 'success')
+    },
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
+  })
+}
+
+export function useSuspendProduct() {
+  const qc = useQueryClient()
+  const toast = useToast()
+  const { t } = useT()
+  return useMutation({
+    mutationFn: adminApi.suspendProduct,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: adminKeys.products })
+      qc.invalidateQueries({ queryKey: productKeys.all })
+      toast(t('toasts.productSuspended'), 'success')
+    },
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }
 
@@ -120,6 +173,7 @@ export function useApproveWithdrawal() {
     mutationFn: adminApi.approveWithdrawal,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: adminKeys.withdrawals })
+      qc.invalidateQueries({ queryKey: adminKeys.dashboard })
       toast(t('toasts.withdrawalApproved'), 'success')
     },
     onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
@@ -134,6 +188,7 @@ export function useRejectWithdrawal() {
     mutationFn: adminApi.rejectWithdrawal,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: adminKeys.withdrawals })
+      qc.invalidateQueries({ queryKey: adminKeys.dashboard })
       toast(t('toasts.requestRejected'), 'success')
     },
     onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
@@ -152,7 +207,7 @@ export function useBulkApproveProducts() {
     mutationFn: adminApi.bulkApproveProducts,
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: adminKeys.products })
-      toast(t('toasts.productsApproved').replace('{n}', String(data.approved.length)), 'success')
+      toast(t('toasts.productsApproved').replace('{n}', String(data.approved)), 'success')
     },
     onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
@@ -166,6 +221,7 @@ export function useSuspendUser() {
     mutationFn: adminApi.suspendUser,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'customers'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'crm', 'customers'] })
       toast(t('toasts.accountSuspended'), 'success')
     },
     onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
@@ -180,6 +236,7 @@ export function useActivateUser() {
     mutationFn: adminApi.activateUser,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'customers'] })
+      qc.invalidateQueries({ queryKey: ['admin', 'crm', 'customers'] })
       toast(t('toasts.accountActivated'), 'success')
     },
     onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
@@ -216,7 +273,7 @@ export function useCRMSegments() {
 
 export function useCRMCustomers(params: CRMCustomersParams = {}) {
   return useQuery<CustomerRow[]>({
-    queryKey: ['admin', 'crm', 'customers', params],
+    queryKey: ['admin', 'crm', 'customers', params.q ?? '', params.segment ?? '', params.limit ?? 10, params.skip ?? 0],
     queryFn: () => adminApi.getCRMCustomers(params),
   })
 }
@@ -275,7 +332,7 @@ export function useBehaviorOverview(date?: string) {
 
 export function useBehaviorSessions(params: { date?: string; limit?: number; offset?: number } = {}) {
   return useQuery<SessionSummary[]>({
-    queryKey: ['admin', 'behavior', 'sessions', params],
+    queryKey: ['admin', 'behavior', 'sessions', params.date ?? '', params.limit ?? 20, params.offset ?? 0],
     queryFn: () => adminApi.getBehaviorSessions(params),
   })
 }

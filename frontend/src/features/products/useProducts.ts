@@ -1,6 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import * as productsApi from './products.api'
 import type { ProductsParams, ReviewCreate } from './products.api'
+import { useToast } from '@/components/ui/Toast'
+import { useT } from '@/i18n/useT'
 
 export const productKeys = {
   all: ['products'] as const,
@@ -23,6 +25,7 @@ export function useProduct(id: number) {
   return useQuery({
     queryKey: productKeys.detail(id),
     queryFn: () => productsApi.getProduct(id),
+    enabled: id > 0,
   })
 }
 
@@ -37,6 +40,7 @@ export function useMerchant(id: number) {
   return useQuery({
     queryKey: productKeys.merchant(id),
     queryFn: () => productsApi.getMerchant(id),
+    enabled: id > 0,
   })
 }
 
@@ -44,6 +48,7 @@ export function useMerchantProducts(merchantId: number) {
   return useQuery({
     queryKey: productKeys.merchantProducts(merchantId),
     queryFn: () => productsApi.getMerchantProducts(merchantId),
+    enabled: merchantId > 0,
   })
 }
 
@@ -72,8 +77,16 @@ export function useRelatedProducts(productId: number) {
 
 export function useCreateReview(productId: number) {
   const queryClient = useQueryClient()
+  const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: (payload: ReviewCreate) => productsApi.createReview(productId, payload),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products', productId, 'reviews'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products', productId, 'reviews'] })
+      queryClient.invalidateQueries({ queryKey: productKeys.detail(productId) })
+      queryClient.invalidateQueries({ queryKey: ['products', 'related', productId] })
+      toast(t('toasts.reviewSubmitted'), 'success')
+    },
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }

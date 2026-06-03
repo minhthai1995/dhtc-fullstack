@@ -148,6 +148,8 @@ function easeOutCubic(t: number): number {
 }
 
 function CountUp({ end, format = 'auto', duration = 1400 }: { end: number; format?: 'auto' | 'plain'; duration?: number }) {
+  const { lang } = useT()
+  const locale = lang === 'vi' ? 'vi-VN' : 'en-US'
   const [val, setVal] = useState(0)
   const ref = useRef<HTMLSpanElement>(null)
   useEffect(() => {
@@ -175,7 +177,7 @@ function CountUp({ end, format = 'auto', duration = 1400 }: { end: number; forma
     io.observe(el)
     return () => io.disconnect()
   }, [end, duration])
-  const formatted = format === 'plain' || end < 1000 ? String(val) : val.toLocaleString('de-DE')
+  const formatted = format === 'plain' || end < 1000 ? String(val) : val.toLocaleString(locale)
   return <span ref={ref}>{formatted}</span>
 }
 

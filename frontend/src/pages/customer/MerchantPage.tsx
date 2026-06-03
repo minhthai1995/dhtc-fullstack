@@ -12,6 +12,7 @@ export function MerchantPage() {
   const { data: products } = useMerchantProducts(merchantId)
   const addToCart = useAddToCart()
   const { t, lang } = useT()
+  const locale = lang === 'vi' ? 'vi-VN' : 'en-US'
 
   if (isLoading) {
     return <div className="flex justify-center py-16"><Spinner /></div>
@@ -36,22 +37,38 @@ export function MerchantPage() {
       {/* Merchant hero banner */}
       <div
         className="relative rounded-3xl overflow-hidden p-8 mb-8"
-        style={{ background: 'linear-gradient(135deg, var(--color-green) 0%, var(--color-green-soft) 100%)', color: 'var(--color-cream)', minHeight: '240px' }}
+        style={{
+          background: merchant.banner_url
+            ? `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.55)), url(${merchant.banner_url}) center/cover`
+            : 'linear-gradient(135deg, var(--color-green) 0%, var(--color-green-soft) 100%)',
+          color: 'var(--color-cream)',
+          minHeight: '240px',
+        }}
       >
-        {/* Decorative orb */}
-        <div
-          className="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(201,169,97,0.2), transparent 70%)' }}
-        />
+        {/* Decorative orb (only when no banner photo) */}
+        {!merchant.banner_url && (
+          <div
+            className="absolute -top-24 -right-24 w-72 h-72 rounded-full pointer-events-none"
+            style={{ background: 'radial-gradient(circle, rgba(201,169,97,0.2), transparent 70%)' }}
+          />
+        )}
 
         <div className="relative flex items-start gap-6 flex-wrap">
-          {/* Avatar */}
-          <div
-            className="w-20 h-20 rounded-2xl flex items-center justify-center font-bold text-4xl flex-shrink-0"
-            style={{ background: 'var(--color-gold)', color: 'var(--color-green)', fontFamily: 'var(--font-display)' }}
-          >
-            {(merchantDisplayName || 'M').charAt(0)}
-          </div>
+          {/* Avatar — real logo when available */}
+          {merchant.logo_url ? (
+            <img
+              src={merchant.logo_url}
+              alt={merchantDisplayName}
+              className="w-20 h-20 rounded-2xl object-cover flex-shrink-0 border-2 border-white/20"
+            />
+          ) : (
+            <div
+              className="w-20 h-20 rounded-2xl flex items-center justify-center font-bold text-4xl flex-shrink-0"
+              style={{ background: 'var(--color-gold)', color: 'var(--color-green)', fontFamily: 'var(--font-display)' }}
+            >
+              {(merchantDisplayName || 'M').charAt(0)}
+            </div>
+          )}
 
           <div className="flex-1 min-w-[240px]">
             {/* Badges */}
@@ -93,7 +110,7 @@ export function MerchantPage() {
 
           {/* Stats */}
           <div className="text-right flex-shrink-0">
-            {merchant.rating && (
+            {merchant.rating != null && (
               <div>
                 <span
                   className="text-2xl font-semibold"
@@ -192,19 +209,25 @@ export function MerchantPage() {
                       </h3>
                     </Link>
                     <div className="flex items-center gap-1 text-xs text-ink-mute mb-2">
-                      <Star size={10} className="text-yellow-500" fill="currentColor" />
-                      <span>{product.rating?.toFixed(1)}</span>
-                      <span>· {t('shop.soldCount').replace('{count}', product.sold_count?.toLocaleString() ?? '0')}</span>
+                      {product.rating != null && (
+                        <>
+                          <Star size={10} className="text-gold fill-gold" />
+                          <span>{product.rating.toFixed(1)}</span>
+                          <span>·</span>
+                        </>
+                      )}
+                      <span>{t('shop.soldCount').replace('{count}', product.sold_count?.toLocaleString() ?? '0')}</span>
                     </div>
                     <div
                       className="mt-auto text-base font-semibold text-green"
                       style={{ fontFamily: 'var(--font-display)' }}
                     >
-                      {product.price.toLocaleString('vi-VN')}₫
+                      {product.price.toLocaleString(locale)}₫
                     </div>
                     <button
                       onClick={() => addToCart.mutate({ productId: product.id, quantity: 1 })}
-                      className="mt-2 w-full py-2 bg-cream border border-green text-green rounded-lg text-xs font-medium hover:bg-green hover:text-cream transition-all flex items-center justify-center gap-1"
+                      disabled={addToCart.isPending}
+                      className="mt-2 w-full py-2 bg-cream border border-green text-green rounded-lg text-xs font-medium hover:bg-green hover:text-cream transition-all flex items-center justify-center gap-1 disabled:opacity-50"
                     >
                       <ShoppingCart size={11} />
                       {t('merchant.addToCart')}

@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom'
+import { ConsentBanner } from '@/components/ConsentBanner'
 import { ProtectedRoute } from '@/features/auth/ProtectedRoute'
 import { RoleRedirect } from '@/components/layout/RoleRedirect'
 import { AdminLayout } from '@/components/layout/AdminLayout'
@@ -44,6 +45,7 @@ import { SellerReturns } from '@/pages/seller/SellerReturns'
 export function App() {
   return (
     <BrowserRouter>
+      <ConsentBanner />
       <Routes>
         {/* Public landing — Chợ Đêm Sơn Trà showcase for visitors and Meta App Review */}
         <Route path="/" element={<Landing />} />

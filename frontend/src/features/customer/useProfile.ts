@@ -17,9 +17,18 @@ export function useProfile() {
 
 export function useUpdateProfile() {
   const qc = useQueryClient()
+  const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: updateProfile,
-    onSuccess: () => qc.invalidateQueries({ queryKey: profileKeys.profile }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: profileKeys.profile })
+      toast(t('toasts.updated'), 'success')
+    },
+    onError: (err: unknown) => {
+      const axiosErr = err as { response?: { data?: { detail?: string } } }
+      toast(t('toasts.errorWithMsg').replace('{msg}', axiosErr?.response?.data?.detail ?? ''), 'error')
+    },
   })
 }
 

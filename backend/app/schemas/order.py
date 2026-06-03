@@ -1,8 +1,16 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.order import OrderStatus
+
+
+class ShippingAddressSchema(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    phone: str = Field(min_length=1, max_length=20)
+    address: str = Field(min_length=1, max_length=500)
+    city: str = Field(min_length=1, max_length=100)
+    country: str = "Việt Nam"
 
 
 class OrderEventRead(BaseModel):
@@ -55,6 +63,11 @@ class OrderRead(BaseModel):
     shipping_address: dict
     tracking_number: str | None
     notes: str | None = None
+    payment_method: str | None = None
+    payment_status: str = "pending"
+    payment_id: str | None = None
+    shipping_method: str | None = None
+    shipping_fee: float = 0
     created_at: datetime
     updated_at: datetime
     items: list[OrderItemRead] = []
@@ -66,15 +79,19 @@ class OrderDetail(OrderRead):
 
 class CreateOrderItem(BaseModel):
     product_id: int
-    quantity: int
+    quantity: int = Field(ge=1)
 
 
 class CreateOrder(BaseModel):
     merchant_id: int | None = None  # inferred from items if not provided
     items: list[CreateOrderItem]
-    shipping_address: dict
-    promotion_code: str | None = None
-    notes: str | None = None
+    shipping_address: ShippingAddressSchema
+    promotion_code: str | None = Field(default=None, max_length=50)
+    notes: str | None = Field(default=None, max_length=1000)
+    payment_method: str | None = Field(default=None, max_length=50)
+    shipping_method: str | None = Field(default=None, max_length=50)
+    shipping_fee: float = Field(default=0, ge=0)
+    shipping_zone_id: int | None = None
 
     @field_validator("items")
     @classmethod
@@ -83,13 +100,20 @@ class CreateOrder(BaseModel):
             raise ValueError("Đơn hàng phải có ít nhất một sản phẩm")
         return v
 
+    @field_validator("shipping_fee")
+    @classmethod
+    def shipping_fee_non_negative(cls, v: float) -> float:
+        if v < 0:
+            raise ValueError("Phí vận chuyển không thể âm")
+        return v
+
 
 class UpdateOrderStatus(BaseModel):
     status: OrderStatus
-    tracking_number: str | None = None
+    tracking_number: str | None = Field(default=None, max_length=100)
 
 
 class OrderStatusUpdate(BaseModel):
     status: OrderStatus
-    note: str | None = None
-    tracking_number: str | None = None
+    note: str | None = Field(default=None, max_length=1000)
+    tracking_number: str | None = Field(default=None, max_length=100)

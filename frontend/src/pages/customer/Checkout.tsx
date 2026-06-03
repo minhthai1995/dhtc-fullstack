@@ -3,17 +3,21 @@ import { useNavigate } from 'react-router-dom'
 import { useCreateOrder } from '@/features/orders/useOrders'
 import { useCart, useClearCart } from '@/features/cart/useCart'
 import { useAddresses } from '@/features/customer/useAddress'
-import type { UserAddress } from '@/types/api'
-import { Check, Lock } from 'lucide-react'
+import { useValidateCoupon } from '@/features/customer/useCoupon'
+import { useMerchantShippingZones } from '@/features/customer/useShipping'
+import type { CouponValidateResponse, UserAddress } from '@/types/api'
+import { Check, Lock, Tag, X } from 'lucide-react'
 import { useT } from '@/i18n/useT'
 
-type ShippingMethod = 'dhl_express' | 'dhl_economy'
 type PaymentMethod = 'vietqr' | 'card'
 
-const SHIPPING_OPTIONS = [
-  { id: 'dhl_express' as ShippingMethod, nameKey: 'checkout.shippingExpressName', descKey: 'checkout.shippingExpressDesc', price: 135000, usd: '~$5.40' },
-  { id: 'dhl_economy' as ShippingMethod, nameKey: 'checkout.shippingEcoName', descKey: 'checkout.shippingEcoDesc', price: 68000, usd: '~$2.72' },
-]
+const VN_COUNTRY_NAMES = ['việt nam', 'viet nam', 'vietnam', 'vn']
+function toCountryCode(country: string): string {
+  const lower = country.trim().toLowerCase()
+  if (VN_COUNTRY_NAMES.includes(lower)) return 'VN'
+  if (lower.length === 2) return lower.toUpperCase()
+  return country.trim().toUpperCase()
+}
 
 export function Checkout() {
   const navigate = useNavigate()
@@ -21,10 +25,16 @@ export function Checkout() {
   const clearCart = useClearCart()
   const { data: cartItems } = useCart()
   const { data: addresses = [] } = useAddresses()
-  const { t } = useT()
-  const [shippingMethod, setShippingMethod] = useState<ShippingMethod>('dhl_express')
+  const { t, lang } = useT()
+  const locale = lang === 'vi' ? 'vi-VN' : 'en-US'
+  const validateCoupon = useValidateCoupon()
+  const [selectedZoneId, setSelectedZoneId] = useState<number | null>(null)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('vietqr')
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null)
+  const [couponInput, setCouponInput] = useState('')
+  const [appliedCode, setAppliedCode] = useState<string | null>(null)
+  const [couponResult, setCouponResult] = useState<CouponValidateResponse | null>(null)
+  const [couponError, setCouponError] = useState<string | null>(null)
 
   const [form, setForm] = useState({
     name: '',
@@ -60,13 +70,80 @@ export function Checkout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addresses])
 
-  const selectedShipping = SHIPPING_OPTIONS.find((s) => s.id === shippingMethod)!
   const subtotal = (cartItems ?? []).reduce((sum, item) => sum + (item.product?.price ?? 0) * item.quantity, 0)
-  const total = subtotal + selectedShipping.price
+  const merchantId =
+    (cartItems ?? []).find((it) => it.product?.merchant_id != null)?.product?.merchant_id ?? null
+  const countryCode = toCountryCode(form.country)
+  const { data: shippingZones = [], isLoading: zonesLoading } = useMerchantShippingZones(
+    merchantId,
+    countryCode,
+  )
+  const selectedZone = shippingZones.find((z) => z.id === selectedZoneId) ?? null
+  const shippingFee = selectedZone ? selectedZone.base_rate : 0
+  const discount = couponResult?.discount_amount ?? 0
+  const total = Math.max(0, subtotal - discount) + shippingFee
+
+  // Auto-select first zone when zones load or change
+  useEffect(() => {
+    if (shippingZones.length === 0) {
+      if (selectedZoneId !== null) setSelectedZoneId(null)
+      return
+    }
+    if (selectedZoneId === null || !shippingZones.some((z) => z.id === selectedZoneId)) {
+      setSelectedZoneId(shippingZones[0].id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shippingZones])
+
+  const applyCoupon = (rawCode: string) => {
+    const code = rawCode.trim().toUpperCase()
+    if (!code) return
+    setCouponError(null)
+    validateCoupon.mutate(
+      { code, orderTotal: subtotal },
+      {
+        onSuccess: (data) => {
+          if (data.valid) {
+            setAppliedCode(code)
+            setCouponInput(code)
+            setCouponResult(data)
+            setCouponError(null)
+          } else {
+            setAppliedCode(null)
+            setCouponResult(null)
+            setCouponError(data.message)
+          }
+        },
+        onError: () => {
+          setAppliedCode(null)
+          setCouponResult(null)
+          setCouponError(t('checkout.couponErrFail'))
+        },
+      }
+    )
+  }
+
+  const removeCoupon = () => {
+    setAppliedCode(null)
+    setCouponResult(null)
+    setCouponError(null)
+    setCouponInput('')
+  }
+
+  // Auto-apply coupon carried from Cart once cart items are loaded and subtotal is known
+  useEffect(() => {
+    const stored = sessionStorage.getItem('dhtc.checkout.coupon')
+    if (stored && appliedCode === null && subtotal > 0 && cartItems && cartItems.length > 0) {
+      applyCoupon(stored)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal, cartItems])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const items = (cartItems ?? []).map((item) => ({ product_id: item.product_id, quantity: item.quantity }))
+    if (items.length === 0) return
+    if (!form.name.trim() || !form.phone.trim() || !form.address.trim() || !form.city.trim()) return
     createOrder.mutate(
       {
         shipping_address: {
@@ -78,9 +155,15 @@ export function Checkout() {
         },
         items,
         notes: form.note || undefined,
+        payment_method: paymentMethod,
+        shipping_zone_id: selectedZone?.id,
+        shipping_method: selectedZone ? `zone:${selectedZone.zone_name}` : undefined,
+        shipping_fee: shippingFee,
+        promotion_code: appliedCode ?? undefined,
       },
       {
         onSuccess: (order) => {
+          sessionStorage.removeItem('dhtc.checkout.coupon')
           clearCart.mutate()
           navigate(`/shop/tracking?order=${order.id}`)
         },
@@ -246,39 +329,52 @@ export function Checkout() {
               <h3 className="font-semibold text-ink mb-4" style={{ fontFamily: 'var(--font-display)' }}>
                 {t('checkout.shippingTitle')}
               </h3>
-              <div className="space-y-2.5">
-                {SHIPPING_OPTIONS.map((option) => (
-                  <label
-                    key={option.id}
-                    className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border-2 ${
-                      shippingMethod === option.id
-                        ? 'border-green bg-green/5'
-                        : 'border-border hover:border-green/40'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="shipping"
-                      checked={shippingMethod === option.id}
-                      onChange={() => setShippingMethod(option.id)}
-                      className="accent-green"
-                    />
-                    <div className="flex-1">
-                      <div className="font-semibold text-sm text-ink">{t(option.nameKey)}</div>
-                      <div className="text-xs text-ink-mute mt-0.5">{t(option.descKey)}</div>
-                    </div>
-                    <div className="text-right">
-                      <div
-                        className="text-base font-semibold text-green"
-                        style={{ fontFamily: 'var(--font-display)' }}
-                      >
-                        {option.price.toLocaleString('vi-VN')}₫
+              {zonesLoading && (
+                <div className="text-xs text-ink-mute italic">{t('checkout.shippingLoading')}</div>
+              )}
+              {!zonesLoading && shippingZones.length === 0 && (
+                <div className="text-xs text-ink-mute italic">
+                  {t('checkout.shippingNoneAvailable').replace('{country}', form.country || '—')}
+                </div>
+              )}
+              {shippingZones.length > 0 && (
+                <div className="space-y-2.5">
+                  {shippingZones.map((zone) => (
+                    <label
+                      key={zone.id}
+                      className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border-2 ${
+                        selectedZoneId === zone.id
+                          ? 'border-green bg-green/5'
+                          : 'border-border hover:border-green/40'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="shipping"
+                        checked={selectedZoneId === zone.id}
+                        onChange={() => setSelectedZoneId(zone.id)}
+                        className="accent-green"
+                      />
+                      <div className="flex-1">
+                        <div className="font-semibold text-sm text-ink">{zone.zone_name}</div>
+                        <div className="text-xs text-ink-mute mt-0.5">
+                          {t('checkout.shippingEta')
+                            .replace('{min}', String(zone.estimated_days_min))
+                            .replace('{max}', String(zone.estimated_days_max))}
+                        </div>
                       </div>
-                      <div className="text-[10px] text-ink-mute font-mono">{option.usd}</div>
-                    </div>
-                  </label>
-                ))}
-              </div>
+                      <div className="text-right">
+                        <div
+                          className="text-base font-semibold text-green"
+                          style={{ fontFamily: 'var(--font-display)' }}
+                        >
+                          {zone.base_rate.toLocaleString(locale)}₫
+                        </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Payment method */}
@@ -324,7 +420,7 @@ export function Checkout() {
                   />
                   <div
                     className="w-11 h-11 rounded-xl flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    style={{ background: 'linear-gradient(135deg, #1a237e, #0d47a1)' }}
+                    style={{ background: 'linear-gradient(135deg, var(--color-ink), var(--color-ink-soft))' }}
                   >
                     VISA
                   </div>
@@ -363,32 +459,89 @@ export function Checkout() {
                       {item.product?.name_vi ?? `Product #${item.product_id}`} × {item.quantity}
                     </span>
                     <span className="font-mono font-semibold flex-shrink-0">
-                      {((item.product?.price ?? 0) * item.quantity).toLocaleString('vi-VN')}₫
+                      {((item.product?.price ?? 0) * item.quantity).toLocaleString(locale)}₫
                     </span>
                   </div>
                 ))}
               </div>
 
+              {/* Coupon input */}
+              <div className="border-t border-dashed border-border pt-3 mb-3">
+                <label className="block text-[10.5px] font-bold uppercase tracking-widest text-ink-mute mb-2">
+                  {t('checkout.couponLabel')}
+                </label>
+                {appliedCode ? (
+                  <div className="flex items-center justify-between gap-2 px-3 py-2 bg-green/5 border-2 border-green rounded-xl">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Tag size={14} className="text-green flex-shrink-0" />
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-green font-mono truncate">{appliedCode}</div>
+                        {couponResult?.message && (
+                          <div className="text-[11px] text-ink-mute truncate">{couponResult.message}</div>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeCoupon}
+                      className="text-ink-mute hover:text-ink flex-shrink-0"
+                      aria-label={t('checkout.couponRemove')}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      placeholder={t('checkout.couponPlaceholder')}
+                      className="flex-1 min-w-0 px-3 py-2 border border-border rounded-xl text-sm bg-cream focus:outline-none focus:border-green transition-all font-mono uppercase"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => applyCoupon(couponInput)}
+                      disabled={validateCoupon.isPending || !couponInput.trim()}
+                      className="px-4 py-2 bg-green text-white rounded-xl text-sm font-semibold disabled:opacity-60 hover:bg-green-soft transition-colors flex-shrink-0"
+                    >
+                      {validateCoupon.isPending ? t('checkout.couponChecking') : t('checkout.couponApply')}
+                    </button>
+                  </div>
+                )}
+                {couponError && (
+                  <div className="mt-1.5 text-[11px] text-danger">{couponError}</div>
+                )}
+              </div>
+
               <div className="space-y-1.5 text-sm border-t border-dashed border-border pt-3">
                 <div className="flex justify-between py-1">
                   <span className="text-ink-mute">{t('checkout.subtotal')}</span>
-                  <span className="font-mono">{subtotal.toLocaleString('vi-VN')}₫</span>
+                  <span className="font-mono">{subtotal.toLocaleString(locale)}₫</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between py-1 text-green">
+                    <span>
+                      {t('checkout.discountLine').replace('{code}', appliedCode ?? '')}
+                    </span>
+                    <span className="font-mono font-semibold">−{discount.toLocaleString(locale)}₫</span>
+                  </div>
+                )}
                 <div className="flex justify-between py-1">
                   <span className="text-ink-mute">{t('checkout.shippingLine')}</span>
-                  <span className="font-mono">{selectedShipping.price.toLocaleString('vi-VN')}₫</span>
+                  <span className="font-mono">{shippingFee.toLocaleString(locale)}₫</span>
                 </div>
                 <div className="flex justify-between py-3 border-t border-dashed border-border mt-1">
                   <span className="font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>{t('checkout.total')}</span>
                   <span className="font-semibold text-green font-mono" style={{ fontFamily: 'var(--font-display)' }}>
-                    {total.toLocaleString('vi-VN')}₫
+                    {total.toLocaleString(locale)}₫
                   </span>
                 </div>
               </div>
 
               <button
                 type="submit"
-                disabled={createOrder.isPending}
+                disabled={createOrder.isPending || zonesLoading || shippingZones.length === 0}
                 className="w-full py-3.5 bg-green text-white rounded-xl font-semibold hover:bg-green-soft disabled:opacity-60 transition-colors mt-2"
               >
                 {createOrder.isPending ? t('checkout.submitting') : t('checkout.submit')}

@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { useProduct, useReviews, useRelatedProducts } from '@/features/products/useProducts'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useProduct, useMerchant, useReviews, useRelatedProducts, useCreateReview } from '@/features/products/useProducts'
 import { useAddToCart } from '@/features/cart/useCart'
 import { useWishlist, useAddToWishlist, useRemoveFromWishlist } from '@/features/customer/useWishlist'
+import { useCurrentUser } from '@/features/auth/useAuth'
 import { Spinner } from '@/components/ui/Spinner'
-import { Heart, Truck, CreditCard, RotateCcw, Minus, Plus, ShoppingCart, ChevronRight } from 'lucide-react'
+import { RatingStars } from '@/components/ui/RatingStars'
+import { Heart, Truck, CreditCard, RotateCcw, Minus, Plus, ShoppingCart, ChevronRight, Star, Package } from 'lucide-react'
 import { addToRecentlyViewed } from '@/pages/customer/Shop'
 import { useT } from '@/i18n/useT'
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>()
-  const productId = parseInt(id ?? '0')
+  const navigate = useNavigate()
+  const productId = parseInt(id ?? '0', 10)
   const { data: product, isLoading } = useProduct(productId)
+  const { data: merchant } = useMerchant(product?.merchant_id ?? 0)
   const [reviewSort, setReviewSort] = useState<'newest' | 'rating_desc' | 'rating_asc'>('newest')
   const { data: reviews = [] } = useReviews(productId, reviewSort)
   const { data: relatedProducts } = useRelatedProducts(productId)
@@ -20,6 +24,13 @@ export function ProductDetail() {
   const addToWishlist = useAddToWishlist()
   const removeFromWishlist = useRemoveFromWishlist()
   const isWishlisted = wishlist.some(w => w.product_id === productId)
+  const { data: currentUser } = useCurrentUser()
+  const createReview = useCreateReview(productId)
+  const [reviewRating, setReviewRating] = useState(0)
+  const [reviewHover, setReviewHover] = useState(0)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewError, setReviewError] = useState<string | null>(null)
+  const [reviewDone, setReviewDone] = useState(false)
   const [qty, setQty] = useState(1)
   const [activeImage, setActiveImage] = useState(0)
   const { t, lang } = useT()
@@ -70,7 +81,7 @@ export function ProductDetail() {
                 className="max-w-full max-h-full object-contain"
               />
             ) : (
-              <div className="text-6xl">🌿</div>
+              <Package size={64} className="text-ink-mute" />
             )}
           </div>
           {product.images && product.images.length > 1 && (
@@ -118,24 +129,40 @@ export function ProductDetail() {
             to={`/shop/merchants/${product.merchant_id}`}
             className="flex items-center gap-3 p-3 bg-cream rounded-xl mb-4 no-underline hover:bg-cream-dark transition-colors"
           >
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-base flex-shrink-0"
-              style={{ background: 'var(--color-green)', color: 'var(--color-gold)', fontFamily: 'var(--font-display)' }}
-            >
-              M
-            </div>
+            {merchant?.logo_url ? (
+              <img
+                src={merchant.logo_url}
+                alt=""
+                className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-base flex-shrink-0"
+                style={{ background: 'var(--color-green)', color: 'var(--color-gold)', fontFamily: 'var(--font-display)' }}
+              >
+                {((lang === 'en' && merchant?.business_name_en ? merchant.business_name_en : (merchant?.business_name ?? merchant?.shop_name)) || 'M').charAt(0)}
+              </div>
+            )}
             <div className="flex-1">
-              <div className="text-sm font-semibold text-ink">{t('product.viewShopCta')}</div>
-              <div className="text-xs text-ink-mute">{product.rating ? `${product.rating.toFixed(1)}★` : ''} · {product.origin}</div>
+              <div className="text-sm font-semibold text-ink">
+                {(lang === 'en' && merchant?.business_name_en ? merchant.business_name_en : (merchant?.business_name ?? merchant?.shop_name)) || t('product.viewShopCta')}
+              </div>
+              <div className="text-xs text-ink-mute">{product.rating != null ? `${product.rating.toFixed(1)}★` : ''} · {product.origin}</div>
             </div>
             <span className="text-xs font-semibold text-green">{t('product.viewShopArrow')}</span>
           </Link>
 
           {/* Rating */}
           <div className="flex items-center gap-3.5 mb-5">
-            <div className="text-lg font-semibold" style={{ color: 'var(--color-gold-deep)' }}>★★★★★</div>
-            <div className="text-sm font-semibold text-ink">{product.rating?.toFixed(1)}</div>
-            <a href="#reviews" className="text-xs text-ink-mute underline">{t('product.reviewCount').replace('{count}', product.sold_count?.toLocaleString() ?? '0')}</a>
+            {product.rating != null ? (
+              <>
+                <RatingStars rating={product.rating} size={16} />
+                <div className="text-sm font-semibold text-ink">{product.rating.toFixed(1)}</div>
+                <a href="#reviews" className="text-xs text-ink-mute underline">{t('product.reviewCount').replace('{count}', reviews.length.toLocaleString())}</a>
+              </>
+            ) : (
+              <span className="text-xs text-ink-mute">{t('product.noReviews')}</span>
+            )}
             <span className="text-border">·</span>
             <span className="text-xs text-ink-mute">{t('product.soldCount').replace('{count}', product.sold_count?.toLocaleString() ?? '0')}</span>
           </div>
@@ -146,7 +173,7 @@ export function ProductDetail() {
               className="text-4xl font-semibold text-green tracking-tight"
               style={{ fontFamily: 'var(--font-display)' }}
             >
-              {product.price.toLocaleString('vi-VN')}₫
+              {product.price.toLocaleString(locale)}₫
             </div>
             <div className="text-sm text-ink-mute font-mono">
               ≈ ${(product.price / 25000).toFixed(2)} USD
@@ -219,12 +246,17 @@ export function ProductDetail() {
             >
               <Heart size={18} fill={isWishlisted ? 'currentColor' : 'none'} />
             </button>
-            <Link
-              to="/shop/checkout"
-              className="flex-1 py-3 border-2 border-green text-green rounded-xl font-semibold text-sm hover:bg-green/5 transition-colors flex items-center justify-center no-underline"
+            <button
+              onClick={() => {
+                addToCart.mutate({ productId: product.id, quantity: qty }, {
+                  onSuccess: () => navigate('/shop/checkout'),
+                })
+              }}
+              disabled={addToCart.isPending || product.stock === 0}
+              className="flex-1 py-3 border-2 border-green text-green rounded-xl font-semibold text-sm hover:bg-green/5 transition-colors flex items-center justify-center disabled:opacity-40"
             >
               {t('product.buyNow')}
-            </Link>
+            </button>
           </div>
 
           {/* Stock indicator */}
@@ -275,13 +307,17 @@ export function ProductDetail() {
               <h2 className="font-semibold text-ink" style={{ fontFamily: 'var(--font-display)', fontSize: '18px' }}>
                 {t('product.reviewsTitle').replace('{count}', String(reviews.length))}
               </h2>
-              <div className="flex items-center gap-2">
-                <div className="text-3xl font-medium" style={{ fontFamily: 'var(--font-display)' }}>{product.rating?.toFixed(1)}</div>
-                <div>
-                  <div className="text-yellow-500 text-sm">★★★★★</div>
-                  <div className="text-xs text-ink-mute">{t('product.reviewCount').replace('{count}', String(product.sold_count))}</div>
+              {product.rating != null ? (
+                <div className="flex items-center gap-2">
+                  <div className="text-3xl font-medium" style={{ fontFamily: 'var(--font-display)' }}>{product.rating.toFixed(1)}</div>
+                  <div>
+                    <RatingStars rating={product.rating} size={14} />
+                    <div className="text-xs text-ink-mute mt-0.5">{t('product.reviewCount').replace('{count}', String(reviews.length))}</div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="text-xs text-ink-mute">{t('product.noReviews')}</div>
+              )}
             </div>
             {/* Sort tabs */}
             <div className="flex gap-2 mb-4">
@@ -303,6 +339,89 @@ export function ProductDetail() {
               })}
             </div>
 
+            {/* Review submission form */}
+            {(() => {
+              if (!currentUser) return null
+              const alreadyReviewed = reviewDone || reviews.some(r => Number(r.customer_id) === Number(currentUser.id))
+              if (alreadyReviewed) {
+                return (
+                  <div className="mb-4 px-4 py-3 bg-cream rounded-xl text-xs text-ink-mute italic">
+                    {t('product.reviewAlreadyLeft')}
+                  </div>
+                )
+              }
+              if (reviewDone) {
+                return (
+                  <div className="mb-4 px-4 py-3 bg-green/10 border border-green/20 rounded-xl text-xs font-semibold text-green">
+                    {t('product.reviewSuccess')}
+                  </div>
+                )
+              }
+              return (
+                <div className="mb-5 p-4 border border-border rounded-xl bg-cream/40">
+                  <div className="text-sm font-semibold text-ink mb-3">{t('product.writeReview')}</div>
+                  <div className="mb-3">
+                    <div className="text-xs text-ink-mute mb-1.5">{t('product.reviewYourRating')}</div>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setReviewRating(star)}
+                          onMouseEnter={() => setReviewHover(star)}
+                          onMouseLeave={() => setReviewHover(0)}
+                          className="p-0.5 transition-transform hover:scale-110"
+                        >
+                          <Star
+                            size={22}
+                            className={star <= (reviewHover || reviewRating) ? 'text-gold-deep' : 'text-border'}
+                            fill={star <= (reviewHover || reviewRating) ? 'currentColor' : 'none'}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mb-3">
+                    <div className="text-xs text-ink-mute mb-1.5">{t('product.reviewComment')}</div>
+                    <textarea
+                      rows={3}
+                      value={reviewComment}
+                      onChange={(e) => setReviewComment(e.target.value)}
+                      placeholder={t('product.reviewCommentPlaceholder')}
+                      className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white resize-none focus:outline-none focus:ring-2 focus:ring-green/30 placeholder:text-ink-mute/60"
+                    />
+                  </div>
+                  {reviewError && (
+                    <div className="mb-3 text-xs text-danger">{reviewError}</div>
+                  )}
+                  <button
+                    disabled={reviewRating === 0 || createReview.isPending}
+                    onClick={() => {
+                      setReviewError(null)
+                      createReview.mutate(
+                        { rating: reviewRating, comment: reviewComment.trim() || undefined },
+                        {
+                          onSuccess: () => setReviewDone(true),
+                          onError: (err: unknown) => {
+                            setReviewDone(false)
+                            const status = (err as { response?: { status?: number } })?.response?.status
+                            if (status === 403) {
+                              setReviewError(t('product.reviewNotPurchased'))
+                            } else {
+                              setReviewError(String(err))
+                            }
+                          },
+                        },
+                      )
+                    }}
+                    className="px-4 py-2 bg-green text-white text-sm font-semibold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-green-soft transition-colors"
+                  >
+                    {createReview.isPending ? t('product.reviewSubmitting') : t('product.reviewSubmit')}
+                  </button>
+                </div>
+              )
+            })()}
+
             {reviews.length === 0 ? (
               <div className="text-center text-ink-mute text-sm py-6">{t('product.noReviews')}</div>
             ) : (
@@ -311,7 +430,7 @@ export function ProductDetail() {
                   <div key={review.id} className="p-4 bg-cream rounded-xl">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="font-semibold text-sm text-ink">{t('product.customerRef').replace('{id}', String(review.customer_id))}</span>
-                      <div className="text-yellow-500 text-xs ml-auto">{'★'.repeat(review.rating)}</div>
+                      <div className="ml-auto"><RatingStars rating={review.rating} size={11} /></div>
                       <span className="text-xs text-ink-mute">{new Date(review.created_at).toLocaleDateString(locale)}</span>
                     </div>
                     {review.comment && (
@@ -343,16 +462,16 @@ export function ProductDetail() {
                         {img ? (
                           <img src={img} alt={pName} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                         ) : (
-                          <div className="text-2xl">🌿</div>
+                          <Package size={20} className="text-ink-mute" />
                         )}
                       </div>
                       <div className="p-2.5">
                         <div className="text-xs font-medium text-ink line-clamp-2 mb-1" style={{ fontFamily: 'var(--font-display)' }}>
                           {pName}
                         </div>
-                        <div className="text-xs font-semibold text-green">{p.price.toLocaleString('vi-VN')}₫</div>
-                        {p.rating && (
-                          <div className="text-[10px] text-yellow-500 mt-0.5">{'★'.repeat(Math.round(p.rating))}</div>
+                        <div className="text-xs font-semibold text-green">{p.price.toLocaleString(locale)}₫</div>
+                        {p.rating != null && (
+                          <RatingStars rating={p.rating} size={10} className="mt-0.5" />
                         )}
                       </div>
                     </Link>

@@ -42,8 +42,14 @@ export function useDeleteAddress() {
 
 export function useSetDefaultAddress() {
   const qc = useQueryClient()
+  const toast = useToast()
+  const { t } = useT()
   return useMutation({
     mutationFn: (id: number) => addressApi.setDefaultAddress(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: addressKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: addressKeys.all })
+      toast(t('toasts.updated'), 'success')
+    },
+    onError: (error: Error) => toast(t('toasts.errorWithMsg').replace('{msg}', error.message), 'error'),
   })
 }

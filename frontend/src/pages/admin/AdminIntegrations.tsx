@@ -2,21 +2,21 @@ import { useState, useRef, useEffect } from 'react'
 import { useIntegrations } from '@/features/admin/useAdmin'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Badge } from '@/components/ui/Badge'
-import { RefreshCw, ExternalLink, CheckCircle, AlertTriangle, XCircle, MessageCircle } from 'lucide-react'
+import {
+  RefreshCw,
+  ExternalLink,
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  MessageCircle,
+  MinusCircle,
+} from 'lucide-react'
 import { api } from '@/lib/axios'
 import { useToast } from '@/components/ui/Toast'
 import { useT } from '@/i18n/useT'
+import type { IntegrationHealth } from '@/types/api'
 
-interface IntegrationCard {
-  name: string
-  description: string
-  status: 'online' | 'degraded' | 'offline'
-  uptime: number
-  latency: number
-  lastCheck: string
-  apiVersion: string
-  icon: string
-}
+type IntegrationStatus = IntegrationHealth['status']
 
 interface WebhookStatus {
   page_token_configured: boolean
@@ -31,82 +31,25 @@ interface ChatMessage {
   text: string
 }
 
-const NAME_TO_DESC_KEY: Record<string, string> = {
-  'Vietcombank VietQR': 'adminIntegrations.descVietQR',
-  'DHL Express API': 'adminIntegrations.descDHL',
-  'Messenger Webhook': 'adminIntegrations.descMessenger',
-  'Zalo OA API': 'adminIntegrations.descZalo',
-  'AI Chatbot (Gemini)': 'adminIntegrations.descGemini',
-  'VNPOST Tracking': 'adminIntegrations.descVNPOST',
+const KEY_TO_DESC_KEY: Record<string, string> = {
+  messenger_webhook: 'adminIntegrations.descMessenger',
+  facebook_oauth: 'adminIntegrations.descFbOauth',
+  ai_chatbot: 'adminIntegrations.descGemini',
+  proactive_reply: 'adminIntegrations.descProactive',
 }
 
-const MOCK_INTEGRATIONS: IntegrationCard[] = [
-  {
-    name: 'Vietcombank VietQR',
-    description: '',
-    status: 'online',
-    uptime: 99.9,
-    latency: 142,
-    lastCheck: '2026-05-15 14:32',
-    apiVersion: 'v2.1',
-    icon: '🏦',
-  },
-  {
-    name: 'DHL Express API',
-    description: '',
-    status: 'online',
-    uptime: 99.7,
-    latency: 238,
-    lastCheck: '2026-05-15 14:31',
-    apiVersion: 'v3.0',
-    icon: '✈️',
-  },
-  {
-    name: 'Messenger Webhook',
-    description: '',
-    status: 'online',
-    uptime: 98.5,
-    latency: 89,
-    lastCheck: '2026-05-15 14:30',
-    apiVersion: 'v18.0',
-    icon: '💬',
-  },
-  {
-    name: 'Zalo OA API',
-    description: '',
-    status: 'degraded',
-    uptime: 95.2,
-    latency: 520,
-    lastCheck: '2026-05-15 14:29',
-    apiVersion: 'v2.0',
-    icon: '📱',
-  },
-  {
-    name: 'AI Chatbot (Gemini)',
-    description: '',
-    status: 'online',
-    uptime: 99.1,
-    latency: 320,
-    lastCheck: '2026-05-15 14:32',
-    apiVersion: 'gemini-1.5',
-    icon: '🤖',
-  },
-  {
-    name: 'VNPOST Tracking',
-    description: '',
-    status: 'offline',
-    uptime: 87.3,
-    latency: 0,
-    lastCheck: '2026-05-15 13:00',
-    apiVersion: 'v1.2',
-    icon: '📦',
-  },
-]
-
-const STATUS_BADGE_KEY: Record<'online' | 'degraded' | 'offline', string> = {
+const STATUS_BADGE_KEY: Record<IntegrationStatus, string> = {
   online: 'adminIntegrations.badgeOnline',
   degraded: 'adminIntegrations.badgeDegraded',
   offline: 'adminIntegrations.badgeOffline',
+  not_configured: 'adminIntegrations.badgeNotConfigured',
+}
+
+const STATUS_BAR_PCT: Record<IntegrationStatus, number> = {
+  online: 100,
+  degraded: 60,
+  offline: 30,
+  not_configured: 0,
 }
 
 const SETUP_STEP_KEYS = [
@@ -136,24 +79,27 @@ const SETUP_STEP_KEYS = [
   },
 ] as const
 
-function statusIcon(status: 'online' | 'degraded' | 'offline') {
+function statusIcon(status: IntegrationStatus) {
   if (status === 'online') return <CheckCircle size={16} className="text-success" />
   if (status === 'degraded') return <AlertTriangle size={16} className="text-warning" />
-  return <XCircle size={16} className="text-danger" />
+  if (status === 'offline') return <XCircle size={16} className="text-danger" />
+  return <MinusCircle size={16} className="text-ink-mute" />
+}
+
+function formatLastCheck(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return '—'
+  return d.toLocaleString()
 }
 
 export function AdminIntegrations() {
   const { t } = useT()
-  const { data: integrations } = useIntegrations()
+  const { data: integrations, refetch, isFetching } = useIntegrations()
   const toast = useToast()
 
-  // Webhook status
   const [webhookStatus, setWebhookStatus] = useState<WebhookStatus | null>(null)
-
-  // Messenger setup
   const [isSettingUp, setIsSettingUp] = useState(false)
 
-  // Chat test
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     { role: 'bot', text: t('adminIntegrations.testGreeting') },
   ])
@@ -161,7 +107,6 @@ export function AdminIntegrations() {
   const [isBotTyping, setIsBotTyping] = useState(false)
   const chatRef = useRef<HTMLDivElement>(null)
 
-  // Load webhook status on mount
   useEffect(() => {
     api
       .get('/webhook/facebook/status')
@@ -169,7 +114,6 @@ export function AdminIntegrations() {
       .catch(() => {})
   }, [])
 
-  // Auto-scroll chat
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight
@@ -214,21 +158,24 @@ export function AdminIntegrations() {
     }
   }
 
-  const source = integrations
-    ? integrations.map((i) => {
-        const mock = MOCK_INTEGRATIONS.find((m) => m.name === i.name)
-        return { ...MOCK_INTEGRATIONS[0], ...i, ...(mock ?? {}) }
-      })
-    : MOCK_INTEGRATIONS
-
+  const source: IntegrationHealth[] = integrations ?? []
   const onlineCount = source.filter((i) => i.status === 'online').length
   const degradedCount = source.filter((i) => i.status === 'degraded').length
-  const offlineCount = source.filter((i) => i.status === 'offline').length
+  const offlineCount = source.filter(
+    (i) => i.status === 'offline' || i.status === 'not_configured',
+  ).length
 
-  const verifyToken = webhookStatus?.verify_token ?? 'dhtc_webhook_2026'
+  const verifyToken = webhookStatus?.verify_token || '<VERIFY_TOKEN>'
 
-  const statusBadge = (status: 'online' | 'degraded' | 'offline') => {
-    const variant = status === 'online' ? 'active' : status === 'degraded' ? 'pending' : 'cancelled'
+  const statusBadge = (status: IntegrationStatus) => {
+    const variant =
+      status === 'online'
+        ? 'active'
+        : status === 'degraded'
+          ? 'pending'
+          : status === 'offline'
+            ? 'cancelled'
+            : 'default'
     return <Badge variant={variant}>{t(STATUS_BADGE_KEY[status])}</Badge>
   }
 
@@ -238,8 +185,12 @@ export function AdminIntegrations() {
         title={t('adminIntegrations.title')}
         subtitle={t('adminIntegrations.subtitle')}
         actions={
-          <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-xl text-sm font-semibold text-ink-soft hover:border-green hover:text-green transition-colors">
-            <RefreshCw size={14} />
+          <button
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="flex items-center gap-2 px-4 py-2 border border-border rounded-xl text-sm font-semibold text-ink-soft hover:border-green hover:text-green transition-colors disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={isFetching ? 'animate-spin' : ''} />
             {t('adminIntegrations.refresh')}
           </button>
         }
@@ -259,7 +210,7 @@ export function AdminIntegrations() {
           </div>
         </div>
         <div className="bg-white border border-border rounded-xl p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
             <AlertTriangle size={18} className="text-warning" />
           </div>
           <div>
@@ -270,7 +221,7 @@ export function AdminIntegrations() {
           </div>
         </div>
         <div className="bg-white border border-border rounded-xl p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-danger/10 flex items-center justify-center">
             <XCircle size={18} className="text-danger" />
           </div>
           <div>
@@ -284,87 +235,92 @@ export function AdminIntegrations() {
 
       {/* Integration cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {source.map((int) => (
-          <div key={int.name} className="bg-white border border-border rounded-2xl p-5">
-            <div className="flex items-start gap-4">
-              <div className="text-3xl flex-shrink-0">{int.icon}</div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <h3 className="font-semibold text-ink">{int.name}</h3>
-                  {statusBadge(int.status)}
-                </div>
-                <p className="text-xs text-ink-mute mb-3">
-                  {NAME_TO_DESC_KEY[int.name] ? t(NAME_TO_DESC_KEY[int.name]) : int.description}
-                </p>
+        {source.length === 0 ? (
+          <div className="md:col-span-2 bg-white border border-border rounded-2xl p-8 text-center text-sm text-ink-mute">
+            {t('adminIntegrations.empty')}
+          </div>
+        ) : (
+          source.map((int) => (
+            <div key={int.key} className="bg-white border border-border rounded-2xl p-5">
+              <div className="flex items-start gap-4">
+                <div className="text-3xl flex-shrink-0">{int.icon}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <h3 className="font-semibold text-ink">{int.name}</h3>
+                    {statusBadge(int.status)}
+                  </div>
+                  <p className="text-xs text-ink-mute mb-3">
+                    {KEY_TO_DESC_KEY[int.key] ? t(KEY_TO_DESC_KEY[int.key]) : ''}
+                  </p>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">{t('adminIntegrations.uptime')}</div>
-                    <div
-                      className="text-sm font-semibold text-ink"
-                      style={{ fontFamily: 'var(--font-mono)' }}
-                    >
-                      {int.uptime}%
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">
+                        {t('adminIntegrations.configured')}
+                      </div>
+                      <div
+                        className="text-sm font-semibold text-ink"
+                        style={{ fontFamily: 'var(--font-mono)' }}
+                      >
+                        {int.configured ? t('adminIntegrations.yes') : t('adminIntegrations.no')}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">
+                        {t('adminIntegrations.version')}
+                      </div>
+                      <div
+                        className="text-sm font-semibold text-ink"
+                        style={{ fontFamily: 'var(--font-mono)' }}
+                      >
+                        {int.api_version ?? '—'}
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">{t('adminIntegrations.latency')}</div>
-                    <div
-                      className="text-sm font-semibold text-ink"
-                      style={{ fontFamily: 'var(--font-mono)' }}
-                    >
-                      {int.latency > 0 ? `${int.latency}ms` : '—'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] text-ink-mute uppercase tracking-wider mb-1">{t('adminIntegrations.version')}</div>
-                    <div
-                      className="text-sm font-semibold text-ink"
-                      style={{ fontFamily: 'var(--font-mono)' }}
-                    >
-                      {int.apiVersion}
+
+                  {/* Status bar */}
+                  <div className="mt-3">
+                    <div className="h-1.5 bg-cream-dark rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${
+                          int.status === 'online'
+                            ? 'bg-success'
+                            : int.status === 'degraded'
+                              ? 'bg-warning'
+                              : int.status === 'offline'
+                                ? 'bg-danger'
+                                : 'bg-ink-mute/40'
+                        }`}
+                        style={{ width: `${STATUS_BAR_PCT[int.status]}%` }}
+                      />
                     </div>
                   </div>
                 </div>
 
-                {/* Uptime bar */}
-                <div className="mt-3">
-                  <div className="h-1.5 bg-cream-dark rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full ${
-                        int.status === 'online'
-                          ? 'bg-success'
-                          : int.status === 'degraded'
-                          ? 'bg-warning'
-                          : 'bg-danger'
-                      }`}
-                      style={{ width: `${int.uptime}%` }}
-                    />
-                  </div>
-                </div>
+                <button className="text-ink-mute hover:text-ink transition-colors flex-shrink-0">
+                  <ExternalLink size={14} />
+                </button>
               </div>
 
-              <button className="text-ink-mute hover:text-ink transition-colors flex-shrink-0">
-                <ExternalLink size={14} />
-              </button>
+              <div
+                className="mt-3 pt-3 border-t border-border text-[11px] text-ink-mute flex items-center gap-1"
+                style={{ fontFamily: 'var(--font-mono)' }}
+              >
+                {statusIcon(int.status)}
+                <span>
+                  {t('adminIntegrations.lastCheck').replace('{date}', formatLastCheck(int.last_check))}
+                </span>
+              </div>
             </div>
-
-            <div
-              className="mt-3 pt-3 border-t border-border text-[11px] text-ink-mute flex items-center gap-1"
-              style={{ fontFamily: 'var(--font-mono)' }}
-            >
-              {statusIcon(int.status)}
-              <span>{t('adminIntegrations.lastCheck').replace('{date}', int.lastCheck)}</span>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* ── Facebook Messenger Setup ─────────────────────────────────── */}
       <div className="bg-white border border-border rounded-2xl p-5 mt-5">
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
-            <MessageCircle size={20} className="text-blue-600" />
+          <div className="w-10 h-10 rounded-xl bg-green/10 flex items-center justify-center">
+            <MessageCircle size={20} className="text-green" />
           </div>
           <div>
             <h2
@@ -380,7 +336,7 @@ export function AdminIntegrations() {
               className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
                 webhookStatus?.page_token_configured
                   ? 'bg-green/10 text-green'
-                  : 'bg-amber-50 text-amber-600'
+                  : 'bg-warning/10 text-warning'
               }`}
             >
               {webhookStatus?.page_token_configured ? t('adminIntegrations.fbOk') : t('adminIntegrations.fbNotConfigured')}
@@ -418,12 +374,12 @@ export function AdminIntegrations() {
             <button
               onClick={handleSetupMessenger}
               disabled={!webhookStatus?.page_token_configured || isSettingUp}
-              className="mt-4 w-full py-2.5 px-4 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="mt-4 w-full py-2.5 px-4 bg-green text-white text-sm font-semibold rounded-xl hover:bg-green-soft transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isSettingUp ? t('adminIntegrations.setupBtnLoading') : t('adminIntegrations.setupBtn')}
             </button>
             {!webhookStatus?.page_token_configured && (
-              <p className="text-xs text-amber-600 mt-2">
+              <p className="text-xs text-warning mt-2">
                 {t('adminIntegrations.setupHint')}
               </p>
             )}

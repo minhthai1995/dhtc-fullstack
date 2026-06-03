@@ -139,6 +139,12 @@ export interface OrderRead {
   total_amount: number
   shipping_address: ShippingAddress
   tracking_number?: string
+  notes?: string
+  payment_method?: string
+  payment_status?: string
+  payment_id?: string
+  shipping_method?: string
+  shipping_fee?: number
   created_at: string
   updated_at: string
   items?: OrderItemSummary[]
@@ -222,6 +228,8 @@ export interface WalletSummary {
   total_sales?: number
   total_withdrawals?: number
   pending_orders?: number
+  last_bank_name?: string | null
+  last_bank_account?: string | null
   // Extended fields used by SellerWallet page
   available_balance?: number
   pending_balance?: number
@@ -280,9 +288,14 @@ export interface UserProfile {
 }
 
 export interface IntegrationHealth {
+  key: string
   name: string
-  status: 'online' | 'degraded' | 'offline'
-  uptime: number
+  icon: string
+  status: 'online' | 'degraded' | 'offline' | 'not_configured'
+  configured: boolean
+  last_check: string
+  api_version: string | null
+  details?: Record<string, boolean | number | string | null>
 }
 
 // Seller
@@ -327,14 +340,17 @@ export interface CouponValidateResponse {
 export interface AdminMerchantDetail {
   id: number
   user_id: number
-  store_name: string
+  shop_name: string
   slug: string
-  description: string | null
+  description_vi: string | null
+  description_en: string | null
   logo_url: string | null
   banner_url: string | null
+  region: string | null
   status: string
   tier: string
   created_at: string
+  updated_at: string
   product_count: number
   order_count: number
   monthly_revenue: number

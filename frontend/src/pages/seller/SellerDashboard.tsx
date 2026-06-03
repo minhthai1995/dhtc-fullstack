@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useSellerDashboardFull, useTopProducts, useLowStockProducts, useProductAnalytics } from '@/features/seller/useSeller'
+import { useSellerDashboardFull, useTopProducts, useLowStockProducts, useProductAnalytics, useWallet } from '@/features/seller/useSeller'
 import { KpiCard } from '@/components/ui/KpiCard'
 import { Badge } from '@/components/ui/Badge'
 import { Spinner } from '@/components/ui/Spinner'
@@ -15,6 +15,7 @@ export function SellerDashboard() {
   const topProducts = useTopProducts()
   const lowStock = useLowStockProducts()
   const analytics = useProductAnalytics()
+  const wallet = useWallet()
 
   useEffect(() => {
     if (error && (error as { response?: { status?: number } }).response?.status === 404) {
@@ -27,6 +28,22 @@ export function SellerDashboard() {
   const pendingOrders = dashboard?.pending_orders ?? []
   const merchantName = dashboard?.merchant_name ?? '—'
   const localeStr = lang === 'vi' ? 'vi-VN' : 'en-US'
+
+  const lastRevenue = chartData.at(-1)?.revenue ?? 0
+  const prevRevenue = chartData.at(-2)?.revenue ?? 0
+  const revenueDelta = prevRevenue > 0
+    ? t('sellerDashboard.kpiRevenueDelta')
+        .replace('{sign}', lastRevenue >= prevRevenue ? '+' : '')
+        .replace('{pct}', (((lastRevenue - prevRevenue) / prevRevenue) * 100).toFixed(1))
+    : undefined
+  const revenueDeltaType: 'up' | 'down' = lastRevenue >= prevRevenue ? 'up' : 'down'
+
+  const walletBalance = wallet.data?.balance ?? wallet.data?.available_balance
+  const walletValue = wallet.isLoading
+    ? '—'
+    : walletBalance !== undefined
+      ? `₫${(walletBalance / 1_000_000).toLocaleString(localeStr, { maximumFractionDigits: 1 })}M`
+      : '—'
 
   return (
     <div>
@@ -76,29 +93,27 @@ export function SellerDashboard() {
           label={t('sellerDashboard.kpiRevenue')}
           value={
             dashboard
-              ? `₫${(dashboard.total_revenue / 1_000_000).toFixed(1)}M`
+              ? `₫${(dashboard.total_revenue / 1_000_000).toLocaleString(localeStr, { maximumFractionDigits: 1 })}M`
               : isLoading ? '—' : '₫0M'
           }
-          delta={t('sellerDashboard.kpiRevenueDelta')}
-          deltaType="up"
+          delta={revenueDelta}
+          deltaType={revenueDeltaType}
         />
         <KpiCard
           label={t('sellerDashboard.kpiOrders')}
           value={dashboard?.total_orders ?? (isLoading ? '—' : 0)}
-          delta="8.1%"
-          deltaType="up"
         />
         <KpiCard
           label={t('sellerDashboard.kpiPending')}
           value={dashboard?.pending_count ?? (isLoading ? '—' : 0)}
-          delta={t('sellerDashboard.kpiPendingDelta')}
+          delta={(dashboard?.pending_count ?? 0) > 0 ? t('sellerDashboard.kpiPendingDelta') : undefined}
           deltaType="warn"
         />
         <KpiCard
           label={t('sellerDashboard.kpiWallet')}
-          value="—"
-          delta={t('sellerDashboard.kpiWalletDelta')}
-          deltaType="up"
+          value={walletValue}
+          delta={walletBalance !== undefined ? t('sellerDashboard.kpiWalletDelta') : undefined}
+          deltaType="neutral"
         />
       </div>
 
@@ -224,7 +239,7 @@ export function SellerDashboard() {
                 </div>
                 <div className="text-right flex-shrink-0">
                   <div className="text-sm font-medium text-green" style={{ fontFamily: 'var(--font-display)' }}>
-                    ₫{(order.total_amount / 1_000).toFixed(0)}K
+                    ₫{(order.total_amount / 1_000_000).toLocaleString(localeStr, { maximumFractionDigits: 1 })}M
                   </div>
                   <Badge variant="pending" className="text-[9px]">{t('sellerDashboard.pendingBadge')}</Badge>
                 </div>

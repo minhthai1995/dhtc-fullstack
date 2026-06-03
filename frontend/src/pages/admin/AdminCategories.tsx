@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useToast } from '@/components/ui/Toast'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Spinner } from '@/components/ui/Spinner'
 import { useAdminCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/features/admin/useCategories'
@@ -77,7 +78,9 @@ function CategoryFormModal({ title, initial, onSubmit, onClose, isPending }: Cat
             <input
               type="number"
               value={form.sort_order ?? 0}
-              onChange={(e) => set('sort_order', Number(e.target.value))}
+              onChange={(e) => set('sort_order', parseInt(e.target.value, 10) || 0)}
+              min="0"
+              step="1"
               className="w-full border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-green"
             />
           </div>
@@ -104,6 +107,7 @@ function CategoryFormModal({ title, initial, onSubmit, onClose, isPending }: Cat
 
 export function AdminCategories() {
   const { t } = useT()
+  const toast = useToast()
   const { data: categories = [], isLoading } = useAdminCategories()
   const createCat = useCreateCategory()
   const updateCat = useUpdateCategory()
@@ -114,19 +118,28 @@ export function AdminCategories() {
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null)
 
   function handleCreate(data: CategoryCreate) {
-    createCat.mutate(data, { onSuccess: () => setShowCreate(false) })
+    createCat.mutate(data, {
+      onSuccess: () => setShowCreate(false),
+      onError: () => toast(t('toasts.errorCreateCategory'), 'error'),
+    })
   }
 
   function handleUpdate(data: CategoryCreate) {
     if (!editTarget) return
     updateCat.mutate(
       { id: editTarget.id, body: data },
-      { onSuccess: () => setEditTarget(null) }
+      {
+        onSuccess: () => setEditTarget(null),
+        onError: () => toast(t('toasts.errorUpdateCategory'), 'error'),
+      }
     )
   }
 
   function handleDelete(id: number) {
-    deleteCat.mutate(id, { onSuccess: () => setDeleteConfirm(null) })
+    deleteCat.mutate(id, {
+      onSuccess: () => setDeleteConfirm(null),
+      onError: () => toast(t('toasts.errorDeleteCategory'), 'error'),
+    })
   }
 
   return (

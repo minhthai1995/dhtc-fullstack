@@ -39,7 +39,7 @@ export function AdminWithdrawals() {
                 <tr className="bg-cream-dark border-b border-border">
                   <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminWithdrawals.thMerchant')}</th>
                   <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminWithdrawals.thAmount')}</th>
-                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminWithdrawals.thNote')}</th>
+                  <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminWithdrawals.thBank')}</th>
                   <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminWithdrawals.thStatus')}</th>
                   <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminWithdrawals.thDate')}</th>
                   <th className="text-left px-4 py-3 text-xs font-bold text-ink-mute uppercase tracking-wider">{t('adminWithdrawals.thActions')}</th>
@@ -52,7 +52,16 @@ export function AdminWithdrawals() {
                     <td className="px-4 py-3 text-sm font-semibold text-green" style={{ fontFamily: 'var(--font-display)' }}>
                       {w.amount.toLocaleString(localeStr)}₫
                     </td>
-                    <td className="px-4 py-3 text-xs text-ink-mute max-w-[200px] truncate">{w.note ?? '—'}</td>
+                    <td className="px-4 py-3 text-xs max-w-[220px]">
+                      {w.bank_name || w.bank_account ? (
+                        <div className="space-y-0.5">
+                          <div className="font-semibold text-ink truncate">{w.bank_name ?? '—'}</div>
+                          <div className="font-mono text-ink-mute truncate">{w.bank_account ?? '—'}</div>
+                        </div>
+                      ) : (
+                        <span className="text-ink-mute">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">{statusBadge(w.status)}</td>
                     <td className="px-4 py-3 text-xs text-ink-mute font-mono">
                       {new Date(w.created_at).toLocaleDateString(localeStr)}
