@@ -35,7 +35,9 @@
   - ✅ **FB secrets live (2026-06-03):** `PAGE_ACCESS_TOKEN` + `APP_SECRET` + `OPENROUTER_API_KEY` đã load vào container — `page_token_configured: true`, `ai_provider: OpenRouter (claude-haiku-4-5)`
   - ✅ **Chatbot trả lời:** test-chat endpoint phản hồi tiếng Việt, webhook GET verify trả đúng challenge
   - ✅ **Data Deletion Callback (2026-06-03):** `POST /api/v1/webhook/facebook/data-deletion` — HMAC-SHA256 verify + xóa fb_profiles + chat_messages, 5 tests pass
-  - ⏳ **Bước cuối (Meta App Review):** Vào FB Developer Console → Webhooks → đăng ký `https://api.dhtcdanang.com/api/v1/webhook/facebook` + token `dhtc_webhook_2026` → subscribe `messages, messaging_postbacks, feed, mentions` → điền Data Deletion URL: `https://api.dhtcdanang.com/api/v1/webhook/facebook/data-deletion`
+  - ✅ **DataDeletion page (2026-06-03):** `useSearchParams` đọc `?code=` param, hiện green banner xác nhận; URL format section 5 align với backend response (`6cc6e11`)
+  - ⚠️ **CORS chưa sửa (VPS):** Cần thêm `https://www.dhtcdanang.com` vào CORS_ORIGINS trong `/opt/dhtc/.env` → recreate container. Chạy lệnh: `sed -i 's|"https://dhtcdanang.com"|"https://dhtcdanang.com","https://www.dhtcdanang.com"|' /opt/dhtc/.env && cd /opt/dhtc && docker compose up -d --force-recreate api`
+  - ⏳ **Bước cuối (Meta App Review):** Vào FB Developer Console → Webhooks → đăng ký `https://api.dhtcdanang.com/api/v1/webhook/facebook` + token `dhtc_webhook_2026` → subscribe `messages, messaging_postbacks` → điền Data Deletion URL: `https://api.dhtcdanang.com/api/v1/webhook/facebook/data-deletion`
 - **TS fixes (2026-06-03):** Fix 4 TS errors + Dockerfile WORKDIR bug (shebang `/build/.venv`) + mkdir uploads permission
 - **Files deploy:** `docker-compose.vps.yml` · `backend/.env.production.example` · `scripts/deploy-vps.sh` · `scripts/add-nginx-dhtc.sh`
 - **Next session:** P5B Messenger Customer Chat Plugin embed; P5C Messenger webhook; P5D clustering; finish VPS SSL + nginx config. Carry-over: S3 migration, Redis rate limit, GeoIP
