@@ -122,6 +122,11 @@ jobs:
           ssh -i ~/.ssh/deploy_key root@103.161.97.176 \
             "bash /opt/dhtc/scripts/deploy.sh"
 
+      - name: Fix nginx cert paths (host→container path)
+        run: |
+          ssh -i ~/.ssh/deploy_key root@103.161.97.176 \
+            "sed -i 's|/opt/stock-dashboard/certbot/conf/live/|/etc/letsencrypt/live/|g' /opt/stock-dashboard/nginx/nginx.conf && echo 'Cert paths fixed'"
+
       - name: Setup frontend subdomains (idempotent)
         run: bash scripts/setup-subdomains.sh root@103.161.97.176
 
