@@ -23,7 +23,7 @@ async def test_register_duplicate_email(client: AsyncClient, db_session: AsyncSe
     await user_crud.create_user(db_session, "dup@example.com", "secret123")
     response = await client.post(
         "/api/v1/auth/register",
-        json={"email": "dup@example.com", "password": "another"},
+        json={"email": "dup@example.com", "password": "another1"},
     )
     assert response.status_code == 409
 
