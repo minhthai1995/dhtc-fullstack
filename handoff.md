@@ -23,16 +23,26 @@
   - Known limitation P6: token qua URL query `?token=<jwt>` ở redirect cuối — mitigation hiện tại FE replace-navigate clear ngay; P6 sẽ thay bằng HttpOnly cookie + `/auth/me` bootstrap hoặc one-shot code exchange
   - Reserved cho P5C: `fb_profiles.messenger_psid` UNIQUE nullable — P5C webhook map sender_id → user khi chat sau khi FB-login web
   - Spec: `docs/specs/04-fb-oauth-login/{spec,design,plan,tasks,handoff}.md` — 30 task ticked đầy đủ, handoff.md có user-action checklist tạo FB App + 6 manual e2e flows
-- **Branch:** `main` — latest commit (T13 this commit); working tree clean sau P4A 13/13
-- **Blocked:** Manual e2e P5A với FB Test User chờ user tạo FB App + điền `.env` (xem `docs/specs/04-fb-oauth-login/handoff.md`)
-- **Files đang sửa:** _(không)_
-- **Next session:** P5B Messenger Customer Chat Plugin embed; P5C capture-everything Messenger webhook → `fb_profiles.messenger_psid` + JOIN `chat_messages.linked_user_id` vào AdminCRM CustomersTab; P5D multi-signal clustering áp `customer_cluster_members` runtime (segment derive → assign); P5E proactive reply check-in posts; P6 AWS deploy. Carry-over: S3 migration cho production uploads; Response time / conversion compute cho ConversationsTab; Redis rate limit; GeoIP country_code thật
+- **Branch:** `main`
+- **VPS Deploy ✅ (2026-06-03):** Backend live tại `http://103.161.97.176:8020/api/v1/health`
+  - ✅ Disk dọn: 82% → 58% (sau build)
+  - ✅ `dhtc_api` + `dhtc_postgres` containers healthy trên VPS
+  - ✅ 19 Alembic migrations chạy sạch (27 tables)
+  - ✅ Nginx HTTP block `api.dhtcdanang.com` active (redirect 301 → HTTPS khi có cert)
+  - ✅ **DNS A record đã tạo (2026-06-03):** `api.dhtcdanang.com → 103.161.97.176` qua ZoneDNS (Nhân Hòa)
+  - ⏳ **Chờ DNS propagate:** chạy `scripts/add-nginx-dhtc.sh root@103.161.97.176` hoặc SSH vào chạy `/opt/dhtc/setup-ssl.sh` khi `dig +short api.dhtcdanang.com @8.8.8.8` ra `103.161.97.176`
+  - ✅ **FB secrets đã có:** `FACEBOOK_APP_ID`, `FACEBOOK_PAGE_ACCESS_TOKEN` trong `/opt/dhtc/.env`
+- **TS fixes (2026-06-03):** Fix 4 TS errors + Dockerfile WORKDIR bug (shebang `/build/.venv`) + mkdir uploads permission
+- **Files deploy:** `docker-compose.vps.yml` · `backend/.env.production.example` · `scripts/deploy-vps.sh` · `scripts/add-nginx-dhtc.sh`
+- **Next session:** P5B Messenger Customer Chat Plugin embed; P5C Messenger webhook; P5D clustering; finish VPS SSL + nginx config. Carry-over: S3 migration, Redis rate limit, GeoIP
 
 ---
 
 ## Active context
 
-→ **P4A ✅ done 2026-05-25:** Suite **77/77** PASS · ruff 0 errors · 13/13 task ticked với SHA · spec status ✅ Implemented. Schema P5C-ready (`chat_messages` +7 cột capture/linked) và P5D-ready (`customer_clusters` 7 system slugs + `customer_cluster_members` UNIQUE composite + CRUD `assign_user` idempotent). Spec ở `docs/specs/05-db-foundation/`.
+→ **P4A ✅ done 2026-05-25:** Suite **77/77** PASS · ruff 0 errors · 13/13 task ticked với SHA · spec status ✅ Implemented.
+
+→ **VPS Deploy 🔄 in-progress (2026-06-03):** Backend đang deploy lên `api.dhtcdanang.com` (103.161.97.176). Files cần thiết đã rsync; Docker image đang build. Xem TL;DR để biết status chi tiết.
 
 ---
 
