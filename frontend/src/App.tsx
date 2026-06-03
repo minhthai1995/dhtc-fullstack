@@ -8,10 +8,22 @@ import { SellerLayout } from '@/components/layout/SellerLayout'
 // Public pages
 import { Landing } from '@/pages/Landing'
 import { NotFound } from '@/pages/NotFound'
+import { Login } from '@/pages/Login'
+import { Register } from '@/pages/Register'
 import { PrivacyPolicy } from '@/pages/legal/PrivacyPolicy'
 import { TermsOfService } from '@/pages/legal/TermsOfService'
 import { DataDeletion } from '@/pages/legal/DataDeletion'
 import { FacebookReturnPage } from '@/pages/auth/FacebookReturnPage'
+
+// Customer pages
+import { CustomerLayout } from '@/components/layout/CustomerLayout'
+import { Shop } from '@/pages/customer/Shop'
+import { ProductDetail } from '@/pages/customer/ProductDetail'
+import { MerchantPage } from '@/pages/customer/MerchantPage'
+import { Cart } from '@/pages/customer/Cart'
+import { Checkout } from '@/pages/customer/Checkout'
+import { Account } from '@/pages/customer/Account'
+import { Tracking } from '@/pages/customer/Tracking'
 
 // Admin pages
 import { AdminDashboard } from '@/pages/admin/AdminDashboard'
@@ -53,17 +65,31 @@ export function App() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/data-deletion" element={<DataDeletion />} />
 
-        {/* Facebook OAuth callback — kept functional for App Review even with login UI hidden */}
+        {/* Facebook OAuth callback */}
         <Route path="/auth/fb-return" element={<FacebookReturnPage />} />
 
-        {/* Customer-facing auth + shop hidden during approval phase — redirect to landing */}
-        <Route path="/login" element={<Navigate to="/" replace />} />
-        <Route path="/register" element={<Navigate to="/" replace />} />
-        <Route path="/shop/*" element={<Navigate to="/" replace />} />
-        <Route path="/cart" element={<Navigate to="/" replace />} />
-        <Route path="/account" element={<Navigate to="/" replace />} />
+        {/* Auth */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-        {/* Role redirect — authenticated users land here post-login (admin/seller dev access) */}
+        {/* Marketplace — public (browse without login) */}
+        <Route element={<CustomerLayout />}>
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/shop/products/:id" element={<ProductDetail />} />
+          <Route path="/shop/merchants/:id" element={<MerchantPage />} />
+        </Route>
+
+        {/* Marketplace — authenticated customer */}
+        <Route element={<ProtectedRoute requiredRole="customer" />}>
+          <Route element={<CustomerLayout />}>
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/shop/checkout" element={<Checkout />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/tracking" element={<Tracking />} />
+          </Route>
+        </Route>
+
+        {/* Role redirect — authenticated users land here post-login */}
         <Route path="/app" element={<RoleRedirect />} />
 
         {/* Admin portal — internal access only */}

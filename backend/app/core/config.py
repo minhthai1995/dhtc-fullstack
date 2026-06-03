@@ -22,7 +22,12 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRE_MINUTES: int = 60 * 24
 
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "https://admin.dhtcdanang.com",
+        "https://seller.dhtcdanang.com",
+        "https://marketplace.dhtcdanang.com",
+    ]
 
     # AI Chatbot
     OPENROUTER_API_KEY: str = ""
