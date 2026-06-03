@@ -1,9 +1,12 @@
 """Facebook Messenger webhook handler — production-ready."""
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
+import json
 import logging
+import secrets as secrets_module
 
 import httpx
 from fastapi import (
@@ -426,3 +429,87 @@ def _agno_status() -> str:
         return "available"
     except ImportError:
         return "fallback (HTTP)"
+
+
+# ── Facebook Data Deletion Callback ──────────────────────────────────────────
+# Required for Meta App Review.
+# Spec: developers.facebook.com/docs/development/create-an-app/app-dashboard/data-deletion-callback
+
+def _b64url_decode(s: str) -> bytes:
+    s += "=" * (-len(s) % 4)
+    return base64.urlsafe_b64decode(s)
+
+
+def _parse_and_verify_signed_request(signed_request: str) -> str | None:
+    """Verify HMAC-SHA256 signature and return fb_user_id, or None on failure."""
+    try:
+        encoded_sig, payload_part = signed_request.split(".", 1)
+        sig = _b64url_decode(encoded_sig)
+        data: dict = json.loads(_b64url_decode(payload_part))
+    except Exception:
+        return None
+
+    if data.get("algorithm", "").upper() != "HMAC-SHA256":
+        return None
+
+    if not FB_APP_SECRET:
+        logger.warning("[DataDeletion] APP_SECRET not set — skipping signature verify (dev mode)")
+        return data.get("user_id")
+
+    expected = hmac.new(FB_APP_SECRET.encode(), payload_part.encode(), hashlib.sha256).digest()
+    if not hmac.compare_digest(expected, sig):
+        return None
+
+    return data.get("user_id")
+
+
+async def _delete_fb_user_data(db: AsyncSession, fb_user_id: str) -> str:
+    """Delete all FB-linked data for fb_app_user_id. Returns confirmation_code."""
+    from sqlalchemy import delete, select
+
+    from app.models.chat_message import ChatMessage
+    from app.models.fb_profile import FBProfile
+
+    result = await db.execute(
+        select(FBProfile).where(FBProfile.fb_app_user_id == fb_user_id)
+    )
+    profile = result.scalar_one_or_none()
+
+    if profile and profile.messenger_psid:
+        await db.execute(
+            delete(ChatMessage).where(ChatMessage.fb_user_id == profile.messenger_psid)
+        )
+
+    if profile:
+        await db.delete(profile)
+
+    code = secrets_module.token_urlsafe(16)
+    await db.commit()
+    logger.info("[DataDeletion] Deleted FB data fb_user_id=%s code=%s", fb_user_id, code)
+    return code
+
+
+@router.post("/facebook/data-deletion")
+async def facebook_data_deletion(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Facebook Data Deletion Callback — bắt buộc cho Meta App Review.
+
+    Meta POST form data với signed_request khi user xóa app data.
+    Returns confirmation_code + status URL.
+    """
+    form = await request.form()
+    signed_request: str = form.get("signed_request", "")  # type: ignore[assignment]
+    if not signed_request:
+        raise HTTPException(status_code=400, detail="Missing signed_request")
+
+    fb_user_id = _parse_and_verify_signed_request(signed_request)
+    if fb_user_id is None:
+        raise HTTPException(status_code=400, detail="Invalid signed_request")
+
+    confirmation_code = await _delete_fb_user_data(db, fb_user_id)
+    status_url = (
+        f"{settings.FRONTEND_URL}/privacy/data-deletion?code={confirmation_code}"
+    )
+    return {"url": status_url, "confirmation_code": confirmation_code}
