@@ -215,12 +215,13 @@ async def handle_facebook_webhook(
 # ── Postback handler ──────────────────────────────────────────────────────────
 
 WELCOME_TEXT = (
-    "Chào mừng bạn đến với DHTC Marketplace — sàn đặc sản Việt Nam! 🌿\n\n"
+    "Chào mừng bạn đến với Chợ Đêm Sơn Trà — Đà Nẵng! 🌙\n\n"
     "Tôi có thể giúp bạn:\n"
-    "• Tìm sản phẩm đặc sản\n"
-    "• Tư vấn về cà phê, hồ tiêu, xoài, điều, mật ong…\n"
-    "• Giải đáp chính sách đổi trả, thanh toán\n\n"
-    "Bạn muốn tìm hiểu về sản phẩm nào?"
+    "• Giờ mở cửa & địa chỉ\n"
+    "• Gian hàng ẩm thực & thủ công\n"
+    "• Sự kiện & hoạt động tại chợ\n"
+    "• Hướng dẫn di chuyển\n\n"
+    "Bạn muốn biết thêm gì về chợ đêm?"
 )
 
 async def _handle_postback(sender_id: str, payload: str) -> None:
@@ -228,44 +229,42 @@ async def _handle_postback(sender_id: str, payload: str) -> None:
         await _send_text(sender_id, WELCOME_TEXT)
         await _send_quick_replies(
             sender_id,
-            "Chọn chủ đề bạn quan tâm:",
+            "Chọn thông tin bạn cần:",
             [
-                {"content_type": "text", "title": "☕ Cà phê", "payload": "CAT_COFFEE"},
-                {"content_type": "text", "title": "🌶️ Hồ tiêu", "payload": "CAT_PEPPER"},
-                {"content_type": "text", "title": "🍋 Trái cây sấy", "payload": "CAT_DRIED"},
-                {"content_type": "text", "title": "📦 Tra cứu đơn hàng", "payload": "ORDER_LOOKUP"},
+                {"content_type": "text", "title": "🕕 Giờ mở cửa", "payload": "INFO_HOURS"},
+                {
+                    "content_type": "text",
+                    "title": "📍 Địa chỉ & đường đi",
+                    "payload": "INFO_LOCATION",
+                },
+                {"content_type": "text", "title": "🍜 Ẩm thực", "payload": "INFO_FOOD"},
+                {"content_type": "text", "title": "🎪 Sự kiện", "payload": "INFO_EVENTS"},
             ],
         )
-    elif payload.startswith("CAT_"):
-        cat_map = {
-            "CAT_COFFEE": "cà phê",
-            "CAT_PEPPER": "hồ tiêu",
-            "CAT_DRIED": "trái cây sấy",
-            "CAT_HONEY": "mật ong",
-        }
-        keyword = cat_map.get(payload, "đặc sản")
-        from app.chatbot.agent import get_agent
-        agent = get_agent()
-        response = await agent.chat(
-            message=f"Tìm sản phẩm {keyword}",
-            user_id=f"fb_{sender_id}",
-            session_id=f"fb_sess_{sender_id}",
-        )
-        await _send_text(sender_id, response)
-    elif payload == "ORDER_LOOKUP":
+    elif payload == "INFO_HOURS":
         await _send_text(
             sender_id,
-            "Để tra cứu đơn hàng, vui lòng cung cấp mã đơn hàng (ví dụ: #123) "
-            "hoặc email đặt hàng của bạn."
+            "🕕 Chợ Đêm Sơn Trà mở cửa hàng ngày từ 18:00 – 23:00,"
+            " kể cả cuối tuần và ngày lễ. Vào cửa miễn phí!"
         )
-    elif payload == "RETURN_POLICY":
+    elif payload == "INFO_LOCATION":
         await _send_text(
             sender_id,
-            "Chính sách đổi trả DHTC:\n"
-            "• Đổi trả trong vòng 7 ngày kể từ khi nhận hàng\n"
-            "• Sản phẩm còn nguyên vẹn, chưa qua sử dụng\n"
-            "• Liên hệ qua Messenger hoặc email support@dhtc.vn\n"
-            "• Hoàn tiền trong 3-5 ngày làm việc"
+            "📍 Địa chỉ: 975 Ngô Quyền, An Hải Bắc, Sơn Trà, Đà Nẵng."
+            "\nCách trung tâm ~5km, có bãi giữ xe miễn phí."
+        )
+    elif payload == "INFO_FOOD":
+        await _send_text(
+            sender_id,
+            "🍜 Chợ có hơn 100 gian hàng ẩm thực: bánh tráng cuốn thịt heo,"
+            " mì Quảng, bún mắm, hải sản tươi, chè, và nhiều đặc sản Đà Nẵng khác!"
+        )
+    elif payload == "INFO_EVENTS":
+        await _send_text(
+            sender_id,
+            "🎪 Chợ thường xuyên tổ chức biểu diễn nghệ thuật dân gian,"
+            " âm nhạc đường phố và các sự kiện văn hóa cuối tuần."
+            " Nhắn tin để biết lịch cụ thể nhé!"
         )
 
 # ── Facebook Graph API helpers ────────────────────────────────────────────────
@@ -342,13 +341,16 @@ async def setup_messenger_profile() -> dict:
         "greeting": [
             {
                 "locale": "default",
-                "text": "Chào {{user_first_name}}! DHTC Marketplace — Đặc sản Việt Nam chính gốc 🌿"
+                "text": (
+                    "Hi {{user_first_name}}! Welcome to Son Tra Night Market 🌙"
+                    " Ask me anything about the market!"
+                ),
             },
             {
                 "locale": "vi_VN",
                 "text": (
-                    "Chào {{user_first_name}}! Tôi là trợ lý AI của DHTC"
-                    " — sàn đặc sản Việt Nam. Nhắn tin để được tư vấn ngay!"
+                    "Chào {{user_first_name}}! Tôi là trợ lý của Chợ Đêm Sơn Trà 🌙"
+                    " Hỏi tôi bất cứ điều gì về chợ nhé!"
                 ),
             }
         ],
@@ -357,19 +359,13 @@ async def setup_messenger_profile() -> dict:
                 "locale": "default",
                 "composer_input_disabled": False,
                 "call_to_actions": [
-                    {"type": "postback", "title": "☕ Tìm sản phẩm", "payload": "CAT_COFFEE"},
-                    {"type": "postback", "title": "📦 Tra cứu đơn hàng", "payload": "ORDER_LOOKUP"},
+                    {"type": "postback", "title": "🕕 Giờ mở cửa", "payload": "INFO_HOURS"},
                     {
                         "type": "postback",
-                        "title": "🔄 Chính sách đổi trả",
-                        "payload": "RETURN_POLICY",
+                        "title": "📍 Địa chỉ & đường đi",
+                        "payload": "INFO_LOCATION",
                     },
-                    {
-                        "type": "web_url",
-                        "title": "🛒 Vào DHTC Marketplace",
-                        "url": "https://dhtc.vn",
-                        "webview_height_ratio": "full",
-                    },
+                    {"type": "postback", "title": "🍜 Ẩm thực & gian hàng", "payload": "INFO_FOOD"},
                 ],
             }
         ],
