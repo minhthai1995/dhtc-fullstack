@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom'
 import { LegalLayout } from './LegalLayout'
 import { useT } from '@/i18n/useT'
 
@@ -78,7 +79,7 @@ function ViBody() {
         <li>Hồ sơ Facebook: App-scoped User ID, ảnh đại diện, locale, raw OAuth payload.</li>
         <li>Hồ sơ Messenger: Page-scoped ID (PSID), lịch sử tin nhắn.</li>
         <li>Wishlist, giỏ hàng, đánh giá sản phẩm.</li>
-        <li>Visitor ID, session log, page-view history.</li>
+        <li>Visitor ID, session log, page-view history, bản ghi đồng ý cookie (<code>consent_logs</code>).</li>
         <li>Hồ sơ tiểu thương (nếu có): tên gian hàng, mô tả, hình ảnh sản phẩm.</li>
       </ul>
 
@@ -130,7 +131,7 @@ function ViBody() {
         <li><strong>Mã xác nhận xoá</strong> (Deletion Confirmation Code).</li>
         <li>
           <strong>URL trạng thái</strong> để bạn có thể kiểm tra trạng thái xoá bất cứ lúc nào:{' '}
-          <code>https://dhtcdanang.com/data-deletion/status/&lt;code&gt;</code>.
+          <code>https://dhtcdanang.com/data-deletion?code=&lt;code&gt;</code>.
         </li>
         <li>Danh sách các loại dữ liệu đã xoá và các loại dữ liệu giữ lại theo luật.</li>
       </ul>
@@ -231,7 +232,7 @@ function EnBody() {
         <li>Facebook profile: App-scoped User ID, profile picture, locale, raw OAuth payload.</li>
         <li>Messenger profile: Page-scoped ID (PSID), message history.</li>
         <li>Wishlist, cart, product reviews.</li>
-        <li>Visitor ID, session logs, page-view history.</li>
+        <li>Visitor ID, session logs, page-view history, cookie consent records (<code>consent_logs</code>).</li>
         <li>Merchant profile (if any): shop name, description, product images.</li>
       </ul>
 
@@ -284,7 +285,7 @@ function EnBody() {
         <li><strong>Deletion Confirmation Code</strong>.</li>
         <li>
           <strong>Status URL</strong> for you to check deletion status at any time:{' '}
-          <code>https://dhtcdanang.com/data-deletion/status/&lt;code&gt;</code>.
+          <code>https://dhtcdanang.com/data-deletion?code=&lt;code&gt;</code>.
         </li>
         <li>A list of deleted data types and data types retained by law.</li>
       </ul>
@@ -309,13 +310,32 @@ function EnBody() {
 
 export function DataDeletion() {
   const { t, lang } = useT()
-  const effectiveDate = lang === 'en' ? 'May 25, 2026' : '25/05/2026'
+  const [searchParams] = useSearchParams()
+  const confirmationCode = searchParams.get('code')
+  const effectiveDate = lang === 'en' ? 'May 31, 2026' : '31/05/2026'
   return (
     <LegalLayout
       title={t('legalPage.dataDeletion.title')}
       subtitle={t('legalPage.dataDeletion.subtitle')}
       effectiveDate={effectiveDate}
     >
+      {confirmationCode && (
+        <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">
+          {lang === 'en' ? (
+            <>
+              <strong>Deletion request received.</strong> Your data will be purged within 30 days.
+              <br />
+              Confirmation code: <code className="font-mono text-sm">{confirmationCode}</code>
+            </>
+          ) : (
+            <>
+              <strong>Đã nhận yêu cầu xoá dữ liệu.</strong> Dữ liệu sẽ được xoá trong vòng 30 ngày.
+              <br />
+              Mã xác nhận: <code className="font-mono text-sm">{confirmationCode}</code>
+            </>
+          )}
+        </div>
+      )}
       {lang === 'en' ? <EnBody /> : <ViBody />}
     </LegalLayout>
   )
