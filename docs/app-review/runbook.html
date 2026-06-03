@@ -399,11 +399,11 @@
         <div class="step-check" onclick="toggleStep(this)"></div>
         <div class="step-body">
           <p><strong>Verify tất cả legal pages trả 200</strong></p>
-          <div class="code-block"><button class="copy-mini" onclick="copyText(event, 'curl -o /dev/null -sw \"%{http_code}\\n\" https://dhtcdanang.com/privacy\ncurl -o /dev/null -sw \"%{http_code}\\n\" https://dhtcdanang.com/terms\ncurl -o /dev/null -sw \"%{http_code}\\n\" https://dhtcdanang.com/data-deletion\ncurl -o /dev/null -sw \"%{http_code}\\n\" https://www.dhtcdanang.com/data-deletion')">copy</button>curl -o /dev/null -sw "%{http_code}\n" https://dhtcdanang.com/privacy
-curl -o /dev/null -sw "%{http_code}\n" https://dhtcdanang.com/terms
-curl -o /dev/null -sw "%{http_code}\n" https://dhtcdanang.com/data-deletion
-curl -o /dev/null -sw "%{http_code}\n" https://www.dhtcdanang.com/data-deletion
-# Tất cả phải trả 200</div>
+          <div class="code-block"><button class="copy-mini" onclick="copyText(event, 'curl -L -o /dev/null -sw \"%{http_code}\\n\" https://dhtcdanang.com/privacy\ncurl -L -o /dev/null -sw \"%{http_code}\\n\" https://dhtcdanang.com/terms\ncurl -L -o /dev/null -sw \"%{http_code}\\n\" https://dhtcdanang.com/data-deletion\ncurl -L -o /dev/null -sw \"%{http_code}\\n\" https://www.dhtcdanang.com/data-deletion')">copy</button>curl -L -o /dev/null -sw "%{http_code}\n" https://dhtcdanang.com/privacy
+curl -L -o /dev/null -sw "%{http_code}\n" https://dhtcdanang.com/terms
+curl -L -o /dev/null -sw "%{http_code}\n" https://dhtcdanang.com/data-deletion
+curl -L -o /dev/null -sw "%{http_code}\n" https://www.dhtcdanang.com/data-deletion
+# Tất cả phải trả 200 (-L để follow redirect dhtcdanang.com → www.dhtcdanang.com)</div>
           <div class="actions">
             <a class="btn" href="https://dhtcdanang.com/privacy" target="_blank">Privacy ↗</a>
             <a class="btn" href="https://dhtcdanang.com/terms" target="_blank">Terms ↗</a>
