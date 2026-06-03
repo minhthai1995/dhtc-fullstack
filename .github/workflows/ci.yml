@@ -93,6 +93,7 @@ jobs:
           echo "${{ secrets.VPS_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H 103.161.97.176 >> ~/.ssh/known_hosts
+          printf 'Host 103.161.97.176\n  IdentityFile ~/.ssh/deploy_key\n  StrictHostKeyChecking no\n' >> ~/.ssh/config
 
       - name: Sync backend code
         run: |
@@ -120,6 +121,9 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key root@103.161.97.176 \
             "bash /opt/dhtc/scripts/deploy.sh"
+
+      - name: Setup frontend subdomains (idempotent)
+        run: bash scripts/setup-subdomains.sh root@103.161.97.176
 
       - name: Reload nginx for frontend
         run: |
