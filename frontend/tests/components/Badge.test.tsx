@@ -20,21 +20,21 @@ describe('Badge', () => {
     renderWithProviders(<Badge variant="pending">Chờ xử lý</Badge>)
     const badge = screen.getByText('Chờ xử lý')
     expect(badge).toBeInTheDocument()
-    expect(badge.className).toMatch(/amber/)
+    expect(badge.className).toMatch(/warning/)
   })
 
   it('renders processing variant', () => {
     renderWithProviders(<Badge variant="processing">Đang xử lý</Badge>)
     const badge = screen.getByText('Đang xử lý')
     expect(badge).toBeInTheDocument()
-    expect(badge.className).toMatch(/blue/)
+    expect(badge.className).toMatch(/gold/)
   })
 
   it('renders shipped variant', () => {
     renderWithProviders(<Badge variant="shipped">Đang giao</Badge>)
     const badge = screen.getByText('Đang giao')
     expect(badge).toBeInTheDocument()
-    expect(badge.className).toMatch(/purple/)
+    expect(badge.className).toMatch(/ink/)
   })
 
   it('renders delivered variant', () => {
@@ -48,7 +48,7 @@ describe('Badge', () => {
     renderWithProviders(<Badge variant="cancelled">Đã hủy</Badge>)
     const badge = screen.getByText('Đã hủy')
     expect(badge).toBeInTheDocument()
-    expect(badge.className).toMatch(/red/)
+    expect(badge.className).toMatch(/danger/)
   })
 
   it('renders verified variant', () => {
@@ -69,7 +69,7 @@ describe('Badge', () => {
     renderWithProviders(<Badge variant="suspended">Tạm khóa</Badge>)
     const badge = screen.getByText('Tạm khóa')
     expect(badge).toBeInTheDocument()
-    expect(badge.className).toMatch(/red/)
+    expect(badge.className).toMatch(/danger/)
   })
 
   it('renders gold variant', () => {
@@ -83,14 +83,14 @@ describe('Badge', () => {
     renderWithProviders(<Badge variant="silver">Bạc</Badge>)
     const badge = screen.getByText('Bạc')
     expect(badge).toBeInTheDocument()
-    expect(badge.className).toMatch(/gray/)
+    expect(badge.className).toMatch(/cream/)
   })
 
   it('renders bronze variant', () => {
     renderWithProviders(<Badge variant="bronze">Đồng</Badge>)
     const badge = screen.getByText('Đồng')
     expect(badge).toBeInTheDocument()
-    expect(badge.className).toMatch(/orange/)
+    expect(badge.className).toMatch(/gold/)
   })
 
   it('accepts additional className', () => {
