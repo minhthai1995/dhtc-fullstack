@@ -32,8 +32,9 @@
   - ✅ **DNS A record đã tạo (2026-06-03):** `api.dhtcdanang.com → 103.161.97.176` qua ZoneDNS (Nhân Hòa)
   - ✅ **SSL cert Let's Encrypt (2026-06-03):** `api.dhtcdanang.com` — cert hết hạn 2026-09-01, nginx HTTPS block active với WSS + webhook timeout 60s
   - ✅ **HTTPS live:** `https://api.dhtcdanang.com/api/v1/health/db` → `{"status":"ok","database":"reachable"}`
-  - ✅ **FB secrets đã có:** `FACEBOOK_APP_ID`, `FACEBOOK_PAGE_ACCESS_TOKEN` trong `/opt/dhtc/.env`
-  - ⏳ **Còn lại:** Verify webhook FB + data deletion endpoint; điền `FACEBOOK_APP_SECRET` nếu chưa; test OAuth callback URL
+  - ✅ **FB secrets live (2026-06-03):** `PAGE_ACCESS_TOKEN` + `APP_SECRET` + `OPENROUTER_API_KEY` đã load vào container — `page_token_configured: true`, `ai_provider: OpenRouter (claude-haiku-4-5)`
+  - ✅ **Chatbot trả lời:** test-chat endpoint phản hồi tiếng Việt, webhook GET verify trả đúng challenge
+  - ⏳ **Bước cuối:** Vào FB Developer Console → Webhooks → đăng ký `https://api.dhtcdanang.com/api/v1/webhook/facebook` + token `dhtc_webhook_2026` → subscribe events `messages, messaging_postbacks, feed`
 - **TS fixes (2026-06-03):** Fix 4 TS errors + Dockerfile WORKDIR bug (shebang `/build/.venv`) + mkdir uploads permission
 - **Files deploy:** `docker-compose.vps.yml` · `backend/.env.production.example` · `scripts/deploy-vps.sh` · `scripts/add-nginx-dhtc.sh`
 - **Next session:** P5B Messenger Customer Chat Plugin embed; P5C Messenger webhook; P5D clustering; finish VPS SSL + nginx config. Carry-over: S3 migration, Redis rate limit, GeoIP
