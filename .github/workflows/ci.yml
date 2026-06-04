@@ -23,28 +23,25 @@ jobs:
       - name: Diagnose nginx + container filesystem
         run: |
           ssh -i ~/.ssh/deploy_key root@103.161.97.176 << 'EOF'
-            echo "=== ALL server blocks for dhtcdanang.com in nginx.conf ==="
-            grep -n "dhtcdanang\|DHTC-FE" /opt/stock-dashboard/nginx/nginx.conf
+            echo "=== Trigger live request + capture error logs ==="
+            curl -sk -o /dev/null -w "%{http_code}" https://admin.dhtcdanang.com/
+            echo ""
+            curl -sk -o /dev/null -w "%{http_code}" https://admin.dhtcdanang.com/index.html
+            echo ""
+            sleep 0.5
+            docker logs stock-nginx --tail 10 2>&1
+
+            echo ""
+            echo "=== All listen 443 server_name blocks ==="
+            grep -n "server_name\|listen 443\|root " /opt/stock-dashboard/nginx/nginx.conf | grep -v "#"
 
             echo ""
             echo "=== Full DHTC HTTPS blocks ==="
             awk '/# >>> DHTC-FE.*HTTPS/,/# <<< DHTC-FE.*HTTPS/' /opt/stock-dashboard/nginx/nginx.conf
 
             echo ""
-            echo "=== docker volume inspect: certbot www mount ==="
-            docker inspect stock-nginx --format '{{range .Mounts}}{{if eq .Destination "/var/www/certbot"}}HOST={{.Source}} CONTAINER={{.Destination}} TYPE={{.Type}}{{end}}{{end}}'
-
-            echo ""
             echo "=== Container /var/www/certbot/dhtc/ ==="
-            docker exec stock-nginx ls -la /var/www/certbot/dhtc/ 2>&1
-
-            echo ""
-            echo "=== Container: can nginx read index.html? ==="
-            docker exec stock-nginx cat /var/www/certbot/dhtc/index.html 2>&1 | head -3
-
-            echo ""
-            echo "=== docker logs stock-nginx (last 20 lines) ==="
-            docker logs stock-nginx --tail 20 2>&1
+            docker exec stock-nginx ls -la /var/www/certbot/dhtc/assets/ 2>&1 | head -5
           EOF
 
 
