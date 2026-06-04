@@ -37,7 +37,7 @@ jobs:
             echo "=== Curl subdomains ==="
             for d in admin seller marketplace; do
               code=$(curl -sk -o /dev/null -w "%{http_code}" https://${d}.dhtcdanang.com/)
-              echo "  ${d}.dhtcdanang.com → ${code}"
+              echo "  ${d}.dhtcdanang.com: ${code}"
             done
 
             echo ""
@@ -163,21 +163,10 @@ jobs:
 
       - name: Remove stale DHTC-FE HTTPS blocks from nginx (in-place write)
         run: |
-          ssh -i ~/.ssh/deploy_key root@103.161.97.176 << 'ENDSSH'
-            python3 << 'PYEOF'
-import re
-p = '/opt/stock-dashboard/nginx/nginx.conf'
-c = open(p).read()
-c = re.sub(r'\n# >>> DHTC-FE-[^\n]*-HTTPS[^\n]*\n.*?# <<< DHTC-FE-[^\n]*-HTTPS[^\n]*\n', '\n', c, flags=re.DOTALL)
-open(p, 'w').write(c)
-PYEOF
-            echo "Remaining DHTC-FE HTTPS tags:"
-            grep 'DHTC-FE.*HTTPS' /opt/stock-dashboard/nginx/nginx.conf || echo "(none — clean)"
-            echo "File inode:"
-            stat -c '%i %n' /opt/stock-dashboard/nginx/nginx.conf
-            echo "Container sees same inode:"
-            docker exec stock-nginx stat -c '%i %n' /etc/nginx/conf.d/default.conf
-          ENDSSH
+          ssh -i ~/.ssh/deploy_key root@103.161.97.176 \
+            "python3 /opt/dhtc/scripts/remove-dhtc-https-blocks.py && \
+             echo 'Host inode:' && stat -c '%i %n' /opt/stock-dashboard/nginx/nginx.conf && \
+             echo 'Container inode:' && docker exec stock-nginx stat -c '%i %n' /etc/nginx/conf.d/default.conf"
 
       - name: Setup frontend subdomains (idempotent)
         run: bash scripts/setup-subdomains.sh root@103.161.97.176
