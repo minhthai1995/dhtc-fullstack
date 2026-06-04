@@ -20,18 +20,20 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H 103.161.97.176 >> ~/.ssh/known_hosts
 
-      - name: Verify inode fix + subdomain health
+      - name: Verify subdomain health
         run: |
           ssh -i ~/.ssh/deploy_key root@103.161.97.176 << 'EOF'
             echo "=== Host inode ==="
             stat -c '%i %n' /opt/stock-dashboard/nginx/nginx.conf
 
-            echo "=== Container inode (must match host) ==="
+            echo "=== Container inode ==="
             docker exec stock-nginx stat -c '%i %n' /etc/nginx/conf.d/default.conf
 
-            echo ""
-            echo "=== Link count (0 = stale inode, >0 = live) ==="
+            echo "=== Link count (0=stale, >0=live) ==="
             docker exec stock-nginx stat -c '%h links' /etc/nginx/conf.d/default.conf
+
+            echo "=== @spa_fallback in container config? ==="
+            docker exec stock-nginx grep -c "@spa_fallback" /etc/nginx/conf.d/default.conf && echo "YES — redirect cycle fixed" || echo "NO — still has old config"
 
             echo ""
             echo "=== Curl subdomains ==="
@@ -41,8 +43,8 @@ jobs:
             done
 
             echo ""
-            echo "=== nginx error log (last 5 lines) ==="
-            docker logs stock-nginx --since 120s 2>&1 | grep -i "error\|500" | tail -5 || echo "(no errors)"
+            echo "=== nginx error log (last 60s) ==="
+            docker logs stock-nginx --since 60s 2>&1 | grep -i "error\|500\|cycle" | tail -5 || echo "(no errors)"
           EOF
 
 
@@ -178,7 +180,11 @@ jobs:
              cp -r /opt/dhtc/frontend/dist/. /opt/stock-dashboard/certbot/www/dhtc/ && \
              echo 'Frontend files in /opt/stock-dashboard/certbot/www/dhtc → /var/www/certbot/dhtc in container'"
 
-      - name: Reload nginx for frontend
+      - name: Push nginx.conf into container + reload (fix stale bind-mount inode)
         run: |
           ssh -i ~/.ssh/deploy_key root@103.161.97.176 \
-            "docker exec stock-nginx nginx -t && docker exec stock-nginx nginx -s reload"
+            "docker cp /opt/stock-dashboard/nginx/nginx.conf stock-nginx:/etc/nginx/conf.d/default.conf && \
+             echo 'docker cp done — container now has host config' && \
+             docker exec stock-nginx nginx -t && \
+             docker exec stock-nginx nginx -s reload && \
+             echo 'nginx reloaded'"
