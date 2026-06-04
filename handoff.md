@@ -41,7 +41,20 @@
   - ⏳ **Bước cuối (Meta App Review — manual trong FB Dev Console):** Xem checklist bên dưới
 - **TS fixes (2026-06-03):** Fix 4 TS errors + Dockerfile WORKDIR bug (shebang `/build/.venv`) + mkdir uploads permission
 - **Files deploy:** `docker-compose.vps.yml` · `backend/.env.production.example` · `scripts/deploy-vps.sh` · `scripts/add-nginx-dhtc.sh`
-- **Next session:** P5B Messenger Customer Chat Plugin embed; P5C Messenger webhook; P5D clustering; finish VPS SSL + nginx config. Carry-over: S3 migration, Redis rate limit, GeoIP
+- **Screencast automation ✅ (2026-06-03):** `scripts/record-demo/` — `record.sh` + `demo.mjs` + `package.json`. Run: `cd scripts/record-demo && FB_PAGE_USERNAME=yourpage bash record.sh`. Output: `output/final_meta.mp4`. Gold cursor ring, 3 scenes (Landing→Messenger→DataDeletion), auto post-process <100MB.
+- **Email @dhtcdanang.com ✅ (2026-06-03):** Dùng **uMail** (umailsmtp.com, Nhân Hòa) — MX: `smtp.umailsmtp.com` (45.117.176.181). Quản lý mailbox qua cPanel Nhân Hòa (`nhanhoa.com` → Hosting → Email). Hiện đã có SPF record. Các địa chỉ `tech/privacy/contact@dhtcdanang.com` cần tạo thủ công trong cPanel.
+- **Subdomains setup (2026-06-04):**
+  - ✅ DNS A records: `admin/seller/marketplace.dhtcdanang.com → 103.161.97.176`
+  - ✅ SSL certs Let's Encrypt cho cả 3 subdomains (expire 2026-09-01)
+  - ⏳ **Nginx HTTPS blocks:** CI đang fix lần 2 — sed range deletion xóa blocks cũ (sai cert path `/opt/stock-dashboard/certbot/conf/...`) rồi re-add với đúng `/etc/letsencrypt/...`. CI commit `a499800` đang chạy.
+- **Meta business verification (2026-06-04):**
+  - Meta từ chối: tên pháp lý "DHTC Danang Joint Stock" chưa có trên website
+  - ✅ Fix: `legal.entity.name` (EN) → "DHTC Danang Joint Stock" · footer.copyright EN → bao gồm legal name
+  - ✅ VI name → "Công ty Cổ phần DHTC Đà Nẵng" (full form)
+  - ✅ HQ address → "975 Ngô Quyền" (từ website chính thức dhtcdanang.com)
+  - ⚠️ **GPKD 0401234567 LÀ PLACEHOLDER** — cần user cung cấp MST thật từ Sở KH&ĐT Đà Nẵng
+  - Sau khi CI deploy xong → submit lại Meta verification tại Business Manager
+- **Next session:** P5B Messenger Customer Chat Plugin embed; P5C Messenger webhook; P5D clustering. Carry-over: S3 migration, Redis rate limit, GeoIP
 
 ---
 
@@ -49,7 +62,7 @@
 
 → **P4A ✅ done 2026-05-25:** Suite **77/77** PASS · ruff 0 errors · 13/13 task ticked với SHA · spec status ✅ Implemented.
 
-→ **VPS Deploy 🔄 in-progress (2026-06-03):** Backend đang deploy lên `api.dhtcdanang.com` (103.161.97.176). Files cần thiết đã rsync; Docker image đang build. Xem TL;DR để biết status chi tiết.
+→ **VPS Subdomains 🔄 in-progress (2026-06-04):** Nginx HTTPS blocks cho admin/seller/marketplace subdomains đang fix. CI commit `a499800` — xóa blocks cũ (sai cert path) rồi re-add với đúng `/etc/letsencrypt/live/`. Sau khi CI pass → verify `curl -sI https://admin.dhtcdanang.com`.
 
 ---
 
