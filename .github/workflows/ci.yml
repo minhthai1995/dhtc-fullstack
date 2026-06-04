@@ -5,8 +5,46 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
+  diagnose-nginx:
+    name: Diagnose nginx (manual only)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H 103.161.97.176 >> ~/.ssh/known_hosts
+
+      - name: Diagnose nginx + container filesystem
+        run: |
+          ssh -i ~/.ssh/deploy_key root@103.161.97.176 << 'EOF'
+            echo "=== nginx.conf: root lines in DHTC HTTPS blocks ==="
+            grep -A 20 "DHTC-FE-admin.dhtcdanang.com-HTTPS" /opt/stock-dashboard/nginx/nginx.conf \
+              | grep -E "(root|server_name|listen)" || echo "(block not found)"
+
+            echo ""
+            echo "=== Container /var/www/dhtc/ ==="
+            docker exec stock-nginx ls -la /var/www/dhtc/ 2>&1 | head -20
+
+            echo ""
+            echo "=== nginx error log (last 30 lines) ==="
+            docker exec stock-nginx tail -30 /var/log/nginx/error.log 2>&1
+
+            echo ""
+            echo "=== nginx access log (last 5 lines) ==="
+            docker exec stock-nginx tail -5 /var/log/nginx/access.log 2>&1
+
+            echo ""
+            echo "=== Host /opt/dhtc/frontend/dist/ ==="
+            ls -la /opt/dhtc/frontend/dist/ | head -10
+          EOF
+
+
   backend:
     runs-on: ubuntu-latest
     defaults:
