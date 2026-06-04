@@ -13,6 +13,7 @@ NGINX_CONF="/opt/stock-dashboard/nginx/nginx.conf"
 CERTBOT_WWW="/opt/stock-dashboard/certbot/www"
 CERTBOT_CONF="/opt/stock-dashboard/certbot/conf"
 FRONTEND_DIR="/opt/dhtc/frontend/dist"
+NGINX_WEBROOT="/var/www/dhtc"
 BACKEND_PORT="8020"
 
 SUBDOMAINS=("admin.dhtcdanang.com" "seller.dhtcdanang.com" "marketplace.dhtcdanang.com")
@@ -26,6 +27,7 @@ NGINX_CONF="$NGINX_CONF"
 CERTBOT_WWW="$CERTBOT_WWW"
 CERTBOT_CONF="$CERTBOT_CONF"
 FRONTEND_DIR="$FRONTEND_DIR"
+NGINX_WEBROOT="$NGINX_WEBROOT"
 BACKEND_PORT="$BACKEND_PORT"
 
 # ── Ensure frontend dist dir exists ──────────────────────────────
@@ -100,7 +102,7 @@ server {
     ssl_session_timeout 1d;
     ssl_prefer_server_ciphers on;
 
-    root \$FRONTEND_DIR;
+    root \$NGINX_WEBROOT;
     index index.html;
 
     gzip on;

@@ -122,15 +122,22 @@ jobs:
           ssh -i ~/.ssh/deploy_key root@103.161.97.176 \
             "bash /opt/dhtc/scripts/deploy.sh"
 
-      - name: Remove broken DHTC-FE HTTPS blocks from nginx
+      - name: Remove stale DHTC-FE HTTPS blocks from nginx
         run: |
           ssh -i ~/.ssh/deploy_key root@103.161.97.176 \
             "sed -i '/# >>> DHTC-FE-.*-HTTPS/,/# <<< DHTC-FE-.*-HTTPS/d' /opt/stock-dashboard/nginx/nginx.conf && \
-             echo 'HTTPS blocks removed. Remaining DHTC-FE tags:' && \
+             echo 'Remaining DHTC-FE tags:' && \
              grep 'DHTC-FE' /opt/stock-dashboard/nginx/nginx.conf || echo '(none)'"
 
       - name: Setup frontend subdomains (idempotent)
         run: bash scripts/setup-subdomains.sh root@103.161.97.176
+
+      - name: Copy frontend files into nginx container
+        run: |
+          ssh -i ~/.ssh/deploy_key root@103.161.97.176 \
+            "docker exec stock-nginx mkdir -p /var/www/dhtc && \
+             docker cp /opt/dhtc/frontend/dist/. stock-nginx:/var/www/dhtc/ && \
+             echo 'Frontend files copied to container /var/www/dhtc'"
 
       - name: Reload nginx for frontend
         run: |
