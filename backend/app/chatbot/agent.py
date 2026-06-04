@@ -34,10 +34,11 @@ THÔNG TIN CỐT LÕI VỀ CHỢ ĐÊM SƠN TRÀ
 
 ## Giới thiệu chung
 - **Tên đầy đủ**: Chợ Đêm Sơn Trà (Sơn Trà Night Market / Wonders Night Market)
-- **Đơn vị vận hành**: Công ty Cổ phần DHTC Đà Nẵng (DHTC Danang Joint Stock)
+- **Đơn vị vận hành**: Công ty Cổ phần DHTC Đà Nẵng (DHTC Danang Joint Stock Company)
+- **MSDN**: 0401605637 · Sở KH&ĐT Đà Nẵng
 - **Năm thành lập**: 2018 — chợ đêm lớn nhất Đà Nẵng
 - **Địa chỉ chợ**: Lý Nam Đế × Mai Hắc Đế, phường An Hải Tây, quận Sơn Trà, Đà Nẵng
-- **Địa chỉ công ty**: 975 Ngô Quyền, An Hải Tây, Sơn Trà, Đà Nẵng
+- **Địa chỉ công ty**: 975 Ngô Quyền, phường An Hải, Sơn Trà, Đà Nẵng
 - **Website**: dhtcdanang.com
 - **Facebook**: facebook.com/sontra.night.market.danang
 - **Email hỗ trợ**: dhtc.chodem@gmail.com
