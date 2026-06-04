@@ -180,11 +180,10 @@ jobs:
              cp -r /opt/dhtc/frontend/dist/. /opt/stock-dashboard/certbot/www/dhtc/ && \
              echo 'Frontend files in /opt/stock-dashboard/certbot/www/dhtc → /var/www/certbot/dhtc in container'"
 
-      - name: Push nginx.conf into container + reload (fix stale bind-mount inode)
+      - name: Restart stock-nginx to resync bind-mount inode
         run: |
           ssh -i ~/.ssh/deploy_key root@103.161.97.176 \
-            "docker exec -i stock-nginx sh -c 'cat > /etc/nginx/conf.d/default.conf' < /opt/stock-dashboard/nginx/nginx.conf && \
-             echo 'Wrote to container inode via stdin (no unlink, no device-busy)' && \
+            "docker restart stock-nginx && \
+             echo 'stock-nginx restarted — bind-mount now reads host inode (correct config)' && \
              docker exec stock-nginx nginx -t && \
-             docker exec stock-nginx nginx -s reload && \
-             echo 'nginx reloaded'"
+             echo 'nginx config valid'"
