@@ -147,9 +147,12 @@ server {
         proxy_read_timeout 86400s;
     }
 
-    # SPA fallback — all non-asset routes serve index.html
+    # SPA fallback — named location avoids internal-redirect cycle
     location / {
-        try_files \\\$uri \\\$uri/ /index.html;
+        try_files \\\$uri \\\$uri/ @spa_fallback;
+    }
+    location @spa_fallback {
+        try_files /index.html =404;
     }
 }
 # <<< \$TAG <<<
