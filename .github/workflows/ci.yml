@@ -32,16 +32,16 @@ jobs:
             docker exec stock-nginx ls -la /var/www/dhtc/ 2>&1 | head -20
 
             echo ""
-            echo "=== nginx error log (last 30 lines) ==="
-            docker exec stock-nginx tail -30 /var/log/nginx/error.log 2>&1
+            echo "=== docker logs stock-nginx (last 30 lines) ==="
+            docker logs stock-nginx --tail 30 2>&1
 
             echo ""
-            echo "=== nginx access log (last 5 lines) ==="
-            docker exec stock-nginx tail -5 /var/log/nginx/access.log 2>&1
+            echo "=== Host certbot/www/dhtc/ ==="
+            ls -la /opt/stock-dashboard/certbot/www/dhtc/ 2>&1 | head -10
 
             echo ""
-            echo "=== Host /opt/dhtc/frontend/dist/ ==="
-            ls -la /opt/dhtc/frontend/dist/ | head -10
+            echo "=== Container /var/www/certbot/dhtc/ ==="
+            docker exec stock-nginx ls -la /var/www/certbot/dhtc/ 2>&1 | head -10
           EOF
 
 
@@ -170,12 +170,12 @@ jobs:
       - name: Setup frontend subdomains (idempotent)
         run: bash scripts/setup-subdomains.sh root@103.161.97.176
 
-      - name: Copy frontend files into nginx container
+      - name: Copy frontend files to certbot www (mounted volume)
         run: |
           ssh -i ~/.ssh/deploy_key root@103.161.97.176 \
-            "docker exec stock-nginx mkdir -p /var/www/dhtc && \
-             docker cp /opt/dhtc/frontend/dist/. stock-nginx:/var/www/dhtc/ && \
-             echo 'Frontend files copied to container /var/www/dhtc'"
+            "mkdir -p /opt/stock-dashboard/certbot/www/dhtc && \
+             cp -r /opt/dhtc/frontend/dist/. /opt/stock-dashboard/certbot/www/dhtc/ && \
+             echo 'Frontend files in /opt/stock-dashboard/certbot/www/dhtc → /var/www/certbot/dhtc in container'"
 
       - name: Reload nginx for frontend
         run: |
