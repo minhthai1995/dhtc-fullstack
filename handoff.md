@@ -49,11 +49,13 @@
   - ⏳ **Nginx HTTPS blocks:** CI đang fix lần 2 — sed range deletion xóa blocks cũ (sai cert path `/opt/stock-dashboard/certbot/conf/...`) rồi re-add với đúng `/etc/letsencrypt/...`. CI commit `a499800` đang chạy.
 - **Meta business verification (2026-06-04):**
   - Meta từ chối: tên pháp lý "DHTC Danang Joint Stock" chưa có trên website
-  - ✅ Fix: `legal.entity.name` (EN) → "DHTC Danang Joint Stock" · footer.copyright EN → bao gồm legal name
-  - ✅ VI name → "Công ty Cổ phần DHTC Đà Nẵng" (full form)
-  - ✅ HQ address → "975 Ngô Quyền" (từ website chính thức dhtcdanang.com)
-  - ⚠️ **GPKD 0401234567 LÀ PLACEHOLDER** — cần user cung cấp MST thật từ Sở KH&ĐT Đà Nẵng
-  - Sau khi CI deploy xong → submit lại Meta verification tại Business Manager
+  - ✅ EN `legal.entity.name` → "DHTC Danang Joint Stock Company" (khớp GPKD)
+  - ✅ EN `legal.entity.gpkd` + `footer.gpkd` → MSDN thật **0401605637** (đã xóa placeholder)
+  - ✅ EN `legal.hq.address` → "975 Ngô Quyền, An Hải Ward" (bỏ "Tây" sai)
+  - ✅ EN `footer.copyright` → bao gồm full legal name
+  - ✅ VI name → "Công ty Cổ phần DHTC Đà Nẵng" · VI address → "phường An Hải" · VI GPKD → 0401605637
+  - ✅ Chatbot agent.py: MSDN 0401605637 + tên công ty đầy đủ + địa chỉ 975 Ngô Quyền, phường An Hải
+  - Commit: `d45d2d0` — CI deploys → submit lại Meta verification tại Business Manager
 - **Next session:** P5B Messenger Customer Chat Plugin embed; P5C Messenger webhook; P5D clustering. Carry-over: S3 migration, Redis rate limit, GeoIP
 
 ---
