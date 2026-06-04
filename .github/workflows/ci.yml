@@ -23,26 +23,22 @@ jobs:
       - name: Diagnose nginx + container filesystem
         run: |
           ssh -i ~/.ssh/deploy_key root@103.161.97.176 << 'EOF'
-            echo "=== ALL docker mounts for stock-nginx ==="
-            docker inspect stock-nginx --format '{{range .Mounts}}{{.Type}} HOST={{.Source}} → CONTAINER={{.Destination}}{{"\n"}}{{end}}'
+            echo "=== Files in container /etc/nginx/conf.d/ ==="
+            docker exec stock-nginx ls -la /etc/nginx/conf.d/
 
             echo ""
-            echo "=== bfs.fdvvietnam.com root in nginx.conf ==="
-            grep -n "root " /opt/stock-dashboard/nginx/nginx.conf
+            echo "=== Container base /etc/nginx/nginx.conf (first 40 lines) ==="
+            docker exec stock-nginx head -40 /etc/nginx/nginx.conf
 
             echo ""
-            echo "=== All listen 443 + server_name lines ==="
-            grep -n "listen 443\|server_name " /opt/stock-dashboard/nginx/nginx.conf | grep -v "#"
+            echo "=== ACTUAL admin HTTPS block from mounted nginx.conf (lines 380-450) ==="
+            sed -n '380,450p' /opt/stock-dashboard/nginx/nginx.conf
 
             echo ""
-            echo "=== Test nginx user can read index.html ==="
-            docker exec --user nginx stock-nginx cat /var/www/certbot/dhtc/index.html 2>&1 | head -2
-
-            echo ""
-            echo "=== docker logs after live curl (errors only) ==="
+            echo "=== docker logs after live curl ==="
             curl -sk -o /dev/null https://admin.dhtcdanang.com/
-            sleep 1
-            docker logs stock-nginx --since 30s 2>&1 | grep -v "200\|304" | tail -15
+            sleep 2
+            docker logs stock-nginx --since 60s 2>&1 | tail -10
           EOF
 
 
